@@ -8,4 +8,6 @@
 
 ## Validation
 
-The pull request checks enforce issue approval and type labeling. CI runs `lint:ci`, `typecheck`, and `test`. Required branch protection checks will be configured after their first successful workflow runs establish the exact check names.
+The shared [`hexadrop/validate-pr-action@v1.0.1`](https://github.com/hexadrop/validate-pr-action/releases/tag/v1.0.1) checks issue approval, open state, and type labeling. [PR #53](https://github.com/hexadrop/validate-pr-action/pull/53) added linked-issue open-state validation to the shared action, keeping this policy centralized. CI calls the shared `hexadrop/github-workflows` check workflow to run `lint:ci`, `typecheck`, and `test`. The active ruleset requires these checks on protected branches.
+
+When a pull request is merged into `main`, the shared sync workflow opens or updates a pull request to bring `main` into `develop`.
