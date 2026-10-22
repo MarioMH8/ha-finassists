@@ -8,6 +8,7 @@ describe('loadServerConfig', () => {
 		const config = await loadServerConfig({}, '/tmp/fin-assist-options-not-found.json');
 
 		expect(config).toEqual({
+			databasePath: '/data/fin-assist.sqlite',
 			port: 8099,
 			trustedIngressIp: DEFAULT_TRUSTED_INGRESS_IP,
 		});

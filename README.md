@@ -4,7 +4,7 @@ A self-hosted financial app for Home Assistant, distributed as a Home Assistant 
 
 ## Scaffold status
 
-The Bun scaffold includes a Home Assistant Ingress app shell, bilingual Spanish/English copy, a health endpoint, a session endpoint that trusts Supervisor identity headers only from the configured Supervisor peer, an add-on container definition, and CI checks. This identity is for attribution, not authorization. Financial records, SQLite persistence, REST, MCP, and the native integration are not implemented yet.
+The Bun app includes a Home Assistant Ingress shell, bilingual Spanish/English copy, health and session endpoints, a personal API-token management UI, issue/list/revoke routes, and SQLite persistence for those tokens. Users can create and revoke their own tokens, copy a newly issued secret once, and review token names and creation dates. Ingress identity is used for token ownership and is trusted only from the configured Supervisor peer. Financial records, the financial REST/MCP APIs, and the native integration are not implemented yet.
 
 ## Development
 
@@ -16,7 +16,7 @@ SUPERVISOR_IP=::1 bun run dev  # Run locally with file watching
 bun run start                 # Start the app on port 8099
 ```
 
-Run focused checks independently with `bun run lint:ci`, `bun run typecheck`, and `bun run test`. The service listens on `PORT` (default `8099`). `/health` returns a JSON health status, and `/api/v1/session` reports the Ingress actor only for requests from the configured Supervisor IP. The UI rejects other peers, while the session route treats identity headers from other peers as unknown. The REST (`/api/v1/`) and MCP (`/mcp`) namespaces remain available to network clients and must enforce token authentication when implemented. The browser UI is plain JavaScript, HTML, and CSS without a frontend framework or build step; it is served directly from `src/app/web` beside the server code in `src/app`. The scaffold follows the system light/dark preference; Home Assistant theme synchronization remains future work.
+Run focused checks independently with `bun run lint:ci`, `bun run typecheck`, and `bun run test`. The service listens on `PORT` (default `8099`) and stores API tokens in `/data/fin-assist.sqlite`; set `DATABASE_PATH` to override that location for local development. `/health` returns a JSON health status, `/api/v1/session` reports the trusted Ingress actor, and `/api/v1/tokens` lets that actor issue, list, and revoke only their own tokens. Newly issued secrets are returned once. The MCP (`/mcp`) and financial REST endpoints are not implemented yet. The browser UI is plain JavaScript, HTML, and CSS without a frontend framework or build step; it is served directly from `src/app/web` beside the server code in `src/app`. The scaffold follows the system light/dark preference; Home Assistant theme synchronization remains future work.
 
 The add-on's `supervisor_ip` option defaults to Home Assistant's standard Supervisor address. Override it for non-standard network setups. `SUPERVISOR_IP` can override the option when running the container directly; invalid addresses fail startup. Direct local development should set `SUPERVISOR_IP` to the local peer address.
 

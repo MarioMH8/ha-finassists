@@ -3,11 +3,13 @@ import { isIP } from 'node:net';
 import { DEFAULT_TRUSTED_INGRESS_IP } from '../platform/ingress/actor';
 
 interface ServerConfig {
+	databasePath: string;
 	port: number;
 	trustedIngressIp: string;
 }
 
 interface ServerEnvironment {
+	DATABASE_PATH?: string;
 	PORT?: string;
 	SUPERVISOR_IP?: string;
 }
@@ -30,6 +32,12 @@ async function loadServerConfig(
 	optionsPath = '/data/options.json'
 ): Promise<ServerConfig> {
 	const options = await readOptions(optionsPath);
+	const configuredDatabasePath = environment.DATABASE_PATH ?? '/data/fin-assist.sqlite';
+	const databasePath = configuredDatabasePath.trim();
+	if (databasePath.length === 0) {
+		throw new Error('DATABASE_PATH must not be empty');
+	}
+
 	const configuredIp =
 		environment.SUPERVISOR_IP ??
 		(isRecord(options) && typeof options.supervisor_ip === 'string' ? options.supervisor_ip : undefined) ??
@@ -45,7 +53,7 @@ async function loadServerConfig(
 		throw new Error('PORT must be an integer between 1 and 65535');
 	}
 
-	return { port, trustedIngressIp };
+	return { databasePath, port, trustedIngressIp };
 }
 
 export { loadServerConfig, type ServerConfig, type ServerEnvironment };

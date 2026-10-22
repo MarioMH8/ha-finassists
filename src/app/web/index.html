@@ -14,18 +14,62 @@
         <div class="brand-mark" aria-hidden="true">F</div>
         <h1 data-i18n="title">Fin Assist</h1>
       </header>
-      <main class="main-content">
+      <main class="main-content" id="main-content">
         <section class="welcome-card" aria-labelledby="welcome-title">
-          <div class="eyebrow" data-i18n="eyebrow">Home Assistant add-on</div>
-          <h2 id="welcome-title" data-i18n="welcome">Your financial workspace starts here</h2>
+          <h2 id="welcome-title" data-i18n="welcome">Connect your tools securely</h2>
           <p data-i18n="description">
-            The application scaffold is ready. Accounts, transactions, and the rest of your
-            household-finance tools will be built here.
+            Create personal API tokens to connect trusted tools to your Fin Assist account.
           </p>
           <div class="service-status" role="status" aria-live="polite">
             <span class="status-indicator" aria-hidden="true"></span>
             <span data-status data-i18n="checking">Checking service status…</span>
           </div>
+        </section>
+        <section class="token-section" aria-labelledby="tokens-title">
+          <div class="section-heading">
+            <div>
+              <h2 id="tokens-title" data-i18n="tokensTitle">Personal API tokens</h2>
+              <p data-i18n="tokensDescription">Tokens act as your account when connecting apps and services.</p>
+            </div>
+            <button class="button button-secondary" type="button" data-refresh-tokens data-i18n="refresh">
+              Refresh
+            </button>
+          </div>
+          <form class="token-form" data-token-form>
+            <div class="form-field">
+              <label for="token-name" data-i18n="tokenNameLabel">Token name</label>
+              <p class="field-hint" id="token-name-hint" data-i18n="tokenNameHint">
+                Choose a name that helps you recognize where you use it.
+              </p>
+              <input
+                id="token-name"
+                name="name"
+                type="text"
+                maxlength="80"
+                autocomplete="off"
+                required
+                aria-describedby="token-name-hint"
+              />
+            </div>
+            <button class="button button-primary" type="submit" data-i18n="createToken">Create token</button>
+          </form>
+          <p class="token-feedback" data-token-feedback role="status" aria-live="polite" aria-atomic="true"></p>
+          <section class="issued-token" data-issued-token hidden tabindex="-1" aria-labelledby="issued-token-title">
+            <h3 id="issued-token-title" data-i18n="issuedTokenTitle">Copy your new token</h3>
+            <p data-i18n="issuedTokenWarning">This secret is shown only once. Copy it now and store it safely.</p>
+            <div class="secret-field">
+              <code data-issued-secret></code>
+              <button class="button button-secondary" type="button" data-copy-token data-i18n="copyToken">
+                Copy token
+              </button>
+            </div>
+          </section>
+          <div class="token-list-heading">
+            <h3 data-token-list-heading tabindex="-1" data-i18n="activeTokens">Active tokens</h3>
+            <p data-token-count></p>
+          </div>
+          <p class="token-list-state" data-token-list-state data-i18n="loadingTokens">Loading tokens…</p>
+          <ul class="token-list" data-token-list aria-label="Active API tokens" data-i18n-aria-label="activeTokens"></ul>
         </section>
         <footer data-i18n="footer">Private by design. Runs on your Home Assistant instance.</footer>
       </main>
