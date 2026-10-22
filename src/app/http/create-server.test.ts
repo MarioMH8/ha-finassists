@@ -94,6 +94,37 @@ describe('createServer', () => {
 		expect(await response.text()).toContain('<html');
 	});
 
+	it('server-renders the Spanish interface using the browser language preference', async () => {
+		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
+
+		const response = await fetch(requestUrl('/'), { headers: { 'Accept-Language': 'es-ES, en;q=0.8' } });
+		const html = await response.text();
+
+		expect(response.status).toBe(200);
+		expect(response.headers.get('vary')).toContain('Accept-Language');
+		expect(html).toContain('<html lang="es">');
+		expect(html).toContain('Conecta tus herramientas de forma segura');
+		expect(html).toContain('data-language="es"');
+		expect(html).toContain('id="root"');
+		expect(html).toContain('src="./client.js"');
+	});
+
+	it('serves the React hydration bundle and stylesheet with their MIME types', async () => {
+		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
+
+		const [scriptResponse, stylesheetResponse] = await Promise.all([
+			fetch(requestUrl('/client.js')),
+			fetch(requestUrl('/styles.css')),
+		]);
+
+		expect(scriptResponse.status).toBe(200);
+		expect(scriptResponse.headers.get('content-type')).toContain('text/javascript');
+		const script = await scriptResponse.text();
+		expect(script.length).toBeGreaterThan(0);
+		expect(stylesheetResponse.status).toBe(200);
+		expect(stylesheetResponse.headers.get('content-type')).toContain('text/css');
+	});
+
 	it('keeps the MCP endpoint out of the web interface', async () => {
 		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
 

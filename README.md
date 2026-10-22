@@ -8,7 +8,7 @@ The Bun app includes a Home Assistant Ingress shell, bilingual Spanish/English c
 
 ## Development
 
-Requires Bun 1.4 or later. The app has no runtime dependencies; TypeScript and Bun types are development-only.
+Requires Bun 1.4 or later. React 19 and React DOM provide server rendering and client hydration; the remaining application runtime uses Bun APIs. TypeScript, React types, and Bun types are development-only.
 
 ```sh
 bun install --frozen-lockfile
@@ -16,7 +16,7 @@ SUPERVISOR_IP=::1 bun run dev  # Run locally with file watching
 bun run start                 # Start the app on port 8099
 ```
 
-Run focused checks independently with `bun run lint:ci`, `bun run typecheck`, and `bun run test`. The service listens on `PORT` (default `8099`) and stores API tokens in `/data/fin-assist.sqlite`; set `DATABASE_PATH` to override that location for local development. `/health` returns a JSON health status, `/api/v1/session` reports the trusted Ingress actor, and `/api/v1/tokens` lets that actor issue, list, and revoke only their own tokens. Newly issued secrets are returned once. The MCP (`/mcp`) and financial REST endpoints are not implemented yet. The browser UI is plain JavaScript, HTML, and CSS without a frontend framework or build step; it is served directly from `src/app/web` beside the server code in `src/app`. The scaffold follows the system light/dark preference; Home Assistant theme synchronization remains future work.
+Run focused checks independently with `bun run lint:ci`, `bun run typecheck`, and `bun run test`. The service listens on `PORT` (default `8099`) and stores API tokens in `/data/fin-assist.sqlite`; set `DATABASE_PATH` to override that location for local development. `/health` returns a JSON health status, `/api/v1/session` reports the trusted Ingress actor, and `/api/v1/tokens` lets that actor issue, list, and revoke only their own tokens. Newly issued secrets are returned once. The MCP (`/mcp`) and financial REST endpoints are not implemented yet. The browser UI is implemented with React 19 and CSS under `src/app/web`. The server renders the page and serves a client bundle Bun compiles once in memory at startup; there is no separate frontend build command or generated build directory. The page language is selected from the request's `Accept-Language` header, and the CSS follows the system light/dark preference; Home Assistant theme synchronization remains future work.
 
 The add-on's `supervisor_ip` option defaults to Home Assistant's standard Supervisor address. Override it for non-standard network setups. `SUPERVISOR_IP` can override the option when running the container directly; invalid addresses fail startup. Direct local development should set `SUPERVISOR_IP` to the local peer address.
 

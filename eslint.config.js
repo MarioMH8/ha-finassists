@@ -8,6 +8,12 @@ export default hexadrop(
 		},
 	},
 	{
+		files: ['src/app/web/**/*.tsx'],
+		settings: {
+			react: { version: '19.3.1' },
+		},
+	},
+	{
 		files: ['src/app/server.ts'],
 		rules: {
 			'no-console': 'off',

@@ -6,7 +6,7 @@ Use Bun for installation, development, tests, and runtime. Keep runtime dependen
 
 ## TypeScript
 
-The TypeScript compiler is configured in strict mode with no emitted output. Keep server code under `src/`; the browser files are plain JavaScript, HTML, and CSS under `src/app/web/` and are served without a frontend build system.
+The TypeScript compiler is configured in strict mode with no emitted output. Keep server code and React UI source under `src/`; the browser entry point is compiled by Bun into memory at startup and served from the same origin. Do not introduce an on-disk frontend build directory or a separate build command.
 
 ## Module boundaries
 

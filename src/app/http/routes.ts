@@ -151,7 +151,7 @@ async function routeRequest(
 		return new Response('Method Not Allowed', { status: 405 });
 	}
 
-	return serveWebAsset(pathname);
+	return serveWebAsset(pathname, request);
 }
 
 export async function handleRequest(

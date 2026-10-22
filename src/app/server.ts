@@ -7,8 +7,10 @@ import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } fr
 import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '../modules/tokens/infrastructure';
 import { loadServerConfig } from './config';
 import { createServer } from './http/create-server';
+import { prepareWebAssets } from './http/web-assets';
 
 const config = await loadServerConfig();
+await prepareWebAssets();
 await mkdir(path.dirname(config.databasePath), { recursive: true });
 const database = new Database(config.databasePath);
 const tokenRepository = new SqliteApiTokenRepository(database);
