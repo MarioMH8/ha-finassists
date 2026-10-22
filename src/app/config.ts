@@ -29,10 +29,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 async function loadServerConfig(
 	environment: ServerEnvironment = Bun.env as ServerEnvironment,
-	optionsPath = '/data/options.json'
+	optionsPath = './data/options.json'
 ): Promise<ServerConfig> {
 	const options = await readOptions(optionsPath);
-	const configuredDatabasePath = environment.DATABASE_PATH ?? '/data/fin-assist.sqlite';
+	const configuredDatabasePath = environment.DATABASE_PATH ?? './data/fin-assist.sqlite';
 	const databasePath = configuredDatabasePath.trim();
 	if (databasePath.length === 0) {
 		throw new Error('DATABASE_PATH must not be empty');
