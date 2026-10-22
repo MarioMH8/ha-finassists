@@ -1,0 +1,15 @@
+scope:app:
+  - changed-files:
+      - any-glob-to-any-file: "src/app/**"
+scope:ingress:
+  - changed-files:
+      - any-glob-to-any-file: "src/platform/ingress/**"
+scope:integration:
+  - changed-files:
+      - any-glob-to-any-file: "custom_components/**"
+scope:docs:
+  - changed-files:
+      - any-glob-to-any-file: ["*.md", "docs/**"]
+scope:ci:
+  - changed-files:
+      - any-glob-to-any-file: [".github/**", "package.json", "bun.lock", "*.config.*"]

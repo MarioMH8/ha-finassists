@@ -1,0 +1,6 @@
+.git
+.idea
+.impeccable
+node_modules
+coverage
+*.log

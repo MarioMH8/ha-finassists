@@ -1,0 +1,3 @@
+# One repository for the app and native Home Assistant components
+
+The app, custom integration, and Lovelace card will be maintained in one repository so their contracts and releases stay coordinated. The repository will be installable as a Home Assistant app repository and as a HACS integration repository; because HACS supports only one content category per repository, the card will be served as a frontend resource by the integration instead of being published as a separate HACS dashboard category. The app backend uses Bun, while Home Assistant-native components use their required native formats and runtimes.

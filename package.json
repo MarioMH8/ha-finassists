@@ -1,0 +1,28 @@
+{
+	"name": "ha-finassists",
+	"version": "0.1.0",
+	"description": "Household finance management for Home Assistant",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"commitlint": "commitlint --edit",
+		"dev": "bun --watch src/app/server.ts",
+		"lint": "eslint --cache .",
+		"lint:ci": "eslint --cache --cache-strategy content .",
+		"lint:fix": "eslint --cache --fix .",
+		"prepare": "husky",
+		"start": "bun run src/app/server.ts",
+		"test": "bun test",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@commitlint/cli": "21.2.2",
+		"@commitlint/config-conventional": "21.2.2",
+		"@hexadrop/eslint-config": "1.0.11",
+		"@types/bun": "1.4.3",
+		"eslint": "10.10.0",
+		"husky": "9.1.7",
+		"lint-staged": "17.5.1",
+		"typescript": "6.0.3"
+	}
+}
