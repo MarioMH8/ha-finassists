@@ -1,3 +1,3 @@
-# MCP uses authenticated Streamable HTTP
+# MCP uses stateless, authenticated Streamable HTTP
 
-The MCP server will use Streamable HTTP so local-network MCP clients can connect to the Home Assistant app, with explicit read/write tools authenticated by the same personal tokens as REST. The endpoint is intended for the local network and is not exposed to the Internet by default; Ingress authentication does not replace API/MCP authentication. This provides the requested remote-client capability without adding a separate MCP credential model.
+The MCP server will expose a stateless Streamable HTTP endpoint at `/mcp` so local-network MCP clients can connect to the Home Assistant app without maintaining MCP sessions. Each request will authenticate with the same personal bearer tokens as REST, and the tool set will make read and write operations explicit; Home Assistant Ingress identity is for audit attribution and does not replace API/MCP authentication. The endpoint is intended for the local network and is not exposed to the Internet by default, avoiding a separate MCP credential or session model.
