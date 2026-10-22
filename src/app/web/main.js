@@ -292,13 +292,14 @@ tokenForm?.addEventListener('submit', async event => {
 			throw new Error('Token creation failed');
 		}
 		const createdToken = await response.json();
+		const { secret, ...createdTokenMetadata } = createdToken;
 		tokenState.generation += 1;
-		tokenState.tokens = [createdToken, ...tokenState.tokens];
+		tokenState.tokens = [createdTokenMetadata, ...tokenState.tokens];
 		renderTokens();
 		const currentIssuedToken = document.querySelector('[data-issued-token]');
 		const currentIssuedSecret = document.querySelector('[data-issued-secret]');
 		if (currentIssuedToken && currentIssuedSecret) {
-			currentIssuedSecret.textContent = createdToken.secret;
+			currentIssuedSecret.textContent = secret;
 			currentIssuedToken.hidden = false;
 			currentIssuedToken.focus();
 		}
