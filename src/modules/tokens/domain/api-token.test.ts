@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
+import { TokenNameRequiredError } from './api-token.error';
 import { ApiTokenMother } from './api-token.mother';
-import { TokenNameRequiredError } from './token-name-required.error';
 
 describe('ApiToken', () => {
 	describe('create', () => {

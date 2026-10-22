@@ -2,8 +2,8 @@ import { describe, expect, it } from 'bun:test';
 
 import { ApiTokenMother } from '../domain/api-token.mother';
 import { InMemoryApiTokenRepository } from '../infrastructure';
-import { RevokeApiTokenParametersMother } from './revoke-api-token.parameters.mother';
 import { RevokeApiToken } from './revoke-api-token.use-case';
+import { RevokeApiTokenParametersMother } from './revoke-api-token.use-case.mother';
 
 describe('RevokeApiToken', () => {
 	describe('execute', () => {

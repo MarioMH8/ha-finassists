@@ -1,7 +1,7 @@
 import type { Database } from 'bun:sqlite';
 
-import type { ApiTokenRepository } from '../domain';
-import { ApiToken } from '../domain';
+import type { ApiTokenRepository } from '../../domain';
+import { ApiToken } from '../../domain';
 
 interface TokenRow {
 	created_at: string;

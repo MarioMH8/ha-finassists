@@ -1,4 +1,4 @@
-import type { ApiToken } from './api-token';
+import type { ApiToken } from '../api-token';
 
 export interface ApiTokenRepository {
 	deleteByIdAndOwner(id: string, ownerId: string): Promise<boolean>;

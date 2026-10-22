@@ -1,4 +1,4 @@
-export { InMemoryApiTokenRepository } from './in-memory-api-token.repository';
-export { InMemoryTokenCredentialService } from './in-memory-token-credential.service';
-export { SqliteApiTokenRepository } from './sqlite-api-token.repository';
-export { WebCryptoTokenCredentialService } from './web-crypto-token-credential.service';
+export { InMemoryApiTokenRepository } from './repositories/in-memory-api-token.repository';
+export { SqliteApiTokenRepository } from './repositories/sqlite-api-token.repository';
+export { InMemoryTokenCredentialService } from './services/in-memory-token-credential.service';
+export { WebCryptoTokenCredentialService } from './services/web-crypto-token-credential.service';

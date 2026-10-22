@@ -1,4 +1,4 @@
-import { TokenNameRequiredError } from './token-name-required.error';
+import { TokenNameRequiredError } from './api-token.error';
 
 interface ApiTokenParameters {
 	createdAt: string;

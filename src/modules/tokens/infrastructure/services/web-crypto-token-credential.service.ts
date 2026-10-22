@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer';
 
-import type { TokenCredential, TokenCredentialService } from '../domain';
+import type { TokenCredential, TokenCredentialService } from '../../domain';
 
 const TOKEN_PREFIX_LENGTH = 11;
 

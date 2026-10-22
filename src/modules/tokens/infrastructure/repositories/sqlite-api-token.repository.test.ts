@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import { ApiTokenMother } from '../domain/api-token.mother';
+import { ApiTokenMother } from '../../domain/api-token.mother';
 import { SqliteApiTokenRepository } from './sqlite-api-token.repository';
 
 describe('SqliteApiTokenRepository', () => {

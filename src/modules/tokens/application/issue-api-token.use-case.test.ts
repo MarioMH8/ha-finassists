@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 
 import { InMemoryApiTokenRepository, InMemoryTokenCredentialService } from '../infrastructure';
-import { IssueApiTokenParametersMother } from './issue-api-token.parameters.mother';
 import { IssueApiToken } from './issue-api-token.use-case';
+import { IssueApiTokenParametersMother } from './issue-api-token.use-case.mother';
 
 describe('IssueApiToken', () => {
 	describe('execute', () => {

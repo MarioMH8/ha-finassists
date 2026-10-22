@@ -1,4 +1,4 @@
-import type { TokenCredentialService } from '../domain';
+import type { TokenCredentialService } from '../../domain';
 
 export class InMemoryTokenCredentialService implements TokenCredentialService {
 	async create(): Promise<{ hash: string; prefix: string; secret: string }> {

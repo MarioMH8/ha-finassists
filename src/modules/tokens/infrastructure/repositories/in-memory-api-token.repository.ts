@@ -1,4 +1,4 @@
-import type { ApiToken, ApiTokenRepository } from '../domain';
+import type { ApiToken, ApiTokenRepository } from '../../domain';
 
 export class InMemoryApiTokenRepository implements ApiTokenRepository {
 	private readonly tokens = new Map<string, ApiToken>();
