@@ -6,6 +6,7 @@
 - Create feature and maintenance branches from `develop` and open pull requests back to `develop`.
 - Use `feat/*`, `fix/*`, `docs/*`, `chore/*`, and `refactor/*` prefixes.
 - Create hotfixes from `main` and open pull requests to `main`; merge the fix back into `develop` afterward.
+- Direct pushes are blocked on `main` and `develop`; commits reaching those branches must have verified signatures and pass all required checks.
 
 ## Commit convention
 
