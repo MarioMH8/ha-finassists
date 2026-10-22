@@ -12,6 +12,10 @@ _Avoid_: Ledger, household (when referring to the collection itself)
 A person with an identity in the Home Assistant installation. A user's identity may be recorded as the actor of an action or linked to a shared-expense participant; it does not determine financial permissions.
 _Avoid_: App user, account owner (unless specifically referring to a financial account owner)
 
+**Personal API token**:
+A revocable credential owned by one Home Assistant user and used to authenticate that user's external REST or MCP requests. The token owner is the actor for those requests; users manage only their own tokens.
+_Avoid_: API key (unless referring to a different credential type), session token
+
 **Actor**:
 The person or system identity recorded as responsible for a financial action; it may be unknown.
 _Avoid_: Operator (when the action came from an automation or reusable credential)
