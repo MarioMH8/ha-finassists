@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import json
 import sys
 import types
 import unittest
@@ -269,12 +270,17 @@ class ConfigFlowTests(unittest.IsolatedAsyncioTestCase):
 
 
 class _Response:
-    def __init__(self, status: int = 200, payload: Any = None) -> None:
+    def __init__(
+        self, status: int = 200, payload: Any = None, malformed_json: bool = False
+    ) -> None:
         self.status = status
         self.content_type = "application/json"
         self.payload = payload or {}
+        self.malformed_json = malformed_json
 
     async def json(self) -> Any:
+        if self.malformed_json:
+            raise json.JSONDecodeError("invalid JSON", "{", 1)
         return self.payload
 
 
@@ -301,6 +307,17 @@ class _Session:
 
 
 class CredentialLifecycleTests(unittest.IsolatedAsyncioTestCase):
+    async def test_malformed_json_is_translated_to_api_error(self) -> None:
+        session = _Session()
+        session.request = lambda method, url, **kwargs: _RequestContext(
+            _Response(malformed_json=True)
+        )
+
+        with self.assertRaisesRegex(FinAssistApiError, "malformed JSON"):
+            await FinAssistApi("http://fin-assist/api/v1", "", session).async_request(
+                "GET", "books"
+            )
+
     async def test_exchange_has_no_auth_and_rotation_and_revoke_use_bearer(self) -> None:
         session = _Session()
         unauthenticated = FinAssistApi("http://fin-assist/api/v1", "", session)

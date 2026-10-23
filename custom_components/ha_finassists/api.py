@@ -51,7 +51,10 @@ class FinAssistApi:
                     )
                 if response.content_type != "application/json":
                     raise FinAssistApiError("Fin Assist returned a non-JSON response")
-                return await response.json()
+                try:
+                    return await response.json()
+                except ValueError as err:
+                    raise FinAssistApiError("Fin Assist returned malformed JSON") from err
         except (ClientError, TimeoutError) as err:
             raise FinAssistApiError(f"Could not connect to Fin Assist: {err}") from err
 
