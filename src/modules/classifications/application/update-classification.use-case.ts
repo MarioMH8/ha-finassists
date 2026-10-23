@@ -1,5 +1,5 @@
-import type { Classification, ClassificationRepository } from '../domain';
-import { ClassificationError, classificationLabels, normalizeClassificationName } from '../domain';
+import type { ClassificationRepository } from '../domain';
+import { Classification } from '../domain';
 import { assertWritableBook, requireActiveParent, requireClassification } from './guards';
 
 interface UpdateClassificationInput {
@@ -17,26 +17,20 @@ class UpdateClassification {
 	constructor(private readonly repository: ClassificationRepository) {}
 
 	execute(bookId: string, id: string, input: UpdateClassificationInput): Classification {
-		const { kind } = this.repository;
-		const name = input.name === undefined ? undefined : normalizeClassificationName(kind, input.name);
+		if (input.name !== undefined) {
+			Classification.normalizeName(this.repository.kind, input.name);
+		}
 		assertWritableBook(this.repository, bookId);
 		const current = requireClassification(this.repository, bookId, id);
 
-		let parentId = current.parentId;
+		let updated = input.name === undefined ? current : current.rename(input.name);
 		if (input.parentId !== undefined && input.parentId !== current.parentId) {
-			parentId = input.parentId;
-			if (parentId !== null) {
-				requireActiveParent(this.repository, bookId, parentId);
-				if (this.repository.isSelfOrDescendant(bookId, id, parentId)) {
-					throw new ClassificationError(
-						'cycle',
-						`${classificationLabels[kind]} ${id} cannot be moved below itself or one of its descendants`
-					);
-				}
-			}
+			const parent =
+				input.parentId === null ? undefined : requireActiveParent(this.repository, bookId, input.parentId);
+			const isCycle = parent !== undefined && this.repository.isSelfOrDescendant(bookId, id, parent.id);
+			updated = updated.reparent(parent, isCycle);
 		}
 
-		const updated: Classification = { ...current, name: name ?? current.name, parentId };
 		this.repository.save(updated);
 
 		return updated;

@@ -1,12 +1,7 @@
 import type { Database } from 'bun:sqlite';
 
-import type {
-	CategoryRepository,
-	Classification,
-	ClassificationKind,
-	ClassificationRepository,
-	ClassRepository,
-} from '../../domain';
+import type { CategoryRepository, ClassificationKind, ClassificationRepository, ClassRepository } from '../../domain';
+import { Classification } from '../../domain';
 
 interface ClassificationRow {
 	archived_at: null | string;
@@ -22,14 +17,14 @@ const schema = {
 	class: { reference: 'class_id', table: 'classes' },
 } as const satisfies Record<ClassificationKind, { reference: string; table: string }>;
 
-function toClassification(row: ClassificationRow): Classification {
-	return {
+function toClassification(row: ClassificationRow, kind: ClassificationKind): Classification {
+	return Classification.reconstitute(kind, {
 		archivedAt: row.archived_at,
 		bookId: row.book_id,
 		id: row.id,
 		name: row.name,
 		parentId: row.parent_id,
-	};
+	});
 }
 
 class SqliteClassificationRepository<
@@ -98,7 +93,7 @@ class SqliteClassificationRepository<
 			.query(`SELECT * FROM ${this.table} WHERE book_id = ? AND id = ?`)
 			.get(bookId, id) as ClassificationRow | null;
 
-		return row ? toClassification(row) : undefined;
+		return row ? toClassification(row, this.kind) : undefined;
 	}
 
 	hasChildren(bookId: string, id: string): boolean {
@@ -139,7 +134,7 @@ class SqliteClassificationRepository<
 			.query(`SELECT * FROM ${this.table} WHERE book_id = ?${filter} ORDER BY name COLLATE NOCASE, name, id`)
 			.all(bookId) as ClassificationRow[];
 
-		return rows.map(row => toClassification(row));
+		return rows.map(row => toClassification(row, this.kind));
 	}
 
 	save(classification: Classification): void {

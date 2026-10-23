@@ -11,11 +11,12 @@ class ArchiveClassification {
 	execute(bookId: string, id: string): Classification {
 		assertWritableBook(this.repository, bookId);
 		const current = requireClassification(this.repository, bookId, id);
-		if (current.archivedAt !== null) {
+		const archivedAt = new Date().toISOString();
+		if (current.archive(archivedAt) === current) {
 			return current;
 		}
 
-		this.repository.archiveSubtree(bookId, id, new Date().toISOString());
+		this.repository.archiveSubtree(bookId, id, archivedAt);
 
 		return requireClassification(this.repository, bookId, id);
 	}

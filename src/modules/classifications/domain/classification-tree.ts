@@ -1,13 +1,13 @@
-import type { Classification } from './classification';
+import type { ClassificationFields } from './classification';
 
-interface ClassificationNode extends Classification {
+interface ClassificationNode extends ClassificationFields {
 	children: ClassificationNode[];
 }
 
 /**
  *Builds a forest preserving input order; entries whose parent is absent from the input become roots.
  */
-function buildClassificationTree(classifications: readonly Classification[]): ClassificationNode[] {
+function buildClassificationTree(classifications: readonly ClassificationFields[]): ClassificationNode[] {
 	const nodes = new Map<string, ClassificationNode>();
 	for (const classification of classifications) {
 		nodes.set(classification.id, { ...classification, children: [] });

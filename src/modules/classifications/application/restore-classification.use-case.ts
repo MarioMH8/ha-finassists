@@ -1,8 +1,6 @@
 import type { Classification, ClassificationRepository } from '../domain';
 import { assertWritableBook, requireActiveParent, requireClassification } from './guards';
 
-const JSON_NULL = JSON.parse('null') as null;
-
 /**
  *Restores one archived classification; its parent must be active. Descendants stay archived.
  */
@@ -16,11 +14,9 @@ class RestoreClassification {
 			return current;
 		}
 
-		if (current.parentId !== null) {
-			requireActiveParent(this.repository, bookId, current.parentId);
-		}
-
-		const restored: Classification = { ...current, archivedAt: JSON_NULL };
+		const parent =
+			current.parentId === null ? undefined : requireActiveParent(this.repository, bookId, current.parentId);
+		const restored: Classification = current.restore(parent);
 		this.repository.save(restored);
 
 		return restored;

@@ -1,12 +1,13 @@
 export {
-	type Classification,
+	Classification,
+	CLASSIFICATION_KIND,
+	type ClassificationCreateInput,
+	type ClassificationFields,
 	type ClassificationInput,
 	type ClassificationKind,
 	classificationLabels,
 	classificationNameMaxLength,
-	createClassification,
-	normalizeClassificationName,
 } from './classification';
+export { CLASSIFICATION_ERROR_CODE, ClassificationError, type ClassificationErrorCode } from './classification.error';
 export type { CategoryRepository, ClassificationRepository, ClassRepository } from './classification.repository';
-export { ClassificationError, type ClassificationErrorCode } from './classification-error';
 export { buildClassificationTree, type ClassificationNode } from './classification-tree';

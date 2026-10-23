@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import type { Classification, ClassificationRepository } from '../domain';
-import { createClassification } from '../domain';
+import type { ClassificationRepository } from '../domain';
+import { Classification } from '../domain';
 import { assertWritableBook, requireActiveParent } from './guards';
 
 interface CreateClassificationInput {
@@ -14,10 +14,11 @@ class CreateClassification {
 	constructor(private readonly repository: ClassificationRepository) {}
 
 	execute(input: CreateClassificationInput): Classification {
-		const classification = createClassification(this.repository.kind, { ...input, id: randomUUID() });
+		let classification = Classification.create(this.repository.kind, { ...input, id: randomUUID() });
 		assertWritableBook(this.repository, input.bookId);
-		if (classification.parentId !== null) {
-			requireActiveParent(this.repository, input.bookId, classification.parentId);
+		if (input.parentId !== undefined && input.parentId !== null) {
+			const parent = requireActiveParent(this.repository, input.bookId, input.parentId);
+			classification = classification.reparent(parent, false);
 		}
 
 		this.repository.create(classification);

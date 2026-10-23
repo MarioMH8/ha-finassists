@@ -12,7 +12,7 @@ import {
 	UpdateClassification,
 } from '../../application';
 import type { ClassificationErrorCode, ClassificationKind } from '../../domain';
-import { ClassificationError } from '../../domain';
+import { Classification, ClassificationError } from '../../domain';
 import { SqliteCategoryRepository, SqliteClassRepository } from './sqlite-classification.repository';
 
 const JSON_NULL = JSON.parse('null') as null;
@@ -77,6 +77,25 @@ describe.each([['category'], ['class']] as const)('%s classification use cases',
 
 		return { ...context, repository, uc: useCases(repository) };
 	}
+
+	it('loads immutable entities with the existing serialized data shape', () => {
+		const { database, repository, uc } = setupKind();
+		const created = uc.create.execute({ bookId: 'b1', name: 'Food' });
+		const loaded = repository.find('b1', created.id);
+
+		expect(loaded).toBeDefined();
+		expect(Object.isFrozen(loaded)).toBe(true);
+		// JSON round-tripping verifies that the public serialized shape stays unchanged.
+		// eslint-disable-next-line unicorn/prefer-structured-clone
+		expect(JSON.parse(JSON.stringify(loaded))).toEqual({
+			archivedAt: JSON_NULL,
+			bookId: 'b1',
+			id: created.id,
+			name: 'Food',
+			parentId: JSON_NULL,
+		});
+		database.close();
+	});
 
 	it('creates trimmed, bounded names with optional active parents in the same book', () => {
 		const { database, uc } = setupKind();
@@ -255,7 +274,13 @@ describe('sqlite integrity backstop', () => {
 		const { categories, database } = setup();
 		const uc = useCases(categories);
 		const parent = uc.create.execute({ bookId: 'b1', name: 'P' });
-		const child = { archivedAt: JSON_NULL, bookId: 'b2', id: 'raw', name: 'Raw', parentId: parent.id };
+		const child = Classification.reconstitute('category', {
+			archivedAt: JSON_NULL,
+			bookId: 'b2',
+			id: 'raw',
+			name: 'Raw',
+			parentId: parent.id,
+		});
 
 		expect(() => categories.create(child)).toThrow();
 		useInTransaction(database, 'category', 'b1', parent.id);
