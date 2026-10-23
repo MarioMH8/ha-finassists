@@ -1,9 +1,18 @@
 import type { LedgerRepository } from '../../ledger/domain';
 import type { CreateScheduledPaymentInput, UpdateScheduledPaymentInput } from '../domain/schedule';
 import { SCHEDULE_STATUS, ScheduledPayment } from '../domain/schedule';
+import { ScheduleNotFoundError } from '../domain/schedule.error';
 import type { ScheduleRepository } from '../domain/schedule.repository';
 import type { LedgerTransactionReference } from '../domain/schedule-occurrence';
 import { ScheduleOccurrence } from '../domain/schedule-occurrence';
+import {
+	ScheduleOccurrenceGenerationLimitInvalidError,
+	ScheduleOccurrenceGenerationThroughDateInvalidError,
+	ScheduleOccurrenceLedgerTransactionMismatchError,
+	ScheduleOccurrenceLedgerTransactionNotFoundError,
+	ScheduleOccurrenceLinkConflictError,
+	ScheduleOccurrenceNotFoundError,
+} from '../domain/schedule-occurrence.error';
 import type { ScheduleOccurrenceRepository } from '../domain/schedule-occurrence.repository';
 
 class CreateSchedule {
@@ -71,10 +80,10 @@ class GenerateScheduleOccurrences {
 
 	execute(bookId: string, scheduleId: string, throughDate: string, maxOccurrences = 100): ScheduleOccurrence[] {
 		if (!isCalendarDate(throughDate)) {
-			throw new Error('Generation through date must be a valid YYYY-MM-DD calendar date');
+			throw new ScheduleOccurrenceGenerationThroughDateInvalidError();
 		}
 		if (!Number.isSafeInteger(maxOccurrences) || maxOccurrences < 1 || maxOccurrences > 500) {
-			throw new Error('Generation batch size must be between 1 and 500');
+			throw new ScheduleOccurrenceGenerationLimitInvalidError();
 		}
 
 		const schedule = requireSchedule(this.schedules, bookId, scheduleId);
@@ -130,15 +139,15 @@ class RecordScheduleOccurrence {
 	execute(bookId: string, occurrenceId: string, transactionId: string, recordedAt?: string): ScheduleOccurrence {
 		const occurrence = this.occurrences.find(bookId, occurrenceId);
 		if (!occurrence) {
-			throw new Error('Occurrence was not found in this book');
+			throw new ScheduleOccurrenceNotFoundError();
 		}
 		requireSchedule(this.schedules, bookId, occurrence.scheduleId);
 		const transaction = this.ledger.find(bookId, transactionId);
 		if (!transaction) {
-			throw new Error('Ledger transaction was not found in this book');
+			throw new ScheduleOccurrenceLedgerTransactionNotFoundError();
 		}
 		if (transaction.accountId !== occurrence.accountId || transaction.amountMinor !== occurrence.amountMinor) {
-			throw new Error('Ledger transaction account and amount must match the scheduled occurrence');
+			throw new ScheduleOccurrenceLedgerTransactionMismatchError();
 		}
 
 		const reference: LedgerTransactionReference = {
@@ -150,7 +159,7 @@ class RecordScheduleOccurrence {
 		const recorded = occurrence.record(reference, recordedAt ?? new Date().toISOString());
 		const linked = this.occurrences.linkTransaction(recorded);
 		if (!linked) {
-			throw new Error('Occurrence is already recorded or could not be linked');
+			throw new ScheduleOccurrenceLinkConflictError();
 		}
 
 		return linked;
@@ -160,7 +169,7 @@ class RecordScheduleOccurrence {
 function requireSchedule(repository: ScheduleRepository, bookId: string, scheduleId: string): ScheduledPayment {
 	const schedule = repository.find({ bookId, id: scheduleId });
 	if (!schedule) {
-		throw new Error('Schedule was not found in this book');
+		throw new ScheduleNotFoundError();
 	}
 
 	return schedule;

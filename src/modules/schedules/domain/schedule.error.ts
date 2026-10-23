@@ -54,6 +54,13 @@ class ScheduleOneTimeIntervalInvalidError extends Error {
 	}
 }
 
+class ScheduleNotFoundError extends Error {
+	constructor() {
+		super('Schedule was not found in this book');
+		this.name = 'ScheduleNotFoundError';
+	}
+}
+
 class ScheduleOccurrenceLimitInvalidError extends Error {
 	constructor() {
 		super('Occurrence limit must be a positive safe integer and match the schedule frequency');
@@ -97,6 +104,7 @@ export {
 	ScheduleFrequencyInvalidError,
 	ScheduleIdentityInvalidError,
 	ScheduleIntervalInvalidError,
+	ScheduleNotFoundError,
 	ScheduleOccurrenceLimitInvalidError,
 	ScheduleOneTimeIntervalInvalidError,
 	ScheduleStartDateInvalidError,

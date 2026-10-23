@@ -13,6 +13,15 @@ import {
 	UpdateSchedule,
 } from '../application';
 import {
+	ScheduleNotFoundError,
+	ScheduleOccurrenceGenerationLimitInvalidError,
+	ScheduleOccurrenceGenerationThroughDateInvalidError,
+	ScheduleOccurrenceLedgerTransactionMismatchError,
+	ScheduleOccurrenceLedgerTransactionNotFoundError,
+	ScheduleOccurrenceLinkConflictError,
+	ScheduleOccurrenceNotFoundError,
+} from '../domain';
+import {
 	initializeScheduleSchema,
 	SqliteScheduleOccurrenceRepository,
 	SqliteScheduleRepository,
@@ -175,7 +184,14 @@ describe('SQLite schedules', () => {
 		expect(status.execute('book-1', 'schedule-1', 'active').status).toBe('active');
 		expect(status.execute('book-1', 'schedule-1', 'canceled').status).toBe('canceled');
 		expect(() => status.execute('book-1', 'schedule-1', 'active')).toThrow('Cannot transition');
-		expect(() => status.execute('book-2', 'schedule-1', 'paused')).toThrow('not found in this book');
+		expect(() => status.execute('book-2', 'schedule-1', 'paused')).toThrow(ScheduleNotFoundError);
+		expect(() => status.execute('book-1', 'missing-schedule', 'paused')).toThrow(ScheduleNotFoundError);
+		expect(() =>
+			new GenerateScheduleOccurrences(schedules, occurrences).execute('book-1', 'schedule-1', '2025-02-30')
+		).toThrow(ScheduleOccurrenceGenerationThroughDateInvalidError);
+		expect(() =>
+			new GenerateScheduleOccurrences(schedules, occurrences).execute('book-1', 'schedule-1', '2025-01-03', 501)
+		).toThrow(ScheduleOccurrenceGenerationLimitInvalidError);
 		database.close();
 	});
 
@@ -208,7 +224,12 @@ describe('SQLite schedules', () => {
 		});
 		expect(record.execute('book-1', occurrence.id, transaction.id).transactionId).toBe(transaction.id);
 		expect(database.query('SELECT COUNT(*) AS count FROM transactions').get()).toEqual({ count: 1 });
-		expect(() => record.execute('book-1', occurrence.id, 'not-a-transaction')).toThrow('not found in this book');
+		expect(() => record.execute('book-1', 'missing-occurrence', transaction.id)).toThrow(
+			ScheduleOccurrenceNotFoundError
+		);
+		expect(() => record.execute('book-1', occurrence.id, 'not-a-transaction')).toThrow(
+			ScheduleOccurrenceLedgerTransactionNotFoundError
+		);
 		database.close();
 	});
 
@@ -237,7 +258,9 @@ describe('SQLite schedules', () => {
 		const record = new RecordScheduleOccurrence(schedules, occurrences, ledger);
 
 		record.execute('book-1', generated[0].id, transaction.id);
-		expect(() => record.execute('book-1', generated[1].id, transaction.id)).toThrow('already recorded');
+		expect(() => record.execute('book-1', generated[1].id, transaction.id)).toThrow(
+			ScheduleOccurrenceLinkConflictError
+		);
 		database.close();
 	});
 
@@ -284,7 +307,9 @@ describe('SQLite schedules', () => {
 		expect(() => record.execute('book-1', occurrence.id, otherBookTransaction.id)).toThrow(
 			'not found in this book'
 		);
-		expect(() => record.execute('book-1', occurrence.id, wrongAmount.id)).toThrow('account and amount must match');
+		expect(() => record.execute('book-1', occurrence.id, wrongAmount.id)).toThrow(
+			ScheduleOccurrenceLedgerTransactionMismatchError
+		);
 		expect(occurrences.find('book-2', occurrence.id)).toBeUndefined();
 		database.close();
 	});
