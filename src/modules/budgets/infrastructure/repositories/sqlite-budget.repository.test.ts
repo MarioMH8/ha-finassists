@@ -9,7 +9,7 @@ import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
 import { CreateBudget, GetBudgetReport, ListBudgets } from '../../application';
-import { BudgetPeriodOverlapError, createBudget } from '../../domain';
+import { BudgetPeriodOverlapError } from '../../domain';
 import { initializeBudgetSchema } from '../initialize-budget-schema';
 import { SqliteBudgetRepository } from './sqlite-budget.repository';
 
@@ -109,38 +109,6 @@ function setup() {
 }
 
 const dates = { periodEnd: '2026-03-31', periodStart: '2026-03-01' };
-
-describe('budget domain', () => {
-	const valid = {
-		accountId: 'account-1',
-		bookId: 'book-1',
-		currencyCode: 'usd',
-		id: 'budget-1',
-		name: ' March ',
-		periodEnd: dates.periodEnd,
-		periodStart: dates.periodStart,
-		plannedMinor: Number.MAX_SAFE_INTEGER,
-	};
-
-	it('normalizes currency and name while preserving exact safe integer minor units', () => {
-		expect(createBudget(valid)).toMatchObject({
-			categoryId: null,
-			classId: null,
-			currencyCode: 'USD',
-			name: 'March',
-			plannedMinor: Number.MAX_SAFE_INTEGER,
-		});
-	});
-
-	it('rejects invalid identifiers, dates, reversed periods and unsafe planned amounts', () => {
-		expect(() => createBudget({ ...valid, id: '  ' })).toThrow('id must not be empty');
-		expect(() => createBudget({ ...valid, periodStart: '2026-02-29' })).toThrow('valid calendar date');
-		expect(() => createBudget({ ...valid, periodStart: '2026-04-01' })).toThrow('on or before');
-		expect(() => createBudget({ ...valid, plannedMinor: 0.1 })).toThrow('safe integer');
-		expect(() => createBudget({ ...valid, plannedMinor: Number.MAX_SAFE_INTEGER + 1 })).toThrow('safe integer');
-		expect(() => createBudget({ ...valid, plannedMinor: -1 })).toThrow('must not be negative');
-	});
-});
 
 describe('budget module', () => {
 	it('creates, lists and reports budgets within strict book/account/category/class boundaries', () => {

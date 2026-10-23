@@ -1,12 +1,20 @@
+export { Budget, BUDGET_ACTUAL_STATUSES, type BudgetActualStatus, type BudgetInput, type BudgetReport } from './budget';
 export {
-	type Budget,
-	BUDGET_ACTUAL_STATUSES,
-	type BudgetActualStatus,
-	type BudgetInput,
+	BudgetAccountNotFoundError,
+	BudgetActualAmountInvalidError,
+	BudgetAmountOutOfRangeError,
+	BudgetBookArchivedError,
+	BudgetBookNotFoundError,
+	BudgetCategoryArchivedError,
+	BudgetCategoryNotFoundError,
+	BudgetClassArchivedError,
+	BudgetClassNotFoundError,
+	BudgetDateInvalidError,
+	BudgetIdentifierInvalidError,
+	BudgetNameInvalidError,
+	BudgetNotFoundError,
+	BudgetPeriodInvalidError,
 	BudgetPeriodOverlapError,
-	type BudgetReport,
-	createBudget,
-	safeMinorUnitsFromBigInt,
-	validateBudgetDate,
-} from './budget';
+	BudgetPlannedAmountInvalidError,
+} from './budget.error';
 export type { BudgetRepository } from './budget.repository';

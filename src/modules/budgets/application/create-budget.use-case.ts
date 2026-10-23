@@ -4,8 +4,17 @@ import type { AccountRepository } from '@modules/accounts/domain';
 import type { BookRepository } from '@modules/books/domain';
 import type { CategoryRepository, ClassRepository } from '@modules/classifications/domain';
 
-import type { Budget, BudgetRepository } from '../domain';
-import { createBudget } from '../domain';
+import type { BudgetRepository } from '../domain';
+import {
+	Budget,
+	BudgetAccountNotFoundError,
+	BudgetBookArchivedError,
+	BudgetBookNotFoundError,
+	BudgetCategoryArchivedError,
+	BudgetCategoryNotFoundError,
+	BudgetClassArchivedError,
+	BudgetClassNotFoundError,
+} from '../domain';
 
 interface CreateBudgetInput {
 	accountId: string;
@@ -30,38 +39,38 @@ class CreateBudget {
 	execute(input: CreateBudgetInput): Budget {
 		const book = this.books.find({ id: input.bookId });
 		if (!book) {
-			throw new Error('Book not found');
+			throw new BudgetBookNotFoundError();
 		}
 		if (book.archivedAt !== null) {
-			throw new Error('Cannot create budgets in an archived book');
+			throw new BudgetBookArchivedError();
 		}
 
 		const account = this.accounts.find(input.bookId, input.accountId);
 		if (!account) {
-			throw new Error('Account not found in this book');
+			throw new BudgetAccountNotFoundError();
 		}
 
 		if (input.categoryId) {
 			const category = this.categories.find(input.bookId, input.categoryId);
 			if (!category) {
-				throw new Error('Category not found in this book');
+				throw new BudgetCategoryNotFoundError();
 			}
 			if (category.archivedAt !== null) {
-				throw new Error('Cannot create a budget for an archived category');
+				throw new BudgetCategoryArchivedError();
 			}
 		}
 		if (input.classId) {
 			const classification = this.classes.find(input.bookId, input.classId);
 			if (!classification) {
-				throw new Error('Class not found in this book');
+				throw new BudgetClassNotFoundError();
 			}
 			if (classification.archivedAt !== null) {
-				throw new Error('Cannot create a budget for an archived class');
+				throw new BudgetClassArchivedError();
 			}
 		}
 
 		return this.budgets.create(
-			createBudget({
+			Budget.create({
 				...input,
 				currencyCode: book.currencyCode,
 				id: randomUUID(),

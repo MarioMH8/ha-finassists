@@ -1,5 +1,5 @@
 import type { BudgetReport, BudgetRepository } from '../domain';
-import { safeMinorUnitsFromBigInt } from '../domain';
+import { BudgetNotFoundError } from '../domain';
 
 interface GetBudgetReportInput {
 	bookId: string;
@@ -12,19 +12,10 @@ class GetBudgetReport {
 	execute(input: GetBudgetReportInput): BudgetReport {
 		const budget = this.budgets.find(input.bookId, input.id);
 		if (!budget) {
-			throw new Error('Budget not found');
+			throw new BudgetNotFoundError();
 		}
 
-		const actualMinor = this.budgets.actualMinor(budget);
-
-		return {
-			actualMinor,
-			budget,
-			remainingMinor: safeMinorUnitsFromBigInt(
-				BigInt(budget.plannedMinor) - BigInt(actualMinor),
-				'Budget remaining amount'
-			),
-		};
+		return budget.report(BigInt(this.budgets.actualMinor(budget)));
 	}
 }
 

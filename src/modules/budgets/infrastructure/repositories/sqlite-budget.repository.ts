@@ -1,7 +1,7 @@
 import type { Database } from 'bun:sqlite';
 
-import type { Budget, BudgetRepository } from '../../domain';
-import { BudgetPeriodOverlapError, safeMinorUnitsFromBigInt } from '../../domain';
+import type { BudgetRepository } from '../../domain';
+import { Budget, BudgetAmountOutOfRangeError, BudgetPeriodOverlapError } from '../../domain';
 
 interface BudgetRow {
 	account_id: string;
@@ -21,7 +21,7 @@ interface ActualRow {
 }
 
 function toBudget(row: BudgetRow): Budget {
-	return {
+	return Budget.restore({
 		accountId: row.account_id,
 		bookId: row.book_id,
 		categoryId: row.category_id,
@@ -32,7 +32,7 @@ function toBudget(row: BudgetRow): Budget {
 		periodEnd: row.period_end,
 		periodStart: row.period_start,
 		plannedMinor: row.planned_minor,
-	};
+	});
 }
 
 class SqliteBudgetRepository implements BudgetRepository {
@@ -87,7 +87,12 @@ class SqliteBudgetRepository implements BudgetRepository {
 			}
 		}
 
-		return safeMinorUnitsFromBigInt(total, 'Budget actual amount');
+		const result = Number(total);
+		if (!Number.isSafeInteger(result)) {
+			throw new BudgetAmountOutOfRangeError('actual');
+		}
+
+		return result;
 	}
 
 	create(budget: Budget): Budget {
@@ -130,16 +135,11 @@ class SqliteBudgetRepository implements BudgetRepository {
 					budget.currencyCode
 				);
 
-			return this.find(budget.bookId, budget.id);
+			return budget;
 		});
 
 		try {
-			const created = create();
-			if (!created) {
-				throw new Error('Created budget could not be read');
-			}
-
-			return created;
+			return create();
 		} catch (error) {
 			if (error instanceof Error && error.message.includes('budget_period_overlap')) {
 				throw new BudgetPeriodOverlapError();
