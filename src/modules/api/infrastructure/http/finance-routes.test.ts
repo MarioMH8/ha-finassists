@@ -72,6 +72,7 @@ import { afterEach, describe, expect, it } from 'bun:test';
 import type { FinanceUseCases } from './finance-routes';
 import { handleFinanceRequest } from './finance-routes';
 import { handleMcpRequest, MCP_MAX_BODY_BYTES } from './mcp-transport';
+import { handleRequest } from './routes';
 
 const databases: Database[] = [];
 
@@ -507,7 +508,8 @@ describe('finance REST routes', () => {
 			list: new ListApiTokens(tokenRepository),
 			revoke: new RevokeApiToken(tokenRepository),
 		};
-		const unauthorized = await handleMcpRequest(
+		const httpContext = { remoteAddress: '127.0.0.1', trustedIngressIp: '127.0.0.1' };
+		const unauthorized = await handleRequest(
 			new Request('http://localhost/mcp', {
 				body: JSON.stringify({
 					id: 1,
@@ -518,11 +520,39 @@ describe('finance REST routes', () => {
 				headers: { Accept: 'application/json, text/event-stream', 'Content-Type': 'application/json' },
 				method: 'POST',
 			}),
+			httpContext,
 			tokenUseCases,
 			useCases
 		);
 		expect(unauthorized.status).toBe(401);
 		const issued = await tokenUseCases.issue.execute({ name: 'MCP client', ownerId: 'mcp-owner' });
+		const honoMcpResponse = await handleRequest(
+			new Request('http://localhost/mcp', {
+				body: JSON.stringify({ id: 1, jsonrpc: '2.0', method: 'tools/list' }),
+				headers: {
+					Accept: 'application/json, text/event-stream',
+					Authorization: `Bearer ${issued.secret}`,
+					'Content-Type': 'application/json',
+				},
+				method: 'POST',
+			}),
+			httpContext,
+			tokenUseCases,
+			useCases
+		);
+		expect(honoMcpResponse.status).toBe(200);
+		expect(honoMcpResponse.headers.get('content-security-policy')).toContain('default-src');
+		const honoRestResponse = await handleRequest(
+			new Request('http://localhost/api/v1/books', {
+				headers: { Authorization: `Bearer ${issued.secret}` },
+			}),
+			{ remoteAddress: '127.0.0.1', trustedIngressIp: '::1' },
+			tokenUseCases,
+			useCases
+		);
+		expect(honoRestResponse.status).toBe(200);
+		const honoRestBody = await readJson<PaginatedJson<unknown>>(honoRestResponse);
+		expect(honoRestBody.total).toBe(1);
 		const call = async (message: unknown, extraHeaders: Record<string, string> = {}) =>
 			handleMcpRequest(
 				new Request('http://localhost/mcp', {

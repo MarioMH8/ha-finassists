@@ -9,6 +9,7 @@ import type {
 	RotateSystemCredential,
 } from '@modules/system-credentials/application';
 import type { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
+import { Hono } from 'hono';
 
 import type { FinanceUseCases } from './finance-routes';
 import { handleFinanceRequest } from './finance-routes';
@@ -365,18 +366,45 @@ async function routeRequest(
 	);
 }
 
-export async function handleRequest(
+function createHttpApp(
+	tokenUseCases: TokenManagementUseCases,
+	financeUseCases?: FinanceUseCases,
+	systemCredentialUseCases?: SystemCredentialUseCases
+): Hono<{ Bindings: { requestContext: RequestContext } }> {
+	const app = new Hono<{ Bindings: { requestContext: RequestContext } }>();
+
+	app.use('*', async (context, next) => {
+		await next();
+		context.res = withSecurityHeaders(context.res);
+	});
+	app.all('*', async context =>
+		routeRequest(
+			context.req.raw,
+			context.env.requestContext,
+			tokenUseCases,
+			financeUseCases,
+			systemCredentialUseCases
+		)
+	);
+	app.onError(() => withSecurityHeaders(new Response('Internal Server Error', { status: 500 })));
+
+	return app;
+}
+
+async function handleRequest(
 	request: Request,
 	context: RequestContext,
 	tokenUseCases: TokenManagementUseCases,
 	financeUseCases?: FinanceUseCases,
 	systemCredentialUseCases?: SystemCredentialUseCases
 ): Promise<Response> {
-	return withSecurityHeaders(
-		await routeRequest(request, context, tokenUseCases, financeUseCases, systemCredentialUseCases)
-	);
+	return createHttpApp(tokenUseCases, financeUseCases, systemCredentialUseCases).fetch(request, {
+		requestContext: context,
+	});
 }
 
 export type { SystemCredentialUseCases, TokenManagementUseCases };
+
+export { createHttpApp, handleRequest };
 
 export { type FinanceUseCases } from './finance-routes';
