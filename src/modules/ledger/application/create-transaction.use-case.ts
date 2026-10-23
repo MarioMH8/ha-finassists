@@ -1,11 +1,11 @@
 import type { CreateTransactionInput, LedgerRepository } from '../domain';
-import { validateTransactionInput } from '../domain';
+import { FinancialTransaction } from '../domain';
 
 class CreateTransaction {
 	constructor(private readonly repository: LedgerRepository) {}
 
 	execute(input: CreateTransactionInput): ReturnType<LedgerRepository['create']> {
-		validateTransactionInput(input);
+		FinancialTransaction.validateCreate(input);
 
 		return this.repository.create(input);
 	}

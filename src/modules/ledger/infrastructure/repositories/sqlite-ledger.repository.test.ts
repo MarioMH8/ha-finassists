@@ -11,6 +11,7 @@ import {
 	SetTransactionStatus,
 	UpdateTransaction,
 } from '../../application';
+import { FinancialTransaction } from '../../domain';
 import { SqliteLedgerRepository } from './sqlite-ledger.repository';
 
 const JSON_NULL = JSON.parse('null') as null;
@@ -56,7 +57,9 @@ describe('ledger use cases', () => {
 				.query('SELECT position FROM transaction_parts WHERE transaction_id = ? ORDER BY position')
 				.all(transaction.id)
 		).toEqual([{ position: 0 }, { position: 1 }]);
-		expect(new SqliteLedgerRepository(database).find(book.id, transaction.id)).toEqual(transaction);
+		const restored = new SqliteLedgerRepository(database).find(book.id, transaction.id);
+		expect(restored).toBeInstanceOf(FinancialTransaction);
+		expect(restored).toEqual(transaction);
 		database.close();
 	});
 

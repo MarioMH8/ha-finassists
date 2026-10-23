@@ -5,10 +5,14 @@ import type { Database } from 'bun:sqlite';
 import type {
 	CreateTransactionInput,
 	CreateTransferInput,
-	FinancialTransaction,
 	LedgerRepository,
 	TransactionPart,
 	TransactionStatus,
+} from '../../domain';
+import {
+	FinancialTransaction,
+	TransferAmountDirectionInvalidError,
+	TransferPeerReconciliationError,
 } from '../../domain';
 
 const JSON_NULL = JSON.parse('null') as null;
@@ -35,7 +39,7 @@ interface PartRow {
 }
 
 function toTransaction(row: TransactionRow, parts: TransactionPart[]): FinancialTransaction {
-	return {
+	return FinancialTransaction.restore({
 		accountId: row.account_id,
 		actorId: row.actor_id,
 		amountMinor: row.amount_minor,
@@ -47,7 +51,7 @@ function toTransaction(row: TransactionRow, parts: TransactionPart[]): Financial
 		status: row.status,
 		transactionDate: row.transaction_date,
 		transferId: row.transfer_id,
-	};
+	});
 }
 
 class SqliteLedgerRepository implements LedgerRepository {
@@ -277,12 +281,10 @@ class SqliteLedgerRepository implements LedgerRepository {
 					.query('SELECT * FROM transactions WHERE book_id = ? AND transfer_id = ? AND id != ?')
 					.get(bookId, existing.transfer_id, id) as null | TransactionRow;
 				if (!peer || peer.status === 'reconciled') {
-					throw new Error(
-						'The reconciled transfer leg must be unreconciled before changing the transfer amount or date'
-					);
+					throw new TransferPeerReconciliationError();
 				}
 				if (nextAmount === 0 || Math.sign(nextAmount) !== Math.sign(existing.amount_minor)) {
-					throw new Error('Transfer amount must retain the leg direction and remain greater than zero');
+					throw new TransferAmountDirectionInvalidError();
 				}
 				this.database
 					.query(

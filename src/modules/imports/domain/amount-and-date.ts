@@ -1,4 +1,4 @@
-import { validateDate } from '@modules/ledger/domain';
+import { FinancialTransaction } from '@modules/ledger/domain';
 
 /**
  * Localized amount dialect (QIF): optional sign, digits, optional single decimal separator (`,` or `.`),
@@ -52,7 +52,7 @@ function normalizeStrictAmount(text: string): string | undefined {
 function toIsoDate(year: number, month: number, day: number): string | undefined {
 	const value = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 	try {
-		validateDate(value);
+		FinancialTransaction.validateDate(value);
 	} catch {
 		return undefined;
 	}

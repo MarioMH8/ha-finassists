@@ -1,7 +1,7 @@
 import type { AccountRepository } from '@modules/accounts/domain';
 import type { BookRepository } from '@modules/books/domain';
 import type { CreateTransactionInput } from '@modules/ledger/domain';
-import { validateTransactionInput } from '@modules/ledger/domain';
+import { FinancialTransaction } from '@modules/ledger/domain';
 import { Currency, Money } from '@modules/money/domain';
 
 import type {
@@ -188,7 +188,7 @@ function planRows(
 			...(payee !== '' && { payee }),
 		};
 		try {
-			validateTransactionInput(input);
+			FinancialTransaction.validateCreate(input);
 		} catch (error) {
 			issues.push(issue('invalid-row', record.line, `Line ${String(record.line)}: ${(error as Error).message}.`));
 			continue;
