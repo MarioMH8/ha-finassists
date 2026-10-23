@@ -8,9 +8,9 @@ import { ScheduleOccurrence } from '../domain/schedule-occurrence';
 import {
 	ScheduleOccurrenceGenerationLimitInvalidError,
 	ScheduleOccurrenceGenerationThroughDateInvalidError,
+	ScheduleOccurrenceIdentityConflictError,
 	ScheduleOccurrenceLedgerTransactionMismatchError,
 	ScheduleOccurrenceLedgerTransactionNotFoundError,
-	ScheduleOccurrenceLinkConflictError,
 	ScheduleOccurrenceNotFoundError,
 } from '../domain/schedule-occurrence.error';
 import type { ScheduleOccurrenceRepository } from '../domain/schedule-occurrence.repository';
@@ -43,7 +43,7 @@ class ListScheduleOccurrences {
 	execute(bookId: string, scheduleId: string): ScheduleOccurrence[] {
 		requireSchedule(this.schedules, bookId, scheduleId);
 
-		return this.occurrences.listForSchedule(bookId, scheduleId);
+		return this.occurrences.search({ bookId, scheduleId });
 	}
 }
 
@@ -91,7 +91,7 @@ class GenerateScheduleOccurrences {
 			return [];
 		}
 
-		const existing = this.occurrences.listForSchedule(bookId, scheduleId);
+		const existing = this.occurrences.search({ bookId, scheduleId });
 		let occurrenceNumber =
 			existing.reduce((latest, occurrence) => Math.max(latest, occurrence.occurrenceNumber), -1) + 1;
 		const generated: ScheduleOccurrence[] = [];
@@ -107,7 +107,8 @@ class GenerateScheduleOccurrences {
 			}
 
 			const occurrence = ScheduleOccurrence.create(schedule, occurrenceNumber, this.idFactory());
-			if (this.occurrences.createIfAbsent(occurrence)) {
+			try {
+				this.occurrences.save(occurrence);
 				generated.push(occurrence);
 				occurrenceNumber += 1;
 				if (schedule.dueDateAtOccurrence(occurrenceNumber) === undefined) {
@@ -115,14 +116,18 @@ class GenerateScheduleOccurrences {
 					break;
 				}
 				continue;
-			}
+			} catch (error) {
+				if (!(error instanceof ScheduleOccurrenceIdentityConflictError)) {
+					throw error;
+				}
 
-			const refreshed = this.occurrences.listForSchedule(bookId, scheduleId);
-			const next = refreshed.reduce((latest, item) => Math.max(latest, item.occurrenceNumber), -1) + 1;
-			if (next <= occurrenceNumber) {
-				break;
+				const refreshed = this.occurrences.search({ bookId, scheduleId });
+				const next = refreshed.reduce((latest, item) => Math.max(latest, item.occurrenceNumber), -1) + 1;
+				if (next <= occurrenceNumber) {
+					throw error;
+				}
+				occurrenceNumber = next;
 			}
-			occurrenceNumber = next;
 		}
 
 		return generated;
@@ -137,7 +142,7 @@ class RecordScheduleOccurrence {
 	) {}
 
 	execute(bookId: string, occurrenceId: string, transactionId: string, recordedAt?: string): ScheduleOccurrence {
-		const occurrence = this.occurrences.find(bookId, occurrenceId);
+		const occurrence = this.occurrences.find({ bookId, id: occurrenceId });
 		if (!occurrence) {
 			throw new ScheduleOccurrenceNotFoundError();
 		}
@@ -157,12 +162,13 @@ class RecordScheduleOccurrence {
 			id: transaction.id,
 		};
 		const recorded = occurrence.record(reference, recordedAt ?? new Date().toISOString());
-		const linked = this.occurrences.linkTransaction(recorded);
-		if (!linked) {
-			throw new ScheduleOccurrenceLinkConflictError();
+		this.occurrences.save(recorded);
+		const persisted = this.occurrences.find({ bookId, id: occurrenceId });
+		if (!persisted) {
+			throw new ScheduleOccurrenceNotFoundError();
 		}
 
-		return linked;
+		return persisted;
 	}
 }
 

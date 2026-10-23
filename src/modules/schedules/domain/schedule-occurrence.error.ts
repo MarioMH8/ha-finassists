@@ -7,6 +7,13 @@ class ScheduleOccurrenceIdentityInvalidError extends Error {
 	}
 }
 
+class ScheduleOccurrenceIdentityConflictError extends Error {
+	constructor() {
+		super('Schedule occurrence identity conflicts with an existing occurrence');
+		this.name = 'ScheduleOccurrenceIdentityConflictError';
+	}
+}
+
 class ScheduleOccurrenceNumberInvalidError extends Error {
 	constructor() {
 		super('Schedule occurrence number must be a non-negative safe integer');
@@ -103,6 +110,7 @@ export {
 	ScheduleOccurrenceDateInvalidError,
 	ScheduleOccurrenceGenerationLimitInvalidError,
 	ScheduleOccurrenceGenerationThroughDateInvalidError,
+	ScheduleOccurrenceIdentityConflictError,
 	ScheduleOccurrenceIdentityInvalidError,
 	ScheduleOccurrenceLedgerTransactionMismatchError,
 	ScheduleOccurrenceLedgerTransactionNotFoundError,

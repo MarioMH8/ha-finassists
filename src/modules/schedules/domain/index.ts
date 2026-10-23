@@ -33,6 +33,7 @@ export {
 	ScheduleOccurrenceDateInvalidError,
 	ScheduleOccurrenceGenerationLimitInvalidError,
 	ScheduleOccurrenceGenerationThroughDateInvalidError,
+	ScheduleOccurrenceIdentityConflictError,
 	ScheduleOccurrenceIdentityInvalidError,
 	ScheduleOccurrenceLedgerTransactionMismatchError,
 	ScheduleOccurrenceLedgerTransactionNotFoundError,

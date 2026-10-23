@@ -14,8 +14,10 @@ import {
 } from '../application';
 import {
 	ScheduleNotFoundError,
+	ScheduleOccurrence,
 	ScheduleOccurrenceGenerationLimitInvalidError,
 	ScheduleOccurrenceGenerationThroughDateInvalidError,
+	ScheduleOccurrenceIdentityConflictError,
 	ScheduleOccurrenceLedgerTransactionMismatchError,
 	ScheduleOccurrenceLedgerTransactionNotFoundError,
 	ScheduleOccurrenceLinkConflictError,
@@ -126,7 +128,63 @@ describe('SQLite schedules', () => {
 		});
 
 		expect(schedules.find({ bookId: 'book-1', id: created.id })).toEqual(updated);
-		expect(occurrences.find('book-1', occurrence.id)).toEqual(occurrence);
+		expect(occurrences.find({ bookId: 'book-1', id: occurrence.id })).toEqual(occurrence);
+		expect(occurrences.search({ bookId: 'book-1', scheduleId: created.id })).toEqual([occurrence]);
+		expect(() => occurrences.save(ScheduleOccurrence.create(created, 0, 'occ-duplicate'))).toThrow(
+			ScheduleOccurrenceIdentityConflictError
+		);
+		database.close();
+	});
+
+	it('persists occurrence transitions without changing its generated snapshot', () => {
+		const { database, occurrences, schedules } = setup();
+		const schedule = new CreateSchedule(schedules).execute({
+			accountId: 'account-1',
+			amountMinor: -1250,
+			bookId: 'book-1',
+			frequency: 'one_time',
+			id: 'schedule-1',
+			startDate: '2025-01-31',
+		});
+		const [occurrence] = new GenerateScheduleOccurrences(schedules, occurrences, () => 'occ-1').execute(
+			'book-1',
+			schedule.id,
+			'2025-01-31'
+		);
+		const recordedWithoutPending = ScheduleOccurrence.restore({
+			accountId: occurrence.accountId,
+			amountMinor: occurrence.amountMinor,
+			bookId: occurrence.bookId,
+			createdAt: occurrence.createdAt,
+			dueDate: occurrence.dueDate,
+			id: 'not-generated',
+			memo: occurrence.memo,
+			occurrenceNumber: occurrence.occurrenceNumber,
+			payee: occurrence.payee,
+			recordedAt: '2025-01-31T00:00:00.000Z',
+			scheduleId: occurrence.scheduleId,
+			status: 'recorded',
+			transactionId: 'transaction-1',
+		});
+		const changedSnapshot = ScheduleOccurrence.restore({
+			accountId: occurrence.accountId,
+			amountMinor: occurrence.amountMinor,
+			bookId: occurrence.bookId,
+			createdAt: occurrence.createdAt,
+			dueDate: occurrence.dueDate,
+			id: occurrence.id,
+			memo: occurrence.memo,
+			occurrenceNumber: occurrence.occurrenceNumber,
+			payee: 'Changed after generation',
+			scheduleId: occurrence.scheduleId,
+			status: 'pending',
+		});
+
+		expect(() => occurrences.save(recordedWithoutPending)).toThrow(ScheduleOccurrenceLinkConflictError);
+		expect(() => occurrences.save(changedSnapshot)).toThrow(ScheduleOccurrenceIdentityConflictError);
+		occurrences.save(occurrence.skip());
+		expect(occurrences.find({ bookId: 'book-1', id: occurrence.id })?.status).toBe('skipped');
+		expect(() => occurrences.save(occurrence)).toThrow(ScheduleOccurrenceLinkConflictError);
 		database.close();
 	});
 
@@ -153,7 +211,34 @@ describe('SQLite schedules', () => {
 		]);
 		expect(generate.execute('book-1', schedule.id, '2025-12-31')).toEqual([]);
 		expect(schedules.find({ bookId: 'book-1', id: schedule.id })?.status).toBe('completed');
-		expect(occurrences.listForSchedule('book-1', schedule.id)).toHaveLength(3);
+		expect(occurrences.search({ bookId: 'book-1', scheduleId: schedule.id })).toHaveLength(3);
+		database.close();
+	});
+
+	it('propagates occurrence identity conflicts that do not represent concurrent generation', () => {
+		const { database, occurrences, schedules } = setup();
+		new CreateSchedule(schedules).execute({
+			accountId: 'account-1',
+			amountMinor: -100,
+			bookId: 'book-1',
+			frequency: 'one_time',
+			id: 'schedule-1',
+			startDate: '2025-01-01',
+		});
+		new CreateSchedule(schedules).execute({
+			accountId: 'account-1',
+			amountMinor: -200,
+			bookId: 'book-1',
+			frequency: 'one_time',
+			id: 'schedule-2',
+			startDate: '2025-01-01',
+		});
+		const generate = new GenerateScheduleOccurrences(schedules, occurrences, () => 'duplicate-id');
+		generate.execute('book-1', 'schedule-1', '2025-01-01');
+
+		expect(() => generate.execute('book-1', 'schedule-2', '2025-01-01')).toThrow(
+			ScheduleOccurrenceIdentityConflictError
+		);
 		database.close();
 	});
 
@@ -310,7 +395,24 @@ describe('SQLite schedules', () => {
 		expect(() => record.execute('book-1', occurrence.id, wrongAmount.id)).toThrow(
 			ScheduleOccurrenceLedgerTransactionMismatchError
 		);
-		expect(occurrences.find('book-2', occurrence.id)).toBeUndefined();
+		const invalidRecorded = ScheduleOccurrence.restore({
+			accountId: occurrence.accountId,
+			amountMinor: occurrence.amountMinor,
+			bookId: occurrence.bookId,
+			createdAt: occurrence.createdAt,
+			dueDate: occurrence.dueDate,
+			id: occurrence.id,
+			memo: occurrence.memo,
+			occurrenceNumber: occurrence.occurrenceNumber,
+			payee: occurrence.payee,
+			recordedAt: '2025-01-02T00:00:00.000Z',
+			scheduleId: occurrence.scheduleId,
+			status: 'recorded',
+			transactionId: wrongAmount.id,
+		});
+		expect(() => occurrences.save(invalidRecorded)).toThrow(ScheduleOccurrenceLinkConflictError);
+		expect(occurrences.find({ bookId: 'book-1', id: occurrence.id })?.status).toBe('pending');
+		expect(occurrences.find({ bookId: 'book-2', id: occurrence.id })).toBeUndefined();
 		database.close();
 	});
 });

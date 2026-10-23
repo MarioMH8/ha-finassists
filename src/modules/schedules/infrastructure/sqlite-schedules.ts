@@ -4,7 +4,14 @@ import type { ScheduleFrequency, ScheduleStatus } from '../domain/schedule';
 import { ScheduledPayment } from '../domain/schedule';
 import type { ScheduleCriteria, ScheduleRepository } from '../domain/schedule.repository';
 import { ScheduleOccurrence } from '../domain/schedule-occurrence';
-import type { ScheduleOccurrenceRepository } from '../domain/schedule-occurrence.repository';
+import {
+	ScheduleOccurrenceIdentityConflictError,
+	ScheduleOccurrenceLinkConflictError,
+} from '../domain/schedule-occurrence.error';
+import type {
+	ScheduleOccurrenceCriteria,
+	ScheduleOccurrenceRepository,
+} from '../domain/schedule-occurrence.repository';
 
 interface ScheduleRow {
 	account_id: string;
@@ -36,6 +43,11 @@ interface OccurrenceRow {
 	schedule_id: string;
 	status: ScheduleOccurrence['status'];
 	transaction_id: null | string;
+}
+
+interface LedgerTransactionRow {
+	account_id: string;
+	amount_minor: number;
 }
 
 function toNullableSqlBinding(value: number | string | undefined): SQLQueryBindings {
@@ -163,109 +175,196 @@ class SqliteScheduleRepository implements ScheduleRepository {
 class SqliteScheduleOccurrenceRepository implements ScheduleOccurrenceRepository {
 	constructor(private readonly database: Database) {}
 
-	createIfAbsent(occurrence: ScheduleOccurrence): boolean {
-		return (
-			this.database
-				.query(
-					`INSERT INTO scheduled_payment_occurrences
-						(id, book_id, schedule_id, account_id, occurrence_number, due_date, amount_minor, payee, memo, status, created_at)
-					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-					ON CONFLICT DO NOTHING`
+	find(criteria: ScheduleOccurrenceCriteria): ScheduleOccurrence | undefined {
+		return this.search(criteria)[0];
+	}
+
+	save(occurrence: ScheduleOccurrence): void {
+		const persist = this.database.transaction(() => {
+			const existingRow = this.database
+				.query<OccurrenceRow, SQLQueryBindings[]>(
+					'SELECT * FROM scheduled_payment_occurrences WHERE book_id = ? AND id = ?'
 				)
-				.run(
-					occurrence.id,
-					occurrence.bookId,
-					occurrence.scheduleId,
-					occurrence.accountId,
-					occurrence.occurrenceNumber,
-					occurrence.dueDate,
-					occurrence.amountMinor,
-					occurrence.payee,
-					occurrence.memo,
-					occurrence.status,
-					occurrence.createdAt
-				).changes > 0
-		);
-	}
+				.get(occurrence.bookId, occurrence.id);
+			if (!existingRow) {
+				if (occurrence.status !== 'pending') {
+					throw new ScheduleOccurrenceLinkConflictError();
+				}
+				this.insert(occurrence);
 
-	find(bookId: string, id: string): ScheduleOccurrence | undefined {
-		const row = this.database
-			.query('SELECT * FROM scheduled_payment_occurrences WHERE book_id = ? AND id = ?')
-			.get(bookId, id) as null | OccurrenceRow;
-
-		return row ? toOccurrence(row) : undefined;
-	}
-
-	linkTransaction(occurrence: ScheduleOccurrence): ScheduleOccurrence | undefined {
-		if (occurrence.status !== 'recorded' || !occurrence.transactionId || !occurrence.recordedAt) {
-			return undefined;
-		}
-		const bookId = occurrence.bookId;
-		const occurrenceId = occurrence.id;
-		const recordedAt = occurrence.recordedAt;
-		const transactionId = occurrence.transactionId;
-
-		const link = this.database.transaction(() => {
-			const occurrenceRow = this.database
-				.query('SELECT * FROM scheduled_payment_occurrences WHERE book_id = ? AND id = ?')
-				.get(bookId, occurrenceId) as null | OccurrenceRow;
-			if (!occurrenceRow) {
-				return;
-			}
-			if (occurrenceRow.status === 'recorded') {
-				return occurrenceRow.transaction_id === transactionId ? toOccurrence(occurrenceRow) : undefined;
-			}
-			if (
-				occurrenceRow.status !== 'pending' ||
-				occurrenceRow.account_id !== occurrence.accountId ||
-				occurrenceRow.amount_minor !== occurrence.amountMinor
-			) {
 				return;
 			}
 
-			const transactionRow = this.database
-				.query('SELECT account_id, amount_minor FROM transactions WHERE book_id = ? AND id = ?')
-				.get(bookId, transactionId) as null | { account_id: string; amount_minor: number };
-			if (
-				transactionRow?.account_id !== occurrence.accountId ||
-				transactionRow.amount_minor !== occurrence.amountMinor
-			) {
+			const existing = toOccurrence(existingRow);
+			if (!hasSameOccurrenceSnapshot(existing, occurrence)) {
+				throw new ScheduleOccurrenceIdentityConflictError();
+			}
+			if (existing.status === occurrence.status) {
+				if (existing.transactionId !== occurrence.transactionId) {
+					throw new ScheduleOccurrenceLinkConflictError();
+				}
+
 				return;
 			}
-			const alreadyLinked = this.database
-				.query('SELECT 1 FROM scheduled_payment_occurrences WHERE book_id = ? AND transaction_id = ?')
-				.get(bookId, transactionId);
-			if (alreadyLinked) {
-				return;
+			if (existing.status !== 'pending') {
+				throw new ScheduleOccurrenceLinkConflictError();
+			}
+			if (occurrence.status === 'recorded') {
+				this.requireMatchingTransaction(occurrence);
 			}
 
 			const result = this.database
 				.query(
 					`UPDATE scheduled_payment_occurrences
-					SET status = 'recorded', transaction_id = ?, recorded_at = ?
-					WHERE book_id = ? AND id = ? AND status = 'pending' AND transaction_id IS NULL`
+					SET status = ?, transaction_id = ?, recorded_at = ?
+					WHERE book_id = ? AND id = ? AND status = 'pending'`
 				)
-				.run(transactionId, recordedAt, bookId, occurrenceId);
+				.run(
+					occurrence.status,
+					toNullableSqlBinding(occurrence.transactionId),
+					toNullableSqlBinding(occurrence.recordedAt),
+					occurrence.bookId,
+					occurrence.id
+				);
 			if (result.changes === 0) {
-				return;
+				throw new ScheduleOccurrenceLinkConflictError();
 			}
-
-			return this.find(bookId, occurrenceId);
 		});
 
-		return link();
+		try {
+			persist();
+		} catch (error) {
+			if (isOccurrenceTransactionConflict(error)) {
+				throw new ScheduleOccurrenceLinkConflictError();
+			}
+			if (isOccurrenceIdentityConflict(error)) {
+				throw new ScheduleOccurrenceIdentityConflictError();
+			}
+
+			throw error;
+		}
 	}
 
-	listForSchedule(bookId: string, scheduleId: string): ScheduleOccurrence[] {
+	search(criteria: ScheduleOccurrenceCriteria = {}): ScheduleOccurrence[] {
+		const filter = whereOccurrence(criteria);
 		const rows = this.database
-			.query(
-				`SELECT * FROM scheduled_payment_occurrences
-					WHERE book_id = ? AND schedule_id = ? ORDER BY occurrence_number`
+			.query<OccurrenceRow, SQLQueryBindings[]>(
+				`SELECT * FROM scheduled_payment_occurrences${filter.sql} ORDER BY due_date, occurrence_number, id`
 			)
-			.all(bookId, scheduleId) as OccurrenceRow[];
+			.all(...filter.parameters);
 
 		return rows.map(row => toOccurrence(row));
 	}
+
+	private insert(occurrence: ScheduleOccurrence): void {
+		this.database
+			.query(
+				`INSERT INTO scheduled_payment_occurrences
+					(id, book_id, schedule_id, account_id, occurrence_number, due_date, amount_minor, payee, memo, status,
+					 transaction_id, recorded_at, created_at)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			)
+			.run(
+				occurrence.id,
+				occurrence.bookId,
+				occurrence.scheduleId,
+				occurrence.accountId,
+				occurrence.occurrenceNumber,
+				occurrence.dueDate,
+				occurrence.amountMinor,
+				occurrence.payee,
+				occurrence.memo,
+				occurrence.status,
+				toNullableSqlBinding(occurrence.transactionId),
+				toNullableSqlBinding(occurrence.recordedAt),
+				occurrence.createdAt
+			);
+	}
+
+	private requireMatchingTransaction(occurrence: ScheduleOccurrence): void {
+		const transactionId = occurrence.transactionId;
+		if (!transactionId) {
+			throw new ScheduleOccurrenceLinkConflictError();
+		}
+
+		const transaction = this.database
+			.query<LedgerTransactionRow, SQLQueryBindings[]>(
+				'SELECT account_id, amount_minor FROM transactions WHERE book_id = ? AND id = ?'
+			)
+			.get(occurrence.bookId, transactionId);
+		if (transaction?.account_id !== occurrence.accountId || transaction.amount_minor !== occurrence.amountMinor) {
+			throw new ScheduleOccurrenceLinkConflictError();
+		}
+	}
+}
+
+function hasSqliteErrorCode(error: unknown, code: string): error is Error & { code: string } {
+	return error instanceof Error && 'code' in error && error.code === code;
+}
+
+function isOccurrenceIdentityConflict(error: unknown): boolean {
+	return (
+		hasSqliteErrorCode(error, 'SQLITE_CONSTRAINT_UNIQUE') &&
+		error.message.includes('scheduled_payment_occurrences.') &&
+		!isOccurrenceTransactionConflict(error)
+	);
+}
+
+function isOccurrenceTransactionConflict(error: unknown): boolean {
+	return (
+		hasSqliteErrorCode(error, 'SQLITE_CONSTRAINT_UNIQUE') &&
+		error.message.includes('scheduled_payment_occurrences.book_id, scheduled_payment_occurrences.transaction_id')
+	);
+}
+
+function hasSameOccurrenceSnapshot(left: ScheduleOccurrence, right: ScheduleOccurrence): boolean {
+	return (
+		left.accountId === right.accountId &&
+		left.amountMinor === right.amountMinor &&
+		left.bookId === right.bookId &&
+		left.createdAt === right.createdAt &&
+		left.dueDate === right.dueDate &&
+		left.id === right.id &&
+		left.memo === right.memo &&
+		left.occurrenceNumber === right.occurrenceNumber &&
+		left.payee === right.payee &&
+		left.scheduleId === right.scheduleId
+	);
+}
+
+function whereOccurrence(criteria: ScheduleOccurrenceCriteria): { parameters: SQLQueryBindings[]; sql: string } {
+	const clauses: string[] = [];
+	const parameters: SQLQueryBindings[] = [];
+
+	function add(column: string, value: null | number | string | undefined): void {
+		if (value === undefined) {
+			return;
+		}
+		if (value === null) {
+			clauses.push(`${column} IS NULL`);
+
+			return;
+		}
+
+		clauses.push(`${column} = ?`);
+		parameters.push(value);
+	}
+
+	add('account_id', criteria.accountId);
+	add('amount_minor', criteria.amountMinor);
+	add('book_id', criteria.bookId);
+	add('created_at', criteria.createdAt);
+	add('due_date', criteria.dueDate);
+	add('id', criteria.id);
+	add('memo', criteria.memo);
+	add('occurrence_number', criteria.occurrenceNumber);
+	add('payee', criteria.payee);
+	add('recorded_at', criteria.recordedAt);
+	add('schedule_id', criteria.scheduleId);
+	add('status', criteria.status);
+	add('transaction_id', criteria.transactionId);
+
+	return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
 }
 
 function initializeScheduleSchema(database: Database): void {

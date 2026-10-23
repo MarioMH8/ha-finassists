@@ -1,10 +1,25 @@
-import type { ScheduleOccurrence } from './schedule-occurrence';
+import type { OccurrenceStatus, ScheduleOccurrence } from './schedule-occurrence';
 
-interface ScheduleOccurrenceRepository {
-	createIfAbsent(occurrence: ScheduleOccurrence): boolean;
-	find(bookId: string, id: string): ScheduleOccurrence | undefined;
-	linkTransaction(occurrence: ScheduleOccurrence): ScheduleOccurrence | undefined;
-	listForSchedule(bookId: string, scheduleId: string): ScheduleOccurrence[];
+interface ScheduleOccurrenceCriteria {
+	accountId?: string;
+	amountMinor?: number;
+	bookId?: string;
+	createdAt?: string;
+	dueDate?: string;
+	id?: string;
+	memo?: string;
+	occurrenceNumber?: number;
+	payee?: string;
+	recordedAt?: null | string;
+	scheduleId?: string;
+	status?: OccurrenceStatus;
+	transactionId?: null | string;
 }
 
-export type { ScheduleOccurrenceRepository };
+interface ScheduleOccurrenceRepository {
+	find(criteria: ScheduleOccurrenceCriteria): ScheduleOccurrence | undefined;
+	save(occurrence: ScheduleOccurrence): void;
+	search(criteria?: ScheduleOccurrenceCriteria): ScheduleOccurrence[];
+}
+
+export type { ScheduleOccurrenceCriteria, ScheduleOccurrenceRepository };
