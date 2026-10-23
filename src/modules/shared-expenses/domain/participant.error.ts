@@ -26,6 +26,13 @@ class SharedExpenseParticipantIdInvalidError extends Error {
 	}
 }
 
+class SharedExpenseParticipantNotFoundError extends Error {
+	constructor(id: string) {
+		super(`Active participant ${id} not found in book`);
+		this.name = 'SharedExpenseParticipantNotFoundError';
+	}
+}
+
 class SharedExpenseParticipantNameInvalidError extends Error {
 	constructor() {
 		super('Participant name must contain between 1 and 120 characters');
@@ -39,4 +46,5 @@ export {
 	SharedExpenseParticipantBookNotFoundError,
 	SharedExpenseParticipantIdInvalidError,
 	SharedExpenseParticipantNameInvalidError,
+	SharedExpenseParticipantNotFoundError,
 };

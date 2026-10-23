@@ -1,7 +1,7 @@
 import type { IngressActor } from '@modules/home-assistant/domain';
 
 import type { SharedExpenseRepository } from '../domain';
-import { toSharedExpenseActor } from '../domain';
+import { SharedExpense } from '../domain';
 
 interface SettleSharedExpenseInput {
 	actor: IngressActor;
@@ -19,7 +19,7 @@ class SettleSharedExpense {
 			input.bookId,
 			input.expenseId,
 			input.participantId,
-			toSharedExpenseActor(input.actor),
+			SharedExpense.normalizeActor(input.actor),
 			input.settledAt ?? new Date().toISOString()
 		);
 	}

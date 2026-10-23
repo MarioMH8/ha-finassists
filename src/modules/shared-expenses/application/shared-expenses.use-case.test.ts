@@ -4,7 +4,15 @@ import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
-import { SharedExpenseParticipantBookArchivedError, SharedExpenseParticipantBookNotFoundError } from '../domain';
+import {
+	SharedExpenseBookArchivedError,
+	SharedExpenseBookNotFoundError,
+	SharedExpenseParticipantBookArchivedError,
+	SharedExpenseParticipantBookNotFoundError,
+	SharedExpenseParticipantInactiveError,
+	SharedExpenseParticipantNotFoundError,
+	SharedExpenseParticipantsDuplicateError,
+} from '../domain';
 import { initializeSharedExpenseSchema, SqliteSharedExpenseRepository } from '../infrastructure';
 import {
 	CloseSharedExpense,
@@ -43,6 +51,24 @@ function setup() {
 }
 
 describe('shared expense use cases', () => {
+	it('throws semantic errors when creating an expense in a missing or archived book', () => {
+		const context = setup();
+		const input = {
+			actor: { kind: 'unknown' as const },
+			amountMinor: 100,
+			bookId: 'missing',
+			description: 'Lunch',
+			participantIds: ['person'],
+		};
+
+		expect(() => context.create.execute(input)).toThrow(SharedExpenseBookNotFoundError);
+		context.books.save(context.book.archive('2026-01-01T00:00:00.000Z'));
+		expect(() => context.create.execute({ ...input, bookId: context.book.id })).toThrow(
+			SharedExpenseBookArchivedError
+		);
+		context.database.close();
+	});
+
 	it('throws a semantic error when creating a participant for a missing book', () => {
 		const context = setup();
 		expect(() => context.createParticipant.execute({ bookId: 'missing', id: 'person', name: 'Person' })).toThrow(
@@ -94,10 +120,14 @@ describe('shared expense use cases', () => {
 			description: 'Lunch',
 			participantIds: ['person'],
 		};
-		expect(() => context.create.execute({ ...input, participantIds: ['person', 'person'] })).toThrow('unique');
-		expect(() => context.create.execute({ ...input, participantIds: ['missing'] })).toThrow('not found in book');
+		expect(() => context.create.execute({ ...input, participantIds: ['person', 'person'] })).toThrow(
+			SharedExpenseParticipantsDuplicateError
+		);
+		expect(() => context.create.execute({ ...input, participantIds: ['missing'] })).toThrow(
+			SharedExpenseParticipantNotFoundError
+		);
 		context.removeParticipant.execute(context.book.id, 'person', '2026-02-03T00:00:00.000Z');
-		expect(() => context.create.execute(input)).toThrow('not found in book');
+		expect(() => context.create.execute(input)).toThrow(SharedExpenseParticipantInactiveError);
 		context.database.close();
 	});
 

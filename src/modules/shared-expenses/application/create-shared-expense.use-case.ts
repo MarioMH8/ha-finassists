@@ -3,8 +3,15 @@ import { randomUUID } from 'node:crypto';
 import type { BookRepository } from '@modules/books/domain';
 import type { IngressActor } from '@modules/home-assistant/domain';
 
-import type { SharedExpense, SharedExpenseRepository } from '../domain';
-import { createSharedExpense } from '../domain';
+import type { SharedExpenseRepository } from '../domain';
+import {
+	SharedExpense,
+	SharedExpenseBookArchivedError,
+	SharedExpenseBookNotFoundError,
+	SharedExpenseParticipantInactiveError,
+	SharedExpenseParticipantNotFoundError,
+	SharedExpenseParticipantsDuplicateError,
+} from '../domain';
 
 interface CreateSharedExpenseInput {
 	actor: IngressActor;
@@ -24,28 +31,31 @@ class CreateSharedExpense {
 	execute(input: CreateSharedExpenseInput): SharedExpense {
 		const book = this.books.find({ id: input.bookId });
 		if (!book) {
-			throw new Error('Book not found');
+			throw new SharedExpenseBookNotFoundError();
 		}
 		if (book.archivedAt !== null) {
-			throw new Error('Cannot create shared expenses in an archived book');
+			throw new SharedExpenseBookArchivedError();
 		}
 
 		const seen = new Set<string>();
 		const participants = input.participantIds.map(id => {
 			if (seen.has(id)) {
-				throw new Error('Shared expense participants must be unique');
+				throw new SharedExpenseParticipantsDuplicateError();
 			}
 			seen.add(id);
 
 			const participant = this.expenses.findParticipant(input.bookId, id);
-			if (participant?.id === undefined || participant.removedAt !== undefined) {
-				throw new Error(`Active participant ${id} not found in book`);
+			if (participant?.id === undefined) {
+				throw new SharedExpenseParticipantNotFoundError(id);
+			}
+			if (participant.removedAt !== undefined) {
+				throw new SharedExpenseParticipantInactiveError(id);
 			}
 
 			return participant;
 		});
 
-		return this.expenses.create(createSharedExpense({ ...input, id: randomUUID(), participants }));
+		return this.expenses.create(SharedExpense.create({ ...input, id: randomUUID(), participants }));
 	}
 }
 

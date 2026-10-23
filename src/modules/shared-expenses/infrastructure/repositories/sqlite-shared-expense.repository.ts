@@ -1,12 +1,7 @@
 import type { Database } from 'bun:sqlite';
 
-import type {
-	SharedExpense,
-	SharedExpenseActor,
-	SharedExpenseRepository,
-	SharedExpenseSettlementStatus,
-} from '../../domain';
-import { SharedExpenseParticipant } from '../../domain';
+import type { SharedExpenseActor, SharedExpenseRepository, SharedExpenseSettlementStatus } from '../../domain';
+import { SharedExpense, SharedExpenseParticipant } from '../../domain';
 
 interface ExpenseRow {
 	actor_id: null | string;
@@ -72,42 +67,6 @@ function toParticipant(row: ParticipantRow): SharedExpenseParticipant {
 	});
 }
 
-function assertConsistent(expense: SharedExpense): void {
-	if (!Number.isSafeInteger(expense.amountMinor) || expense.amountMinor <= 0) {
-		throw new TypeError('Expense minor units must be a positive safe integer');
-	}
-	if (expense.allocations.length === 0 || expense.allocations.length !== expense.settlements.length) {
-		throw new Error('Each shared expense allocation must have exactly one settlement');
-	}
-
-	const allocations = new Map<string, bigint>();
-	let total = 0n;
-	for (const allocation of expense.allocations) {
-		if (!Number.isSafeInteger(allocation.amountMinor) || allocation.amountMinor < 0) {
-			throw new TypeError('Allocation minor units must be a non-negative safe integer');
-		}
-		if (allocations.has(allocation.participantId)) {
-			throw new Error('Shared expense participants must be unique');
-		}
-		allocations.set(allocation.participantId, BigInt(allocation.amountMinor));
-		total += BigInt(allocation.amountMinor);
-	}
-	if (total !== BigInt(expense.amountMinor)) {
-		throw new Error('Shared expense allocations must sum to the expense amount');
-	}
-
-	const settlementIds = new Set<string>();
-	for (const settlement of expense.settlements) {
-		if (
-			settlementIds.has(settlement.participantId) ||
-			allocations.get(settlement.participantId) !== BigInt(settlement.amountMinor)
-		) {
-			throw new Error('Each settlement must match its participant allocation');
-		}
-		settlementIds.add(settlement.participantId);
-	}
-}
-
 class SqliteSharedExpenseRepository implements SharedExpenseRepository {
 	constructor(private readonly database: Database) {}
 
@@ -120,7 +79,6 @@ class SqliteSharedExpenseRepository implements SharedExpenseRepository {
 	}
 
 	create(expense: SharedExpense): SharedExpense {
-		assertConsistent(expense);
 		const insert = this.database.transaction(() => {
 			this.database
 				.query(
@@ -160,12 +118,8 @@ class SqliteSharedExpenseRepository implements SharedExpenseRepository {
 					allocation.amountMinor,
 					position
 				);
-				const settlement = expense.settlements.find(
-					candidate => candidate.participantId === allocation.participantId
-				);
-				if (!settlement) {
-					throw new Error('Shared expense settlement is missing');
-				}
+			}
+			for (const settlement of expense.settlements) {
 				insertSettlement.run(
 					expense.bookId,
 					expense.id,
@@ -306,7 +260,7 @@ class SqliteSharedExpenseRepository implements SharedExpenseRepository {
 			)
 			.all(row.book_id, row.id) as SettlementRow[];
 
-		return {
+		return SharedExpense.restore({
 			actor: toActor(row.actor_kind, row.actor_id),
 			allocations: allocations.map(allocation => ({
 				amountMinor: allocation.amount_minor,
@@ -328,7 +282,7 @@ class SqliteSharedExpenseRepository implements SharedExpenseRepository {
 				}),
 				status: settlement.status,
 			})),
-		};
+		});
 	}
 }
 

@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'bun:test';
 
-import { createSharedExpense, SHARED_EXPENSE_SETTLEMENT_STATUS, SharedExpenseParticipant } from '.';
+import {
+	SHARED_EXPENSE_SETTLEMENT_STATUS,
+	SharedExpense,
+	SharedExpenseAmountInvalidError,
+	SharedExpenseAmountNonPositiveError,
+	SharedExpenseParticipant,
+	SharedExpenseParticipantBookMismatchError,
+	SharedExpenseParticipantInactiveError,
+	SharedExpenseParticipantsDuplicateError,
+	SharedExpenseParticipantsMissingError,
+	SharedExpenseSettlementTransitionInvalidError,
+	SharedExpenseTransitionInvalidError,
+} from '.';
 
 function participant(id: string, bookId = 'book-a') {
 	return SharedExpenseParticipant.create({ bookId, id, name: `Person ${id}` });
@@ -11,7 +23,7 @@ function create(
 	participantIds: string[],
 	actor?: { id: string; kind: 'home_assistant_user' } | { kind: 'unknown' }
 ) {
-	return createSharedExpense({
+	return SharedExpense.create({
 		actor: actor ?? { id: 'actor-not-in-list', kind: 'home_assistant_user' },
 		amountMinor,
 		bookId: 'book-a',
@@ -21,8 +33,8 @@ function create(
 	});
 }
 
-describe('shared expense domain', () => {
-	it('allocates the whole amount in minor units with a stable tie-break independent of participant input order', () => {
+describe('SharedExpense', () => {
+	it('allocates minor units with a stable participant tie-break and immutable state', () => {
 		const expense = create(11, ['c', 'a', 'b']);
 
 		expect(expense.allocations).toEqual([
@@ -38,6 +50,10 @@ describe('shared expense domain', () => {
 			)
 		).toBe(false);
 		expect(expense.description).toBe('Dinner');
+		expect(Object.isFrozen(expense)).toBe(true);
+		expect(Object.isFrozen(expense.allocations)).toBe(true);
+		expect(Object.isFrozen(expense.allocations[0])).toBe(true);
+		expect(Object.isFrozen(expense.settlements)).toBe(true);
 	});
 
 	it('accepts an unknown actor without changing participant or allocation rules', () => {
@@ -50,14 +66,67 @@ describe('shared expense domain', () => {
 		).toBe(true);
 	});
 
-	it('rejects unsafe or non-positive amounts, duplicates, and participants from another book', () => {
-		expect(() => create(Number.MAX_SAFE_INTEGER + 1, ['a'])).toThrow('safe integer');
-		expect(() => create(1.5, ['a'])).toThrow('safe integer');
-		expect(() => create(0, ['a'])).toThrow('greater than zero');
-		expect(() => create(5, [])).toThrow('at least one participant');
-		expect(() => create(5, ['a', 'a'])).toThrow('unique');
+	it('restores persisted state as an entity without changing its serialized shape', () => {
+		const original = create(17, ['b', 'a']);
+		const restored = SharedExpense.restore(original);
+
+		expect(restored).toBeInstanceOf(SharedExpense);
+		expect(restored).toEqual(original);
+		expect(JSON.stringify(restored)).toBe(
+			JSON.stringify({
+				actor: { id: 'actor-not-in-list', kind: 'home_assistant_user' },
+				allocations: [
+					{ amountMinor: 9, participantId: 'a', participantName: 'Person a' },
+					{ amountMinor: 8, participantId: 'b', participantName: 'Person b' },
+				],
+				amountMinor: 17,
+				bookId: 'book-a',
+				createdAt: original.createdAt,
+				description: 'Dinner',
+				id: 'expense-1',
+				settlements: [
+					{ amountMinor: 9, participantId: 'a', status: 'pending' },
+					{ amountMinor: 8, participantId: 'b', status: 'pending' },
+				],
+			})
+		);
+	});
+
+	it('applies close, reopen, and settlement transitions immutably', () => {
+		const expense = create(20, ['p']);
+		const closed = expense.close('2026-03-01T00:00:00.000Z');
+		const reopened = closed.reopen();
+		const settled = reopened.settle('p', { kind: 'unknown' }, '2026-03-02T00:00:00.000Z');
+
+		expect(expense.closedAt).toBeUndefined();
+		expect(closed.closedAt).toBe('2026-03-01T00:00:00.000Z');
+		expect(reopened.closedAt).toBeUndefined();
+		expect(settled.settlements).toEqual([
+			{
+				amountMinor: 20,
+				participantId: 'p',
+				settledAt: '2026-03-02T00:00:00.000Z',
+				settledByActor: { kind: 'unknown' },
+				status: 'settled',
+			},
+		]);
+		expect(() => closed.settle('p', { kind: 'unknown' }, '2026-03-02T00:00:00.000Z')).toThrow(
+			SharedExpenseTransitionInvalidError
+		);
+		expect(() => settled.settle('p', { kind: 'unknown' }, '2026-03-03T00:00:00.000Z')).toThrow(
+			SharedExpenseSettlementTransitionInvalidError
+		);
+		expect(() => expense.reopen()).toThrow(SharedExpenseTransitionInvalidError);
+	});
+
+	it('rejects invalid amounts, participants, and participant book membership', () => {
+		expect(() => create(Number.MAX_SAFE_INTEGER + 1, ['a'])).toThrow(SharedExpenseAmountInvalidError);
+		expect(() => create(1.5, ['a'])).toThrow(SharedExpenseAmountInvalidError);
+		expect(() => create(0, ['a'])).toThrow(SharedExpenseAmountNonPositiveError);
+		expect(() => create(5, [])).toThrow(SharedExpenseParticipantsMissingError);
+		expect(() => create(5, ['a', 'a'])).toThrow(SharedExpenseParticipantsDuplicateError);
 		expect(() =>
-			createSharedExpense({
+			SharedExpense.create({
 				actor: { kind: 'unknown' },
 				amountMinor: 1,
 				bookId: 'book-a',
@@ -65,6 +134,23 @@ describe('shared expense domain', () => {
 				id: 'expense-2',
 				participants: [participant('a', 'book-b')],
 			})
-		).toThrow('same book');
+		).toThrow(SharedExpenseParticipantBookMismatchError);
+		expect(() =>
+			SharedExpense.create({
+				actor: { kind: 'unknown' },
+				amountMinor: 1,
+				bookId: 'book-a',
+				description: 'Test',
+				id: 'expense-2',
+				participants: [
+					SharedExpenseParticipant.create({
+						bookId: 'book-a',
+						id: 'removed',
+						name: 'Removed',
+						removedAt: 'yesterday',
+					}),
+				],
+			})
+		).toThrow(SharedExpenseParticipantInactiveError);
 	});
 });
