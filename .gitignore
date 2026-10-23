@@ -1,4 +1,6 @@
 /node_modules/
+/dist/
+/plans/
 /.eslintcache
 /.idea/
 /.impeccable/

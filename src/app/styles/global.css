@@ -1,0 +1,54 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light dark;
+  font-family: Roboto, "Noto Sans", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --page: #f5f7f8;
+  --surface: #fff;
+  --surface-secondary: #f0f2f3;
+  --text: #202124;
+  --muted: #5f6368;
+  --line: #dadce0;
+  --accent: #03a9f4;
+  --accent-text: #006b9a;
+  --success: #188038;
+  --danger: #b3261e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #111315;
+    --surface: #1d2023;
+    --surface-secondary: #292d31;
+    --text: #e8eaed;
+    --muted: #aeb4ba;
+    --line: #3b4045;
+    --accent: #4fc3f7;
+    --accent-text: #8edaff;
+    --success: #81c995;
+    --danger: #f28b82;
+  }
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+}
+
+::selection {
+  background: var(--accent);
+  color: #102027;
+}
+
+button,
+input {
+  font: inherit;
+}

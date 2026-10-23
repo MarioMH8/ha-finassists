@@ -12,13 +12,17 @@ Requires Bun 1.4 or later. React 19 and React DOM provide server rendering and c
 
 ```sh
 bun install --frozen-lockfile
-SUPERVISOR_IP=::1 bun run dev  # Run locally with file watching
-bun run start                 # Start the app on port 8099
+cp .env.example .env
+bun run dev       # Watch server files; use a local mock Ingress identity
+bun run build     # Build production server and browser assets into dist/
+bun run start     # Start the production build on port 8099
 ```
 
-Run focused checks independently with `bun run lint:ci`, `bun run typecheck`, and `bun run test`. The service listens on `PORT` (default `8099`) and stores API tokens in `/data/fin-assist.sqlite`; set `DATABASE_PATH` to override that location for local development. `/health` returns a JSON health status, `/api/v1/session` reports the trusted Ingress actor, and `/api/v1/tokens` lets that actor issue, list, and revoke only their own tokens. Newly issued secrets are returned once. The MCP (`/mcp`) and financial REST endpoints are not implemented yet. The browser UI is implemented with React 19 and CSS under `src/app/web`. The server renders the page and serves a client bundle Bun compiles once in memory at startup; there is no separate frontend build command or generated build directory. The page language is selected from the request's `Accept-Language` header, and the CSS follows the system light/dark preference; Home Assistant theme synchronization remains future work.
+Development reads `DEV_INGRESS_USER_ID`, `DEV_INGRESS_USERNAME`, and `DEV_INGRESS_DISPLAY_NAME` from `.env`, bypasses the Ingress peer check, and reloads open pages when Bun restarts the server. Production rejects these mock identity settings and enforces the configured Supervisor peer address. `/health` returns a JSON health status, `/api/v1/session` reports the current actor, and `/api/v1/tokens` lets that actor issue, list, and revoke only their own tokens. Newly issued secrets are returned once. The MCP (`/mcp`) and financial REST endpoints are not implemented yet.
 
-The add-on's `supervisor_ip` option defaults to Home Assistant's standard Supervisor address. Override it for non-standard network setups. `SUPERVISOR_IP` can override the option when running the container directly; invalid addresses fail startup. Direct local development should set `SUPERVISOR_IP` to the local peer address.
+The browser UI is implemented with React 19 and CSS under `src/app`. During development, Bun compiles the client bundle in memory; production builds the browser bundle and server into `dist/`. The page language is selected from `Accept-Language`, and the CSS follows the system light/dark preference; Home Assistant theme synchronization remains future work. The service listens on `PORT` (default `8099`) and stores API tokens in `/data/fin-assist.sqlite`; set `DATABASE_PATH` to override that location for local development.
+
+The add-on's `supervisor_ip` option defaults to Home Assistant's standard Supervisor address. Override it for non-standard network setups. `SUPERVISOR_IP` can override the option when running the container directly; invalid addresses fail startup.
 
 ## Home Assistant packaging
 

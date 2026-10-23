@@ -5,13 +5,18 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
+		"build": "bun run build:server && bun run build:web",
+		"build:server": "mkdir -p dist && bun build --target=bun --packages=external --outfile=dist/server.js src/server.ts",
+		"build:web": "bun run build:web:client && bun run build:web:renderer && cp dist/server-renderer.css dist/styles.css",
+		"build:web:client": "mkdir -p dist && bun build --target=browser --format=esm --minify --outdir=dist src/app/client.tsx",
+		"build:web:renderer": "mkdir -p dist && bun build --target=bun --format=esm --packages=bundle --outdir=dist src/app/shell/server-renderer.tsx",
 		"commitlint": "commitlint --edit",
-		"dev": "bun --watch src/app/server.ts",
+		"dev": "NODE_ENV=development bun --watch src/server.ts",
 		"lint": "eslint --cache .",
 		"lint:ci": "eslint --cache --cache-strategy content .",
 		"lint:fix": "eslint --cache --fix .",
 		"prepare": "husky",
-		"start": "bun run src/app/server.ts",
+		"start": "NODE_ENV=production bun run dist/server.js",
 		"test": "bun test",
 		"typecheck": "tsc --noEmit"
 	},
@@ -22,6 +27,7 @@
 	"devDependencies": {
 		"@commitlint/cli": "21.2.2",
 		"@commitlint/config-conventional": "21.2.2",
+		"@eslint/compat": "2.1.1",
 		"@hexadrop/eslint-config": "1.0.11",
 		"@types/bun": "1.4.3",
 		"@types/react": "19.3.0",

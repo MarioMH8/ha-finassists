@@ -1,6 +1,7 @@
+import { fixupPluginRules } from '@eslint/compat';
 import hexadrop from '@hexadrop/eslint-config';
 
-export default hexadrop(
+const config = await hexadrop(
 	{ ignores: ['.impeccable/**'] },
 	{
 		rules: {
@@ -8,21 +9,21 @@ export default hexadrop(
 		},
 	},
 	{
-		files: ['src/app/web/**/*.tsx'],
+		files: ['src/app/**/*.tsx'],
 		settings: {
 			react: { version: '19.3.1' },
 		},
-	},
-	{
-		files: ['src/app/server.ts'],
-		rules: {
-			'no-console': 'off',
-		},
-	},
-	{
-		files: ['src/app/http/security-headers.ts'],
-		rules: {
-			'style/quotes': 'off',
-		},
 	}
+);
+
+export default config.map(item =>
+	item.plugins?.react
+		? {
+				...item,
+				plugins: {
+					...item.plugins,
+					react: fixupPluginRules(item.plugins.react),
+				},
+			}
+		: item
 );

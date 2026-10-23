@@ -7,14 +7,17 @@ Use the narrowest command that validates the changed behavior. CI runs lint, typ
 | Task | Command |
 | --- | --- |
 | Install locked dependencies | `bun install --frozen-lockfile` |
-| Start with file watching | `bun run dev` |
-| Start the service | `bun run start` |
+| Start with file watching and mock Ingress identity | `bun run dev` |
+| Build production server and browser assets | `bun run build` |
+| Build only the server | `bun run build:server` |
+| Build only the browser bundle | `bun run build:web` |
+| Start the production build | `bun run start` |
 | Lint without modifying files | `bun run lint:ci` |
 | Fix lint findings | `bun run lint:fix` |
 | Type-check | `bun run typecheck` |
 | Run tests | `bun run test` |
 
-Set `SUPERVISOR_IP` when running locally if the request peer differs from the default Supervisor address. Tests use Bun's built-in test runner and are colocated with the source as `*.test.ts` files.
+Copy `.env.example` to `.env` to configure a local mock actor. `bun run dev` uses that actor and bypasses the Supervisor peer check; production rejects development identity variables and validates the trusted peer. Tests use Bun's built-in test runner and are colocated with the source as `*.test.ts` files.
 
 ## Continuous integration
 
