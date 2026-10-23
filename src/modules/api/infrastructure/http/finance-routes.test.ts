@@ -65,7 +65,7 @@ import {
 import { initializeSharedExpenseSchema, SqliteSharedExpenseRepository } from '@modules/shared-expenses/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
-import { InMemoryApiTokenRepository, WebCryptoTokenCredentialService } from '@modules/tokens/infrastructure';
+import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modules/tokens/infrastructure';
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
@@ -97,6 +97,13 @@ interface MCPJson {
 interface FinanceRouteActor {
 	id: string;
 	kind: 'home_assistant_integration' | 'home_assistant_user';
+}
+
+function createMigratedDatabase(): Database {
+	const database = new Database(':memory:');
+	migrateDatabase(database);
+
+	return database;
 }
 
 function setup(): { database: Database; useCases: FinanceUseCases } {
@@ -500,7 +507,7 @@ describe('finance REST routes', () => {
 
 	it('serves stateless MCP tools only with a valid bearer token', async () => {
 		const { useCases } = setup();
-		const tokenRepository = new InMemoryApiTokenRepository();
+		const tokenRepository = new SqliteApiTokenRepository(createMigratedDatabase());
 		const credentialService = new WebCryptoTokenCredentialService();
 		const tokenUseCases = {
 			authenticate: new AuthenticateApiToken(tokenRepository, credentialService),
@@ -650,7 +657,7 @@ describe('finance REST routes', () => {
 			name: 'Checking',
 			openingBalanceMinor: 0,
 		});
-		const tokenRepository = new InMemoryApiTokenRepository();
+		const tokenRepository = new SqliteApiTokenRepository(createMigratedDatabase());
 		const credentialService = new WebCryptoTokenCredentialService();
 		const tokenUseCases = {
 			authenticate: new AuthenticateApiToken(tokenRepository, credentialService),

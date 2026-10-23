@@ -10,7 +10,7 @@ import {
 	WebCryptoSystemCredentialService,
 } from '@modules/system-credentials/infrastructure';
 import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
-import { InMemoryApiTokenRepository, WebCryptoTokenCredentialService } from '@modules/tokens/infrastructure';
+import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modules/tokens/infrastructure';
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
@@ -50,8 +50,15 @@ function isTokenMetadataList(value: unknown): value is TokenMetadataResponse[] {
 	return Array.isArray(value) && value.every(isTokenMetadataResponse);
 }
 
+function createMigratedDatabase(): Database {
+	const database = new Database(':memory:');
+	migrateDatabase(database);
+
+	return database;
+}
+
 function createTokenUseCases() {
-	const repository = new InMemoryApiTokenRepository();
+	const repository = new SqliteApiTokenRepository(createMigratedDatabase());
 
 	const credentialService = new WebCryptoTokenCredentialService();
 
