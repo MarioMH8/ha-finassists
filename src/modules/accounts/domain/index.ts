@@ -1,3 +1,24 @@
-export { type Account, ACCOUNT_KINDS, type AccountInput, type AccountKind, createAccount } from './account';
+export {
+	Account,
+	ACCOUNT_KINDS,
+	type AccountBalances,
+	type AccountInput,
+	type AccountKind,
+	type PersistedAccountInput,
+	type TransactionTotals,
+} from './account';
+export {
+	AccountAlreadyClosedError,
+	AccountAsOfDateInvalidError,
+	AccountBalanceOutOfRangeError,
+	AccountBookArchivedError,
+	AccountBookIdInvalidError,
+	AccountBookNotFoundError,
+	AccountIdInvalidError,
+	AccountKindInvalidError,
+	AccountNameInvalidError,
+	AccountNotClosedError,
+	AccountNotFoundError,
+	AccountOpeningBalanceInvalidError,
+} from './account.error';
 export type { AccountRepository, ListAccountsOptions } from './account.repository';
-export { type AccountBalances, deriveAccountBalances, type TransactionTotals } from './account-balances';

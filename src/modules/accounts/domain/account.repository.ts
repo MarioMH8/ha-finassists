@@ -1,5 +1,4 @@
-import type { Account } from './account';
-import type { TransactionTotals } from './account-balances';
+import type { Account, TransactionTotals } from './account';
 
 interface ListAccountsOptions {
 	includeClosed?: boolean;

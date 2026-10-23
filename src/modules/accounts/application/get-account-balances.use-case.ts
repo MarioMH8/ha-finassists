@@ -1,8 +1,8 @@
 import type { BookRepository } from '@modules/books/domain';
 import { Currency } from '@modules/money/domain';
 
-import type { AccountRepository } from '../domain';
-import { deriveAccountBalances } from '../domain';
+import type { AccountBalances, AccountRepository } from '../domain';
+import { AccountAsOfDateInvalidError, AccountNotFoundError } from '../domain';
 
 interface GetAccountBalancesInput {
 	/**
@@ -19,20 +19,20 @@ class GetAccountBalances {
 		private readonly books: BookRepository
 	) {}
 
-	execute({ asOf, bookId, id }: GetAccountBalancesInput): ReturnType<typeof deriveAccountBalances> {
+	execute({ asOf, bookId, id }: GetAccountBalancesInput): AccountBalances {
 		if (asOf !== undefined && !isIsoDate(asOf)) {
-			throw new Error('asOf must be a valid YYYY-MM-DD date');
+			throw new AccountAsOfDateInvalidError();
 		}
 
 		const book = this.books.find({ id: bookId });
 		const account = book ? this.accounts.find(bookId, id) : undefined;
 		if (!book || !account) {
-			throw new Error('Account not found');
+			throw new AccountNotFoundError();
 		}
 
 		const totals = this.accounts.sumTransactionsByStatus(bookId, id, asOf);
 
-		return deriveAccountBalances(account.openingBalanceMinor, totals, Currency.create(book.currencyCode));
+		return account.balances(totals, Currency.create(book.currencyCode));
 	}
 }
 

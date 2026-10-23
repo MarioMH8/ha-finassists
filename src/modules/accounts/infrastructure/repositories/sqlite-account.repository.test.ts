@@ -5,6 +5,7 @@ import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
 import { CloseAccount, CreateAccount, GetAccountBalances, ListAccounts, ReopenAccount } from '../../application';
+import { AccountAsOfDateInvalidError, AccountBookArchivedError, AccountBookNotFoundError } from '../../domain';
 import { SqliteAccountRepository } from './sqlite-account.repository';
 
 type Status = 'cleared' | 'reconciled' | 'uncleared';
@@ -71,9 +72,9 @@ describe('account use cases', () => {
 		expect(() => create.execute({ ...valid, openingBalanceMinor: Number.MAX_SAFE_INTEGER + 1 })).toThrow(
 			'safe integer'
 		);
-		expect(() => create.execute({ ...valid, bookId: 'missing' })).toThrow('Book not found');
+		expect(() => create.execute({ ...valid, bookId: 'missing' })).toThrow(AccountBookNotFoundError);
 		new ArchiveBook(books).execute(defaultBook.id);
-		expect(() => create.execute(valid)).toThrow('archived book');
+		expect(() => create.execute(valid)).toThrow(AccountBookArchivedError);
 		database.close();
 	});
 
@@ -215,7 +216,9 @@ describe('account balances', () => {
 
 		expect(balances.execute({ bookId: defaultBook.id, id: other.id }).total.minorUnits).toBe(0);
 		for (const asOf of ['2026-13-01', '2026-02-30', '2026/01/01', '']) {
-			expect(() => balances.execute({ asOf, bookId: defaultBook.id, id: account.id })).toThrow('asOf');
+			expect(() => balances.execute({ asOf, bookId: defaultBook.id, id: account.id })).toThrow(
+				AccountAsOfDateInvalidError
+			);
 		}
 		database.close();
 	});

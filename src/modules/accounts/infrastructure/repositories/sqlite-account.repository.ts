@@ -1,6 +1,7 @@
 import type { Database } from 'bun:sqlite';
 
-import type { Account, AccountKind, AccountRepository, ListAccountsOptions, TransactionTotals } from '../../domain';
+import type { AccountKind, AccountRepository, ListAccountsOptions, TransactionTotals } from '../../domain';
+import { Account } from '../../domain';
 
 interface AccountRow {
 	book_id: string;
@@ -18,7 +19,7 @@ interface StatusTotalRow {
 }
 
 function toAccount(row: AccountRow): Account {
-	return {
+	return Account.restore({
 		bookId: row.book_id,
 		closedAt: row.closed_at,
 		createdAt: row.created_at,
@@ -26,7 +27,7 @@ function toAccount(row: AccountRow): Account {
 		kind: row.kind,
 		name: row.name,
 		openingBalanceMinor: row.opening_balance_minor,
-	};
+	});
 }
 
 class SqliteAccountRepository implements AccountRepository {
