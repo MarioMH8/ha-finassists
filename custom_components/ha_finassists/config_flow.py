@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import Any
-from urllib.parse import urlparse
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -47,15 +46,10 @@ class FinAssistConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         slug = discovery_info.slug
         if not isinstance(slug, str):
             return self.async_abort(reason="invalid_discovery_data")
-        slug = slug.strip()
-        if not slug or any(char not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for char in slug.lower()):
+        slug = slug.strip().lower()
+        if not slug or any(char not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for char in slug):
             return self.async_abort(reason="invalid_discovery_data")
-        try:
-            self._base_url = _normalize_base_url(
-                config.get("baseUrl", f"http://{slug.replace('_', '-')}:8099/api/v1")
-            )
-        except (TypeError, vol.Invalid):
-            return self.async_abort(reason="invalid_discovery_data")
+        self._base_url = f"http://{slug.replace('_', '-')}:8099/api/v1"
 
         await self.async_set_unique_id(slug)
         self._abort_if_unique_id_configured()
@@ -174,15 +168,3 @@ async def _async_validate_system_identity(
         except FinAssistApiError:
             pass
         raise
-
-
-def _normalize_base_url(value: str) -> str:
-    """Validate and normalize the API root URL from trusted discovery data."""
-    if not isinstance(value, str):
-        raise vol.Invalid("Invalid API URL")
-    parsed = urlparse(value.strip())
-    if parsed.scheme not in ("http", "https") or not parsed.netloc:
-        raise vol.Invalid("Invalid API URL")
-    if parsed.username or parsed.password or parsed.query or parsed.fragment:
-        raise vol.Invalid("API URL must not contain credentials, query, or fragment")
-    return value.strip().rstrip("/")

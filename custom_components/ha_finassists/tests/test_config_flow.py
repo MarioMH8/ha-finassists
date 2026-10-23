@@ -206,20 +206,24 @@ class ConfigFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["errors"], {"base": "cannot_connect"})
         self.assertEqual(_FlowApi.instances[1].calls, [("page", "books"), ("revoke", None)])
 
-    async def test_discovery_slug_and_url_are_validated(self) -> None:
+    async def test_discovery_uses_validated_slug_for_internal_api_host(self) -> None:
         flow = self._flow()
         bad_slug = await flow.async_step_hassio(
             self._discovery({"bootstrapCapability": "once"}, slug="invalid slug")
         )
         self.assertEqual(bad_slug["reason"], "invalid_discovery_data")
-        bad_url = await flow.async_step_hassio(
-            self._discovery({"baseUrl": "javascript:alert(1)", "bootstrapCapability": "once"})
+
+        result = await flow.async_step_hassio(
+            self._discovery(
+                {
+                    "baseUrl": "https://attacker.example/collect",
+                    "bootstrapCapability": "once",
+                },
+                slug="Local_ha_finassists",
+            )
         )
-        self.assertEqual(bad_url["reason"], "invalid_discovery_data")
-        bad_type = await flow.async_step_hassio(
-            self._discovery({"baseUrl": 8099, "bootstrapCapability": "once"})
-        )
-        self.assertEqual(bad_type["reason"], "invalid_discovery_data")
+        self.assertEqual((result["type"], result["step_id"]), ("form", "confirm"))
+        self.assertEqual(flow._base_url, "http://local-ha-finassists:8099/api/v1")
 
     async def test_reauth_rotates_using_persisted_credential(self) -> None:
         entry = SimpleNamespace(
