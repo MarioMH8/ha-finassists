@@ -14,7 +14,6 @@ export {
 	ScheduleIdentityInvalidError,
 	ScheduleIntervalInvalidError,
 	ScheduleOccurrenceLimitInvalidError,
-	ScheduleOccurrenceNumberInvalidError,
 	ScheduleOneTimeIntervalInvalidError,
 	ScheduleStartDateInvalidError,
 	ScheduleStatusInvalidError,
@@ -23,10 +22,19 @@ export {
 } from './schedule.error';
 export type { ScheduleCriteria, ScheduleRepository } from './schedule.repository';
 export {
-	createScheduleOccurrence,
 	type LedgerTransactionReference,
 	OCCURRENCE_STATUS,
 	type OccurrenceStatus,
-	type ScheduleOccurrence,
+	ScheduleOccurrence,
 } from './schedule-occurrence';
+export {
+	ScheduleOccurrenceAmountInvalidError,
+	ScheduleOccurrenceDateInvalidError,
+	ScheduleOccurrenceIdentityInvalidError,
+	ScheduleOccurrenceNumberInvalidError,
+	ScheduleOccurrenceRecordInvalidError,
+	ScheduleOccurrenceStatusInvalidError,
+	ScheduleOccurrenceTransitionInvalidError,
+	ScheduleOccurrenceUnavailableError,
+} from './schedule-occurrence.error';
 export type { ScheduleOccurrenceRepository } from './schedule-occurrence.repository';

@@ -2,8 +2,8 @@ import type { LedgerRepository } from '../../ledger/domain';
 import type { CreateScheduledPaymentInput, UpdateScheduledPaymentInput } from '../domain/schedule';
 import { SCHEDULE_STATUS, ScheduledPayment } from '../domain/schedule';
 import type { ScheduleRepository } from '../domain/schedule.repository';
-import type { LedgerTransactionReference, ScheduleOccurrence } from '../domain/schedule-occurrence';
-import { createScheduleOccurrence } from '../domain/schedule-occurrence';
+import type { LedgerTransactionReference } from '../domain/schedule-occurrence';
+import { ScheduleOccurrence } from '../domain/schedule-occurrence';
 import type { ScheduleOccurrenceRepository } from '../domain/schedule-occurrence.repository';
 
 class CreateSchedule {
@@ -97,7 +97,7 @@ class GenerateScheduleOccurrences {
 				break;
 			}
 
-			const occurrence = createScheduleOccurrence(schedule, occurrenceNumber, dueDate, this.idFactory());
+			const occurrence = ScheduleOccurrence.create(schedule, occurrenceNumber, this.idFactory());
 			if (this.occurrences.createIfAbsent(occurrence)) {
 				generated.push(occurrence);
 				occurrenceNumber += 1;
@@ -147,12 +147,8 @@ class RecordScheduleOccurrence {
 			bookId: transaction.bookId,
 			id: transaction.id,
 		};
-		const linked = this.occurrences.linkTransaction(
-			bookId,
-			occurrenceId,
-			reference,
-			recordedAt ?? new Date().toISOString()
-		);
+		const recorded = occurrence.record(reference, recordedAt ?? new Date().toISOString());
+		const linked = this.occurrences.linkTransaction(recorded);
 		if (!linked) {
 			throw new Error('Occurrence is already recorded or could not be linked');
 		}

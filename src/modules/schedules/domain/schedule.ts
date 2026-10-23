@@ -7,13 +7,13 @@ import {
 	ScheduleIdentityInvalidError,
 	ScheduleIntervalInvalidError,
 	ScheduleOccurrenceLimitInvalidError,
-	ScheduleOccurrenceNumberInvalidError,
 	ScheduleOneTimeIntervalInvalidError,
 	ScheduleStartDateInvalidError,
 	ScheduleStatusInvalidError,
 	ScheduleTextInvalidError,
 	ScheduleTransitionInvalidError,
 } from './schedule.error';
+import { ScheduleOccurrenceNumberInvalidError } from './schedule-occurrence.error';
 
 const SCHEDULE_FREQUENCY = {
 	DAILY: 'daily',

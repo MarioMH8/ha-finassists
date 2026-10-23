@@ -1,14 +1,9 @@
-import type { LedgerTransactionReference, ScheduleOccurrence } from './schedule-occurrence';
+import type { ScheduleOccurrence } from './schedule-occurrence';
 
 interface ScheduleOccurrenceRepository {
 	createIfAbsent(occurrence: ScheduleOccurrence): boolean;
 	find(bookId: string, id: string): ScheduleOccurrence | undefined;
-	linkTransaction(
-		bookId: string,
-		occurrenceId: string,
-		transaction: LedgerTransactionReference,
-		recordedAt: string
-	): ScheduleOccurrence | undefined;
+	linkTransaction(occurrence: ScheduleOccurrence): ScheduleOccurrence | undefined;
 	listForSchedule(bookId: string, scheduleId: string): ScheduleOccurrence[];
 }
 

@@ -3,7 +3,7 @@ import type { Database, SQLQueryBindings } from 'bun:sqlite';
 import type { ScheduleFrequency, ScheduleStatus } from '../domain/schedule';
 import { ScheduledPayment } from '../domain/schedule';
 import type { ScheduleCriteria, ScheduleRepository } from '../domain/schedule.repository';
-import type { LedgerTransactionReference, ScheduleOccurrence } from '../domain/schedule-occurrence';
+import { ScheduleOccurrence } from '../domain/schedule-occurrence';
 import type { ScheduleOccurrenceRepository } from '../domain/schedule-occurrence.repository';
 
 interface ScheduleRow {
@@ -96,7 +96,7 @@ function where(criteria: ScheduleCriteria): { parameters: SQLQueryBindings[]; sq
 }
 
 function toOccurrence(row: OccurrenceRow): ScheduleOccurrence {
-	return {
+	return ScheduleOccurrence.restore({
 		accountId: row.account_id,
 		amountMinor: row.amount_minor,
 		bookId: row.book_id,
@@ -110,7 +110,7 @@ function toOccurrence(row: OccurrenceRow): ScheduleOccurrence {
 		scheduleId: row.schedule_id,
 		status: row.status,
 		transactionId: row.transaction_id ?? undefined,
-	};
+	});
 }
 
 class SqliteScheduleRepository implements ScheduleRepository {
@@ -196,15 +196,14 @@ class SqliteScheduleOccurrenceRepository implements ScheduleOccurrenceRepository
 		return row ? toOccurrence(row) : undefined;
 	}
 
-	linkTransaction(
-		bookId: string,
-		occurrenceId: string,
-		transaction: LedgerTransactionReference,
-		recordedAt: string
-	): ScheduleOccurrence | undefined {
-		if (transaction.bookId !== bookId) {
+	linkTransaction(occurrence: ScheduleOccurrence): ScheduleOccurrence | undefined {
+		if (occurrence.status !== 'recorded' || !occurrence.transactionId || !occurrence.recordedAt) {
 			return undefined;
 		}
+		const bookId = occurrence.bookId;
+		const occurrenceId = occurrence.id;
+		const recordedAt = occurrence.recordedAt;
+		const transactionId = occurrence.transactionId;
 
 		const link = this.database.transaction(() => {
 			const occurrenceRow = this.database
@@ -214,28 +213,28 @@ class SqliteScheduleOccurrenceRepository implements ScheduleOccurrenceRepository
 				return;
 			}
 			if (occurrenceRow.status === 'recorded') {
-				return occurrenceRow.transaction_id === transaction.id ? toOccurrence(occurrenceRow) : undefined;
+				return occurrenceRow.transaction_id === transactionId ? toOccurrence(occurrenceRow) : undefined;
 			}
 			if (
 				occurrenceRow.status !== 'pending' ||
-				occurrenceRow.account_id !== transaction.accountId ||
-				occurrenceRow.amount_minor !== transaction.amountMinor
+				occurrenceRow.account_id !== occurrence.accountId ||
+				occurrenceRow.amount_minor !== occurrence.amountMinor
 			) {
 				return;
 			}
 
 			const transactionRow = this.database
 				.query('SELECT account_id, amount_minor FROM transactions WHERE book_id = ? AND id = ?')
-				.get(bookId, transaction.id) as null | { account_id: string; amount_minor: number };
+				.get(bookId, transactionId) as null | { account_id: string; amount_minor: number };
 			if (
-				transactionRow?.account_id !== transaction.accountId ||
-				transactionRow.amount_minor !== transaction.amountMinor
+				transactionRow?.account_id !== occurrence.accountId ||
+				transactionRow.amount_minor !== occurrence.amountMinor
 			) {
 				return;
 			}
 			const alreadyLinked = this.database
 				.query('SELECT 1 FROM scheduled_payment_occurrences WHERE book_id = ? AND transaction_id = ?')
-				.get(bookId, transaction.id);
+				.get(bookId, transactionId);
 			if (alreadyLinked) {
 				return;
 			}
@@ -246,7 +245,7 @@ class SqliteScheduleOccurrenceRepository implements ScheduleOccurrenceRepository
 					SET status = 'recorded', transaction_id = ?, recorded_at = ?
 					WHERE book_id = ? AND id = ? AND status = 'pending' AND transaction_id IS NULL`
 				)
-				.run(transaction.id, recordedAt, bookId, occurrenceId);
+				.run(transactionId, recordedAt, bookId, occurrenceId);
 			if (result.changes === 0) {
 				return;
 			}

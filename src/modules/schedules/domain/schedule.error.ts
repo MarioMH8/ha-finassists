@@ -61,13 +61,6 @@ class ScheduleOccurrenceLimitInvalidError extends Error {
 	}
 }
 
-class ScheduleOccurrenceNumberInvalidError extends Error {
-	constructor() {
-		super('Occurrence number must be a non-negative safe integer');
-		this.name = 'ScheduleOccurrenceNumberInvalidError';
-	}
-}
-
 class ScheduleStatusInvalidError extends Error {
 	constructor() {
 		super('Schedule status is not supported');
@@ -105,7 +98,6 @@ export {
 	ScheduleIdentityInvalidError,
 	ScheduleIntervalInvalidError,
 	ScheduleOccurrenceLimitInvalidError,
-	ScheduleOccurrenceNumberInvalidError,
 	ScheduleOneTimeIntervalInvalidError,
 	ScheduleStartDateInvalidError,
 	ScheduleStatusInvalidError,
