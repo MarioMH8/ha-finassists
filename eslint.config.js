@@ -2,7 +2,7 @@ import { fixupPluginRules } from '@eslint/compat';
 import hexadrop from '@hexadrop/eslint-config';
 
 const config = await hexadrop(
-	{ ignores: ['.impeccable/**'] },
+	{ ignores: ['.impeccable/**', 'custom_components/**', 'hacs.json'] },
 	{
 		rules: {
 			'import/prefer-default-export': 'off',

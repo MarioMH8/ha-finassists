@@ -1,0 +1,37 @@
+refresh:
+  name: Refresh
+  description: Request an immediate account and schedule refresh.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Optional Fin Assist integration entry to refresh.
+      selector:
+        text:
+set_schedule_status:
+  name: Set scheduled payment status
+  description: Pause, resume, or cancel a scheduled payment.
+  fields:
+    entry_id:
+      name: Config entry
+      required: true
+      selector:
+        text:
+    book_id:
+      name: Book ID
+      required: true
+      selector:
+        text:
+    schedule_id:
+      name: Schedule ID
+      required: true
+      selector:
+        text:
+    status:
+      name: Status
+      required: true
+      selector:
+        select:
+          options:
+            - active
+            - paused
+            - canceled

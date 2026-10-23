@@ -10,11 +10,21 @@ boot: auto
 stage: experimental
 ingress: true
 ingress_port: 8099
+discovery:
+  - ha_finassists
 backup_pre: backup-pre.sh
 panel_icon: mdi:wallet-outline
 map:
   - type: data
+ports:
+  8099/tcp: null
 options:
-  supervisor_ip: "[IP_ADDRESS]"
+  supervisor_ip: "172.30.32.2"
+  application_name: Fin Assist
+  show_navigation: true
+  show_logo: true
 schema:
   supervisor_ip: str
+  application_name: str
+  show_navigation: bool
+  show_logo: bool

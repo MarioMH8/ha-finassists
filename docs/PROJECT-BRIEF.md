@@ -49,11 +49,11 @@ The Ingress UI follows Home Assistant's visual patterns, supports its light/dark
 - Ingress requests use the Supervisor-provided `X-Remote-User-Id` as the stable user identifier when present. The user name and display name are optional labels, not identity keys.
 - Ingress requests without a stable user ID are attributed to an unknown actor; no default user or name-based inference is allowed. A token cannot be issued without a stable ID.
 - A user becomes available as a shared-expense participant after their first Ingress access. The participant and the actor who records an expense are distinct concepts, even when they refer to the same Home Assistant user.
-- Every Home Assistant user may create and manage their own personal API/MCP tokens. Users can see and revoke their own tokens; administrators can see and revoke all tokens. Tokens are full read/write credentials with equal permissions across books. The secret is shown once, may be manually revoked, and has no mandatory expiry. Tokens must not be shared.
+- Every Home Assistant user may create and manage only their own personal API/MCP tokens. Tokens are full read/write credentials with equal permissions across books. The secret is shown once, may be manually revoked, and has no mandatory expiry. Tokens must not be shared.
 - An API/MCP action is audited as the Home Assistant user associated with its token; this indicates the token owner, not necessarily the human currently operating the client.
 - The native Home Assistant integration uses a separate system identity named “Home Assistant integration”, so calls from automations are not falsely attributed to an individual.
 - Ingress authenticates the browser session, but it does not authenticate external REST/MCP clients. The app must trust identity headers only on requests forwarded by Supervisor. REST/MCP are available to local-network clients with a token; no Internet exposure is configured by default.
-- All users who can open Ingress have full financial read/write access. Identity is for attribution and expense participation, not authorization. Token management is the only administrator-only function.
+- All users who can open Ingress have full financial read/write access. Identity is for attribution and expense participation, not authorization. Token management is owner-scoped; there is no administrator-only authorization model.
 
 ## Delivery phases
 

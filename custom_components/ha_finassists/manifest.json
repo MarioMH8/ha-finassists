@@ -1,0 +1,11 @@
+{
+	"domain": "ha_finassists",
+	"name": "Fin Assist",
+	"codeowners": ["@MarioMH8"],
+	"config_flow": true,
+	"documentation": "https://github.com/MarioMH8/ha-finassists/blob/main/custom_components/ha_finassists/README.md",
+	"iot_class": "local_polling",
+	"issue_tracker": "https://github.com/MarioMH8/ha-finassists/issues",
+	"requirements": [],
+	"version": "0.1.0"
+}
