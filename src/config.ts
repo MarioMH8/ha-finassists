@@ -4,6 +4,7 @@ import type { AppShellSettings } from '@modules/app-configuration/domain';
 import { DEFAULT_APP_SHELL_SETTINGS } from '@modules/app-configuration/domain';
 import type { HomeAssistantActor } from '@modules/home-assistant';
 import { DEFAULT_TRUSTED_INGRESS_IP } from '@modules/home-assistant';
+import { z } from 'zod';
 
 interface ServerConfig {
 	appShellSettings: AppShellSettings;
@@ -34,6 +35,15 @@ interface LoadServerConfigOptions {
 	optionsPath?: string;
 }
 
+const homeAssistantOptionsSchema = z
+	.object({
+		application_name: z.string().optional().catch(undefined),
+		show_logo: z.boolean().optional().catch(undefined),
+		show_navigation: z.boolean().optional().catch(undefined),
+		supervisor_ip: z.string().optional().catch(undefined),
+	})
+	.catch({});
+
 async function readOptions(optionsPath: string): Promise<unknown> {
 	const file = Bun.file(optionsPath);
 	if (!(await file.exists())) {
@@ -41,10 +51,6 @@ async function readOptions(optionsPath: string): Promise<unknown> {
 	}
 
 	return file.json();
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function hasControlCharacters(value: string): boolean {
@@ -91,7 +97,7 @@ async function loadServerConfig({
 		throw new Error('Development Ingress identity variables are only allowed in development mode');
 	}
 
-	const options = await readOptions(optionsPath);
+	const options = homeAssistantOptionsSchema.parse(await readOptions(optionsPath));
 	const configuredDatabasePath =
 		environment.DATABASE_PATH ?? (isDevelopment ? './data/fin-assist.sqlite' : '/data/fin-assist.sqlite');
 	const databasePath = configuredDatabasePath.trim();
@@ -99,32 +105,21 @@ async function loadServerConfig({
 		throw new Error('DATABASE_PATH must not be empty');
 	}
 
-	const configuredIp =
-		environment.SUPERVISOR_IP ??
-		(isRecord(options) && typeof options.supervisor_ip === 'string' ? options.supervisor_ip : undefined) ??
-		DEFAULT_TRUSTED_INGRESS_IP;
+	const configuredIp = environment.SUPERVISOR_IP ?? options.supervisor_ip ?? DEFAULT_TRUSTED_INGRESS_IP;
 	const trustedIngressIp = configuredIp.trim();
 
 	if (isIP(trustedIngressIp) === 0) {
 		throw new Error('SUPERVISOR_IP must contain a valid IPv4 or IPv6 address');
 	}
 
-	const configuredName =
-		isRecord(options) && typeof options.application_name === 'string' ? options.application_name : '';
-	const normalizedName = configuredName.trim();
+	const normalizedName = options.application_name?.trim() ?? '';
 	const appShellSettings: AppShellSettings = {
 		applicationName:
 			normalizedName.length > 0 && normalizedName.length <= 80 && !hasControlCharacters(normalizedName)
 				? normalizedName
 				: DEFAULT_APP_SHELL_SETTINGS.applicationName,
-		showLogo:
-			isRecord(options) && typeof options.show_logo === 'boolean'
-				? options.show_logo
-				: DEFAULT_APP_SHELL_SETTINGS.showLogo,
-		showNavigation:
-			isRecord(options) && typeof options.show_navigation === 'boolean'
-				? options.show_navigation
-				: DEFAULT_APP_SHELL_SETTINGS.showNavigation,
+		showLogo: options.show_logo ?? DEFAULT_APP_SHELL_SETTINGS.showLogo,
+		showNavigation: options.show_navigation ?? DEFAULT_APP_SHELL_SETTINGS.showNavigation,
 	};
 
 	const bootstrapCapability = readOptionalEnvironmentValue(environment.SYSTEM_CREDENTIAL_BOOTSTRAP_CAPABILITY);

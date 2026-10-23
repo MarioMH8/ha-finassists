@@ -1,3 +1,7 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
 import { DEFAULT_TRUSTED_INGRESS_IP } from '@modules/home-assistant';
 import { describe, expect, it } from 'bun:test';
 
@@ -20,6 +24,36 @@ describe('loadServerConfig', () => {
 			supervisorToken: undefined,
 			trustedIngressIp: DEFAULT_TRUSTED_INGRESS_IP,
 		});
+	});
+
+	it('applies each Home Assistant option only when its value has the expected shape', async () => {
+		const directory = await mkdtemp(path.join(tmpdir(), 'fin-assist-config-'));
+		const optionsPath = path.join(directory, 'options.json');
+
+		try {
+			await writeFile(
+				optionsPath,
+				JSON.stringify({
+					application_name: 'Invalid\u{0}name',
+					show_logo: 'yes',
+					show_navigation: false,
+					supervisor_ip: ['127.0.0.1'],
+				})
+			);
+			const config = await loadServerConfig({
+				environment: { NODE_ENV: 'production' },
+				optionsPath,
+			});
+
+			expect(config.appShellSettings).toEqual({
+				applicationName: 'Fin Assist',
+				showLogo: true,
+				showNavigation: false,
+			});
+			expect(config.trustedIngressIp).toBe(DEFAULT_TRUSTED_INGRESS_IP);
+		} finally {
+			await rm(directory, { force: true, recursive: true });
+		}
 	});
 
 	it('accepts a Supervisor token for add-on discovery provisioning', async () => {
