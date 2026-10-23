@@ -1,9 +1,9 @@
+import { CreateTransaction } from '@modules/ledger/application';
+import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
+import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
-import { CreateTransaction } from '../../ledger/application';
-import { SqliteLedgerRepository } from '../../ledger/infrastructure';
-import { migrateDatabase } from '../../storage/infrastructure';
 import {
 	ChangeScheduleStatus,
 	CreateSchedule,

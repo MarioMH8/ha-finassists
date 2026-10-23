@@ -1,4 +1,5 @@
-import type { LedgerRepository } from '../../ledger/domain';
+import type { LedgerRepository } from '@modules/ledger/domain';
+
 import type { ScheduleOccurrenceRepository, ScheduleRepository } from '../domain';
 import type { CreateScheduledPaymentInput, UpdateScheduledPaymentInput } from '../domain/schedule';
 import { SCHEDULE_STATUS, ScheduledPayment } from '../domain/schedule';
