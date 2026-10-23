@@ -10,6 +10,7 @@ import types
 import unittest
 from types import SimpleNamespace
 from typing import Any
+from unittest.mock import AsyncMock, Mock, patch
 
 
 class _Schema:
@@ -135,6 +136,7 @@ def _install_home_assistant_stubs() -> None:
 
 _install_home_assistant_stubs()
 
+import custom_components.ha_finassists as integration  # noqa: E402
 from custom_components.ha_finassists import config_flow  # noqa: E402
 from custom_components.ha_finassists.api import FinAssistApi, FinAssistApiError  # noqa: E402
 from custom_components.ha_finassists.sensor import FinAssistUpcomingSchedulesSensor  # noqa: E402
@@ -288,6 +290,119 @@ class ConfigFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["type"], "create_entry")
         self.assertEqual(entry.data["system_token"], "rotated-secret")
         self.assertIn(("rotate", None), _FlowApi.instances[0].calls)
+
+
+class _SetupApi:
+    error: FinAssistApiError | None = None
+    instances: list["_SetupApi"] = []
+
+    def __init__(self, base_url: str, token: str, session: Any) -> None:
+        self.base_url = base_url
+        self.token = token
+        self.__class__.instances.append(self)
+
+    async def async_fetch_dashboard(self, previous_schedules: list[Any]) -> dict[str, Any]:
+        if self.error:
+            raise self.error
+        return {
+            "books": [],
+            "upcoming_schedules": previous_schedules,
+            "schedule_refresh_failed": False,
+        }
+
+
+class _SetupCoordinator:
+    instances: list["_SetupCoordinator"] = []
+
+    def __init__(self, hass: Any, logger: Any, **kwargs: Any) -> None:
+        self.update_method = kwargs["update_method"]
+        self.data: dict[str, Any] = {}
+        self.listeners: list[Any] = []
+        self.update_interval = kwargs["update_interval"]
+        self.__class__.instances.append(self)
+
+    async def async_config_entry_first_refresh(self) -> None:
+        self.data = await self.update_method()
+
+    def async_add_listener(self, listener: Any) -> Any:
+        self.listeners.append(listener)
+        return Mock()
+
+
+class IntegrationSetupTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self) -> None:
+        _SetupApi.error = None
+        _SetupApi.instances.clear()
+        _SetupCoordinator.instances.clear()
+
+    def _entry(self) -> Any:
+        entry = SimpleNamespace(
+            entry_id="entry-1",
+            data={"base_url": "http://fin-assist/api/v1", "system_token": "system-secret"},
+            options={"base_url": "http://configured/api/v1"},
+            unload_callbacks=[],
+        )
+        entry.async_on_unload = entry.unload_callbacks.append
+        entry.add_update_listener = Mock(return_value="update-listener")
+        return entry
+
+    def _hass(self) -> Any:
+        return SimpleNamespace(
+            data={},
+            session=object(),
+            config_entries=SimpleNamespace(async_forward_entry_setups=AsyncMock()),
+        )
+
+    async def test_setup_fetches_initial_data_and_registers_platforms(self) -> None:
+        entry = self._entry()
+        hass = self._hass()
+        with (
+            patch.object(integration, "FinAssistApi", _SetupApi),
+            patch.object(integration, "DataUpdateCoordinator", _SetupCoordinator),
+            patch.object(integration, "async_get_clientsession", return_value="session"),
+            patch.object(integration, "_async_register_card", new_callable=AsyncMock),
+            patch.object(integration, "_async_register_services"),
+        ):
+            self.assertTrue(await integration.async_setup_entry(hass, entry))
+
+        coordinator = _SetupCoordinator.instances[0]
+        self.assertEqual(_SetupApi.instances[0].base_url, "http://configured/api/v1")
+        self.assertEqual(_SetupApi.instances[0].token, "system-secret")
+        self.assertEqual(coordinator.update_interval, integration.UPDATE_INTERVAL)
+        self.assertEqual(hass.data[integration.DOMAIN][entry.entry_id]["coordinator"], coordinator)
+        hass.config_entries.async_forward_entry_setups.assert_awaited_once_with(
+            entry, integration.PLATFORMS
+        )
+        self.assertEqual(entry.unload_callbacks, ["update-listener"])
+        entry.add_update_listener.assert_called_once_with(integration._async_reload_entry)
+
+    async def test_unauthorized_initial_refresh_requires_reauthentication(self) -> None:
+        _SetupApi.error = FinAssistApiError("expired", 401)
+        entry = self._entry()
+        hass = self._hass()
+        with (
+            patch.object(integration, "FinAssistApi", _SetupApi),
+            patch.object(integration, "DataUpdateCoordinator", _SetupCoordinator),
+            patch.object(integration, "async_get_clientsession", return_value="session"),
+        ):
+            with self.assertRaises(integration.ConfigEntryAuthFailed):
+                await integration.async_setup_entry(hass, entry)
+
+        self.assertEqual(hass.data, {})
+
+    async def test_non_auth_initial_refresh_failure_becomes_update_failed(self) -> None:
+        _SetupApi.error = FinAssistApiError("service unavailable", 503)
+        entry = self._entry()
+        hass = self._hass()
+        with (
+            patch.object(integration, "FinAssistApi", _SetupApi),
+            patch.object(integration, "DataUpdateCoordinator", _SetupCoordinator),
+            patch.object(integration, "async_get_clientsession", return_value="session"),
+        ):
+            with self.assertRaises(integration.UpdateFailed):
+                await integration.async_setup_entry(hass, entry)
+
+        self.assertEqual(hass.data, {})
 
 
 class SensorAttributeTests(unittest.TestCase):
