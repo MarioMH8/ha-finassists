@@ -1,6 +1,7 @@
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
-import type { ScheduledPayment, ScheduleFrequency, ScheduleStatus } from '../domain/schedule';
+import type { ScheduleFrequency, ScheduleStatus } from '../domain/schedule';
+import { ScheduledPayment } from '../domain/schedule';
 import type { ScheduleCriteria, ScheduleRepository } from '../domain/schedule.repository';
 import type { LedgerTransactionReference, ScheduleOccurrence } from '../domain/schedule-occurrence';
 import type { ScheduleOccurrenceRepository } from '../domain/schedule-occurrence.repository';
@@ -42,7 +43,7 @@ function toNullableSqlBinding(value: number | string | undefined): SQLQueryBindi
 }
 
 function toSchedule(row: ScheduleRow): ScheduledPayment {
-	return {
+	return ScheduledPayment.restore({
 		accountId: row.account_id,
 		amountMinor: row.amount_minor,
 		bookId: row.book_id,
@@ -56,7 +57,7 @@ function toSchedule(row: ScheduleRow): ScheduledPayment {
 		payee: row.payee,
 		startDate: row.start_date,
 		status: row.status,
-	};
+	});
 }
 
 function where(criteria: ScheduleCriteria): { parameters: SQLQueryBindings[]; sql: string } {

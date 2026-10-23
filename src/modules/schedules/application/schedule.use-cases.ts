@@ -1,12 +1,6 @@
 import type { LedgerRepository } from '../../ledger/domain';
-import type { CreateScheduledPaymentInput, ScheduledPayment, UpdateScheduledPaymentInput } from '../domain/schedule';
-import {
-	createScheduledPayment,
-	dueDateAtOccurrence,
-	SCHEDULE_STATUS,
-	transitionScheduleStatus,
-	updateScheduledPayment,
-} from '../domain/schedule';
+import type { CreateScheduledPaymentInput, UpdateScheduledPaymentInput } from '../domain/schedule';
+import { SCHEDULE_STATUS, ScheduledPayment } from '../domain/schedule';
 import type { ScheduleRepository } from '../domain/schedule.repository';
 import type { LedgerTransactionReference, ScheduleOccurrence } from '../domain/schedule-occurrence';
 import { createScheduleOccurrence } from '../domain/schedule-occurrence';
@@ -16,7 +10,7 @@ class CreateSchedule {
 	constructor(private readonly schedules: ScheduleRepository) {}
 
 	execute(input: CreateScheduledPaymentInput, createdAt?: string): ScheduledPayment {
-		const schedule = createScheduledPayment(input, createdAt);
+		const schedule = ScheduledPayment.create(input, createdAt);
 		this.schedules.save(schedule);
 
 		return schedule;
@@ -49,7 +43,7 @@ class UpdateSchedule {
 
 	execute(bookId: string, scheduleId: string, changes: UpdateScheduledPaymentInput): ScheduledPayment {
 		const existing = requireSchedule(this.schedules, bookId, scheduleId);
-		const updated = updateScheduledPayment(existing, changes);
+		const updated = existing.update(changes);
 		this.schedules.save(updated);
 
 		return updated;
@@ -61,7 +55,7 @@ class ChangeScheduleStatus {
 
 	execute(bookId: string, scheduleId: string, status: 'active' | 'canceled' | 'paused'): ScheduledPayment {
 		const existing = requireSchedule(this.schedules, bookId, scheduleId);
-		const updated = transitionScheduleStatus(existing, status);
+		const updated = existing.transitionTo(status);
 		this.schedules.save(updated);
 
 		return updated;
@@ -94,9 +88,9 @@ class GenerateScheduleOccurrences {
 		const generated: ScheduleOccurrence[] = [];
 
 		while (generated.length < maxOccurrences) {
-			const dueDate = dueDateAtOccurrence(schedule, occurrenceNumber);
+			const dueDate = schedule.dueDateAtOccurrence(occurrenceNumber);
 			if (dueDate === undefined) {
-				this.schedules.save({ ...schedule, status: SCHEDULE_STATUS.COMPLETED });
+				this.schedules.save(schedule.transitionTo(SCHEDULE_STATUS.COMPLETED));
 				break;
 			}
 			if (dueDate > throughDate) {
@@ -107,8 +101,8 @@ class GenerateScheduleOccurrences {
 			if (this.occurrences.createIfAbsent(occurrence)) {
 				generated.push(occurrence);
 				occurrenceNumber += 1;
-				if (dueDateAtOccurrence(schedule, occurrenceNumber) === undefined) {
-					this.schedules.save({ ...schedule, status: SCHEDULE_STATUS.COMPLETED });
+				if (schedule.dueDateAtOccurrence(occurrenceNumber) === undefined) {
+					this.schedules.save(schedule.transitionTo(SCHEDULE_STATUS.COMPLETED));
 					break;
 				}
 				continue;

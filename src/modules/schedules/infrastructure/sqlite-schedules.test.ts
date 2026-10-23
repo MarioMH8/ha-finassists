@@ -81,6 +81,21 @@ describe('SQLite schedules', () => {
 		database.close();
 	});
 
+	it('restores persisted schedules as domain entities', () => {
+		const { database, schedules } = setup();
+		new CreateSchedule(schedules).execute({
+			accountId: 'account-1',
+			amountMinor: -1250,
+			bookId: 'book-1',
+			frequency: 'monthly',
+			id: 'schedule-1',
+			startDate: '2025-01-31',
+		});
+
+		expect(schedules.find({ bookId: 'book-1', id: 'schedule-1' })?.constructor.name).toBe('ScheduledPayment');
+		database.close();
+	});
+
 	it('updates a schedule without rewriting its generated occurrence history', () => {
 		const { database, occurrences, schedules } = setup();
 		const created = new CreateSchedule(schedules).execute({

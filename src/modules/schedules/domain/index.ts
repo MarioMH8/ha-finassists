@@ -1,18 +1,26 @@
-export {
-	createScheduledPayment,
-	type CreateScheduledPaymentInput,
-	dueDateAtOccurrence,
-	nextDueDate,
-	SCHEDULE_FREQUENCY,
-	SCHEDULE_STATUS,
-	type ScheduledPayment,
-	type ScheduleFrequency,
-	type ScheduleStatus,
-	transitionScheduleStatus,
-	updateScheduledPayment,
-	type UpdateScheduledPaymentInput,
-	validateScheduledPayment,
+export type {
+	CreateScheduledPaymentInput,
+	ScheduleFrequency,
+	ScheduleStatus,
+	UpdateScheduledPaymentInput,
 } from './schedule';
+export { SCHEDULE_FREQUENCY, SCHEDULE_STATUS, ScheduledPayment } from './schedule';
+export {
+	ScheduleAfterDateInvalidError,
+	ScheduleAmountInvalidError,
+	ScheduleDateRangeInvalidError,
+	ScheduleEndDateInvalidError,
+	ScheduleFrequencyInvalidError,
+	ScheduleIdentityInvalidError,
+	ScheduleIntervalInvalidError,
+	ScheduleOccurrenceLimitInvalidError,
+	ScheduleOccurrenceNumberInvalidError,
+	ScheduleOneTimeIntervalInvalidError,
+	ScheduleStartDateInvalidError,
+	ScheduleStatusInvalidError,
+	ScheduleTextInvalidError,
+	ScheduleTransitionInvalidError,
+} from './schedule.error';
 export type { ScheduleCriteria, ScheduleRepository } from './schedule.repository';
 export {
 	createScheduleOccurrence,

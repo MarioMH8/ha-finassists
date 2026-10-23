@@ -1,3 +1,20 @@
+import {
+	ScheduleAfterDateInvalidError,
+	ScheduleAmountInvalidError,
+	ScheduleDateRangeInvalidError,
+	ScheduleEndDateInvalidError,
+	ScheduleFrequencyInvalidError,
+	ScheduleIdentityInvalidError,
+	ScheduleIntervalInvalidError,
+	ScheduleOccurrenceLimitInvalidError,
+	ScheduleOccurrenceNumberInvalidError,
+	ScheduleOneTimeIntervalInvalidError,
+	ScheduleStartDateInvalidError,
+	ScheduleStatusInvalidError,
+	ScheduleTextInvalidError,
+	ScheduleTransitionInvalidError,
+} from './schedule.error';
+
 const SCHEDULE_FREQUENCY = {
 	DAILY: 'daily',
 	MONTHLY: 'monthly',
@@ -9,7 +26,7 @@ const SCHEDULE_FREQUENCY = {
 
 type ScheduleFrequency = (typeof SCHEDULE_FREQUENCY)[keyof typeof SCHEDULE_FREQUENCY];
 
-interface ScheduledPayment {
+interface ScheduledPaymentProperties {
 	accountId: string;
 	amountMinor: number;
 	bookId: string;
@@ -56,201 +73,253 @@ interface UpdateScheduledPaymentInput {
 	payee?: string;
 }
 
-function createScheduledPayment(
-	input: CreateScheduledPaymentInput,
-	createdAt = new Date().toISOString()
-): ScheduledPayment {
-	const schedule: ScheduledPayment = {
-		accountId: input.accountId,
-		amountMinor: input.amountMinor,
-		bookId: input.bookId,
-		createdAt,
-		endDate: input.endDate,
-		frequency: input.frequency,
-		id: input.id,
-		interval: input.interval ?? 1,
-		memo: input.memo?.trim() ?? '',
-		occurrenceLimit: input.occurrenceLimit ?? (input.frequency === SCHEDULE_FREQUENCY.ONE_TIME ? 1 : undefined),
-		payee: input.payee?.trim() ?? '',
-		startDate: input.startDate,
-		status: SCHEDULE_STATUS.ACTIVE,
-	};
-	validateScheduledPayment(schedule);
+class ScheduledPayment {
+	readonly accountId: string;
+	readonly amountMinor: number;
+	readonly bookId: string;
+	readonly createdAt: string;
+	readonly endDate?: string;
+	readonly frequency: ScheduleFrequency;
+	readonly id: string;
+	readonly interval: number;
+	readonly memo: string;
+	readonly occurrenceLimit?: number;
+	readonly payee: string;
+	readonly startDate: string;
+	readonly status: ScheduleStatus;
 
-	return schedule;
-}
-
-function updateScheduledPayment(schedule: ScheduledPayment, changes: UpdateScheduledPaymentInput): ScheduledPayment {
-	const updated = { ...schedule, ...changes };
-	validateScheduledPayment(updated);
-
-	return updated;
-}
-
-function transitionScheduleStatus(schedule: ScheduledPayment, status: ScheduleStatus): ScheduledPayment {
-	const allowedTransitions: Record<ScheduleStatus, ScheduleStatus[]> = {
-		[SCHEDULE_STATUS.ACTIVE]: [SCHEDULE_STATUS.PAUSED, SCHEDULE_STATUS.CANCELED],
-		[SCHEDULE_STATUS.CANCELED]: [],
-		[SCHEDULE_STATUS.COMPLETED]: [],
-		[SCHEDULE_STATUS.PAUSED]: [SCHEDULE_STATUS.ACTIVE, SCHEDULE_STATUS.CANCELED],
-	};
-	if (!allowedTransitions[schedule.status].includes(status)) {
-		throw new Error(`Cannot transition a ${schedule.status} schedule to ${status}`);
+	private constructor(properties: ScheduledPaymentProperties) {
+		this.accountId = properties.accountId;
+		this.amountMinor = properties.amountMinor;
+		this.bookId = properties.bookId;
+		this.createdAt = properties.createdAt;
+		this.endDate = properties.endDate;
+		this.frequency = properties.frequency;
+		this.id = properties.id;
+		this.interval = properties.interval;
+		this.memo = properties.memo;
+		this.occurrenceLimit = properties.occurrenceLimit;
+		this.payee = properties.payee;
+		this.startDate = properties.startDate;
+		this.status = properties.status;
 	}
 
-	return { ...schedule, status };
-}
+	static create(input: CreateScheduledPaymentInput, createdAt = new Date().toISOString()): ScheduledPayment {
+		return this.restore({
+			accountId: input.accountId,
+			amountMinor: input.amountMinor,
+			bookId: input.bookId,
+			createdAt,
+			endDate: input.endDate,
+			frequency: input.frequency,
+			id: input.id,
+			interval: input.interval ?? 1,
+			memo: input.memo?.trim() ?? '',
+			occurrenceLimit: input.occurrenceLimit ?? (input.frequency === SCHEDULE_FREQUENCY.ONE_TIME ? 1 : undefined),
+			payee: input.payee?.trim() ?? '',
+			startDate: input.startDate,
+			status: SCHEDULE_STATUS.ACTIVE,
+		});
+	}
 
-function dueDateAtOccurrence(schedule: ScheduledPayment, occurrenceNumber: number): string | undefined {
-	if (!Number.isSafeInteger(occurrenceNumber) || occurrenceNumber < 0) {
-		throw new Error('Occurrence number must be a non-negative safe integer');
-	}
-	if (schedule.frequency === SCHEDULE_FREQUENCY.ONE_TIME && occurrenceNumber > 0) {
-		return undefined;
-	}
-	if (schedule.occurrenceLimit !== undefined && occurrenceNumber >= schedule.occurrenceLimit) {
-		return undefined;
+	static restore(properties: ScheduledPaymentProperties): ScheduledPayment {
+		const schedule = new this(properties);
+		this.validate(schedule);
+
+		return schedule;
 	}
 
-	const start = parseCalendarDate(schedule.startDate);
-	if (!start) {
-		throw new Error('Schedule start date must be a valid YYYY-MM-DD calendar date');
-	}
-	const step = occurrenceNumber * schedule.interval;
-	let dueDate: string | undefined;
-
-	switch (schedule.frequency) {
-		case SCHEDULE_FREQUENCY.DAILY: {
-			dueDate = addDays(schedule.startDate, step);
-			break;
+	private static validate(schedule: ScheduledPayment): void {
+		if (!schedule.id.trim() || !schedule.bookId.trim() || !schedule.accountId.trim()) {
+			throw new ScheduleIdentityInvalidError();
 		}
-		case SCHEDULE_FREQUENCY.MONTHLY: {
-			dueDate = addMonths(start.year, start.month, start.day, step);
-			break;
+		if (!Object.values(SCHEDULE_FREQUENCY).includes(schedule.frequency)) {
+			throw new ScheduleFrequencyInvalidError();
 		}
-		case SCHEDULE_FREQUENCY.ONE_TIME: {
-			dueDate = schedule.startDate;
-			break;
+		if (!Object.values(SCHEDULE_STATUS).includes(schedule.status)) {
+			throw new ScheduleStatusInvalidError();
 		}
-		case SCHEDULE_FREQUENCY.QUARTERLY: {
-			dueDate = addMonths(start.year, start.month, start.day, step * 3);
-			break;
+		if (!Number.isSafeInteger(schedule.amountMinor) || schedule.amountMinor === 0) {
+			throw new ScheduleAmountInvalidError();
 		}
-		case SCHEDULE_FREQUENCY.WEEKLY: {
-			dueDate = addDays(schedule.startDate, step * 7);
-			break;
+		if (!Number.isSafeInteger(schedule.interval) || schedule.interval < 1) {
+			throw new ScheduleIntervalInvalidError();
 		}
-		case SCHEDULE_FREQUENCY.YEARLY: {
-			dueDate = addYear(start.year, start.month, start.day, step);
-			break;
+		if (schedule.frequency === SCHEDULE_FREQUENCY.ONE_TIME && schedule.interval !== 1) {
+			throw new ScheduleOneTimeIntervalInvalidError();
+		}
+		if (
+			schedule.occurrenceLimit !== undefined &&
+			(!Number.isSafeInteger(schedule.occurrenceLimit) || schedule.occurrenceLimit < 1)
+		) {
+			throw new ScheduleOccurrenceLimitInvalidError();
+		}
+		if (schedule.frequency === SCHEDULE_FREQUENCY.ONE_TIME && schedule.occurrenceLimit !== 1) {
+			throw new ScheduleOccurrenceLimitInvalidError();
+		}
+		if (schedule.payee.length > 120 || schedule.memo.length > 500) {
+			throw new ScheduleTextInvalidError();
+		}
+		if (!parseCalendarDate(schedule.startDate)) {
+			throw new ScheduleStartDateInvalidError();
+		}
+		if (schedule.endDate !== undefined) {
+			if (!parseCalendarDate(schedule.endDate)) {
+				throw new ScheduleEndDateInvalidError();
+			}
+			if (schedule.endDate < schedule.startDate) {
+				throw new ScheduleDateRangeInvalidError();
+			}
 		}
 	}
 
-	return dueDate !== undefined && schedule.endDate !== undefined && dueDate > schedule.endDate ? undefined : dueDate;
-}
-
-function nextDueDate(schedule: ScheduledPayment, afterDate?: string, occurrenceNumber = 0): string | undefined {
-	if (afterDate !== undefined && !parseCalendarDate(afterDate)) {
-		throw new Error('After date must be a valid YYYY-MM-DD calendar date');
-	}
-
-	let index =
-		afterDate === undefined
-			? occurrenceNumber
-			: Math.max(occurrenceNumber, estimateOccurrenceIndex(schedule, afterDate));
-	while (Number.isSafeInteger(index)) {
-		const dueDate = dueDateAtOccurrence(schedule, index);
-		if (dueDate === undefined) {
+	dueDateAtOccurrence(occurrenceNumber: number): string | undefined {
+		if (!Number.isSafeInteger(occurrenceNumber) || occurrenceNumber < 0) {
+			throw new ScheduleOccurrenceNumberInvalidError();
+		}
+		if (this.frequency === SCHEDULE_FREQUENCY.ONE_TIME && occurrenceNumber > 0) {
 			return undefined;
 		}
-		if (afterDate === undefined || dueDate > afterDate) {
-			return dueDate;
+		if (this.occurrenceLimit !== undefined && occurrenceNumber >= this.occurrenceLimit) {
+			return undefined;
 		}
-		index += 1;
+
+		const start = parseCalendarDate(this.startDate);
+		if (!start) {
+			throw new ScheduleStartDateInvalidError();
+		}
+		const step = occurrenceNumber * this.interval;
+		let dueDate: string | undefined;
+
+		switch (this.frequency) {
+			case SCHEDULE_FREQUENCY.DAILY: {
+				dueDate = addDays(this.startDate, step);
+				break;
+			}
+			case SCHEDULE_FREQUENCY.MONTHLY: {
+				dueDate = addMonths(start.year, start.month, start.day, step);
+				break;
+			}
+			case SCHEDULE_FREQUENCY.ONE_TIME: {
+				dueDate = this.startDate;
+				break;
+			}
+			case SCHEDULE_FREQUENCY.QUARTERLY: {
+				dueDate = addMonths(start.year, start.month, start.day, step * 3);
+				break;
+			}
+			case SCHEDULE_FREQUENCY.WEEKLY: {
+				dueDate = addDays(this.startDate, step * 7);
+				break;
+			}
+			case SCHEDULE_FREQUENCY.YEARLY: {
+				dueDate = addYear(start.year, start.month, start.day, step);
+				break;
+			}
+		}
+
+		return dueDate !== undefined && this.endDate !== undefined && dueDate > this.endDate ? undefined : dueDate;
 	}
 
-	return undefined;
-}
+	nextDueDate(afterDate?: string, occurrenceNumber = 0): string | undefined {
+		if (afterDate !== undefined && !parseCalendarDate(afterDate)) {
+			throw new ScheduleAfterDateInvalidError();
+		}
 
-function estimateOccurrenceIndex(schedule: ScheduledPayment, afterDate: string): number {
-	if (afterDate < schedule.startDate || schedule.frequency === SCHEDULE_FREQUENCY.ONE_TIME) {
-		return 0;
-	}
-	const start = parseCalendarDate(schedule.startDate);
-	const after = parseCalendarDate(afterDate);
-	if (!start || !after) {
-		return 0;
-	}
+		let index =
+			afterDate === undefined
+				? occurrenceNumber
+				: Math.max(occurrenceNumber, this.estimateOccurrenceIndex(afterDate));
+		while (Number.isSafeInteger(index)) {
+			const dueDate = this.dueDateAtOccurrence(index);
+			if (dueDate === undefined) {
+				return undefined;
+			}
+			if (afterDate === undefined || dueDate > afterDate) {
+				return dueDate;
+			}
+			index += 1;
+		}
 
-	let estimate: number;
-	switch (schedule.frequency) {
-		case SCHEDULE_FREQUENCY.DAILY:
-		case SCHEDULE_FREQUENCY.WEEKLY: {
-			const differenceDays =
-				(new Date(`${afterDate}T00:00:00.000Z`).getTime() -
-					new Date(`${schedule.startDate}T00:00:00.000Z`).getTime()) /
-				86_400_000;
-			const intervalDays = schedule.interval * (schedule.frequency === SCHEDULE_FREQUENCY.WEEKLY ? 7 : 1);
-			estimate = Math.floor(differenceDays / intervalDays);
-			break;
-		}
-		case SCHEDULE_FREQUENCY.MONTHLY:
-		case SCHEDULE_FREQUENCY.QUARTERLY: {
-			const differenceMonths = (after.year - start.year) * 12 + after.month - start.month;
-			const intervalMonths = schedule.interval * (schedule.frequency === SCHEDULE_FREQUENCY.QUARTERLY ? 3 : 1);
-			estimate = Math.floor(differenceMonths / intervalMonths);
-			break;
-		}
-		case SCHEDULE_FREQUENCY.YEARLY: {
-			estimate = Math.floor((after.year - start.year) / schedule.interval);
-			break;
-		}
+		return undefined;
 	}
 
-	return Number.isSafeInteger(estimate) ? Math.max(0, estimate) : Number.MAX_SAFE_INTEGER;
-}
+	transitionTo(status: ScheduleStatus): ScheduledPayment {
+		const allowedTransitions: Record<ScheduleStatus, ScheduleStatus[]> = {
+			[SCHEDULE_STATUS.ACTIVE]: [SCHEDULE_STATUS.PAUSED, SCHEDULE_STATUS.CANCELED, SCHEDULE_STATUS.COMPLETED],
+			[SCHEDULE_STATUS.CANCELED]: [],
+			[SCHEDULE_STATUS.COMPLETED]: [],
+			[SCHEDULE_STATUS.PAUSED]: [SCHEDULE_STATUS.ACTIVE, SCHEDULE_STATUS.CANCELED],
+		};
+		if (!allowedTransitions[this.status].includes(status)) {
+			throw new ScheduleTransitionInvalidError(this.status, status);
+		}
 
-function validateScheduledPayment(schedule: ScheduledPayment): void {
-	if (!schedule.id.trim() || !schedule.bookId.trim() || !schedule.accountId.trim()) {
-		throw new Error('Schedule id, book id, and account id must not be empty');
+		return this.with({ status });
 	}
-	if (!Object.values(SCHEDULE_FREQUENCY).includes(schedule.frequency)) {
-		throw new Error('Schedule frequency is not supported');
+
+	update(changes: UpdateScheduledPaymentInput): ScheduledPayment {
+		return this.with(changes);
 	}
-	if (!Object.values(SCHEDULE_STATUS).includes(schedule.status)) {
-		throw new Error('Schedule status is not supported');
-	}
-	if (!Number.isSafeInteger(schedule.amountMinor) || schedule.amountMinor === 0) {
-		throw new Error('Schedule amount must be a non-zero safe integer number of minor units');
-	}
-	if (!Number.isSafeInteger(schedule.interval) || schedule.interval < 1) {
-		throw new Error('Schedule interval must be a positive safe integer');
-	}
-	if (schedule.frequency === SCHEDULE_FREQUENCY.ONE_TIME && schedule.interval !== 1) {
-		throw new Error('One-time schedules must have an interval of one');
-	}
-	if (
-		schedule.occurrenceLimit !== undefined &&
-		(!Number.isSafeInteger(schedule.occurrenceLimit) || schedule.occurrenceLimit < 1)
-	) {
-		throw new Error('Occurrence limit must be a positive safe integer');
-	}
-	if (schedule.frequency === SCHEDULE_FREQUENCY.ONE_TIME && schedule.occurrenceLimit !== 1) {
-		throw new Error('One-time schedules must have exactly one occurrence');
-	}
-	if (schedule.payee.length > 120 || schedule.memo.length > 500) {
-		throw new Error('Schedule payee or memo exceeds its maximum length');
-	}
-	if (!parseCalendarDate(schedule.startDate)) {
-		throw new Error('Schedule start date must be a valid YYYY-MM-DD calendar date');
-	}
-	if (schedule.endDate !== undefined) {
-		if (!parseCalendarDate(schedule.endDate)) {
-			throw new Error('Schedule end date must be a valid YYYY-MM-DD calendar date');
+
+	private estimateOccurrenceIndex(afterDate: string): number {
+		if (afterDate < this.startDate || this.frequency === SCHEDULE_FREQUENCY.ONE_TIME) {
+			return 0;
 		}
-		if (schedule.endDate < schedule.startDate) {
-			throw new Error('Schedule end date must not be before its start date');
+		const start = parseCalendarDate(this.startDate);
+		const after = parseCalendarDate(afterDate);
+		if (!start || !after) {
+			return 0;
 		}
+
+		let estimate: number;
+		switch (this.frequency) {
+			case SCHEDULE_FREQUENCY.DAILY:
+			case SCHEDULE_FREQUENCY.WEEKLY: {
+				const differenceDays =
+					(new Date(`${afterDate}T00:00:00.000Z`).getTime() -
+						new Date(`${this.startDate}T00:00:00.000Z`).getTime()) /
+					86_400_000;
+				const intervalDays = this.interval * (this.frequency === SCHEDULE_FREQUENCY.WEEKLY ? 7 : 1);
+				estimate = Math.floor(differenceDays / intervalDays);
+				break;
+			}
+			case SCHEDULE_FREQUENCY.MONTHLY:
+			case SCHEDULE_FREQUENCY.QUARTERLY: {
+				const differenceMonths = (after.year - start.year) * 12 + after.month - start.month;
+				const intervalMonths = this.interval * (this.frequency === SCHEDULE_FREQUENCY.QUARTERLY ? 3 : 1);
+				estimate = Math.floor(differenceMonths / intervalMonths);
+				break;
+			}
+			case SCHEDULE_FREQUENCY.YEARLY: {
+				estimate = Math.floor((after.year - start.year) / this.interval);
+				break;
+			}
+		}
+
+		return Number.isSafeInteger(estimate) ? Math.max(0, estimate) : Number.MAX_SAFE_INTEGER;
+	}
+
+	private with(changes: Partial<ScheduledPaymentProperties>): ScheduledPayment {
+		const updated = new ScheduledPayment({
+			accountId: this.accountId,
+			amountMinor: this.amountMinor,
+			bookId: this.bookId,
+			createdAt: this.createdAt,
+			endDate: this.endDate,
+			frequency: this.frequency,
+			id: this.id,
+			interval: this.interval,
+			memo: this.memo,
+			occurrenceLimit: this.occurrenceLimit,
+			payee: this.payee,
+			startDate: this.startDate,
+			status: this.status,
+			...changes,
+		});
+		ScheduledPayment.validate(updated);
+
+		return updated;
 	}
 }
 
@@ -319,18 +388,5 @@ function formatCalendarDate(year: number, month: number, day: number): string {
 	return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-export {
-	createScheduledPayment,
-	type CreateScheduledPaymentInput,
-	dueDateAtOccurrence,
-	nextDueDate,
-	SCHEDULE_FREQUENCY,
-	SCHEDULE_STATUS,
-	type ScheduledPayment,
-	type ScheduleFrequency,
-	type ScheduleStatus,
-	transitionScheduleStatus,
-	updateScheduledPayment,
-	type UpdateScheduledPaymentInput,
-	validateScheduledPayment,
-};
+export { SCHEDULE_FREQUENCY, SCHEDULE_STATUS, ScheduledPayment };
+export type { CreateScheduledPaymentInput, ScheduleFrequency, ScheduleStatus, UpdateScheduledPaymentInput };
