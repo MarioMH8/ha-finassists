@@ -9,6 +9,6 @@ export class AuthenticateApiToken {
 	async execute(secret: string): Promise<ApiToken | undefined> {
 		const hash = await this.tokenCredentialService.hash(secret);
 
-		return this.apiTokenRepository.findByHash(hash);
+		return this.apiTokenRepository.find({ secretHash: hash });
 	}
 }

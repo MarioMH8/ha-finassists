@@ -9,6 +9,6 @@ export class RevokeApiToken {
 	constructor(private readonly apiTokenRepository: ApiTokenRepository) {}
 
 	async execute(parameters: RevokeApiTokenParameters): Promise<boolean> {
-		return this.apiTokenRepository.deleteByIdAndOwner(parameters.id, parameters.ownerId);
+		return this.apiTokenRepository.delete({ id: parameters.id, ownerId: parameters.ownerId });
 	}
 }

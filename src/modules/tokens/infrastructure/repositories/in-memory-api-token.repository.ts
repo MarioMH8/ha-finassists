@@ -1,45 +1,40 @@
-import type { ApiToken, ApiTokenRepository } from '../../domain';
+import type { ApiToken, ApiTokenCriteria, ApiTokenDeleteCriteria, ApiTokenRepository } from '../../domain';
 
 export class InMemoryApiTokenRepository implements ApiTokenRepository {
 	private readonly tokens = new Map<string, ApiToken>();
 
-	async deleteByIdAndOwner(id: string, ownerId: string): Promise<boolean> {
+	async delete({ id, ownerId }: ApiTokenDeleteCriteria): Promise<boolean> {
 		const isOwnedByActor = this.tokens.get(id)?.ownerId === ownerId;
-
 		const isDeleted = isOwnedByActor && this.tokens.delete(id);
 		await Promise.resolve();
 
 		return isDeleted;
 	}
 
-	async findAllByOwner(ownerId: string): Promise<ApiToken[]> {
-		const tokens: ApiToken[] = [];
-		for (const token of this.tokens.values()) {
-			if (token.ownerId === ownerId) {
-				tokens.push(token);
-			}
-		}
+	async find(criteria: ApiTokenCriteria): Promise<ApiToken | undefined> {
+		const tokens = await this.search(criteria);
 
-		await Promise.resolve();
-
-		return tokens;
-	}
-
-	async findByHash(hash: string): Promise<ApiToken | undefined> {
-		let matchingToken: ApiToken | undefined;
-		for (const token of this.tokens.values()) {
-			if (token.secretHash === hash) {
-				matchingToken = token;
-				break;
-			}
-		}
-		await Promise.resolve();
-
-		return matchingToken;
+		return tokens[0];
 	}
 
 	async save(token: ApiToken): Promise<void> {
 		this.tokens.set(token.id, token);
 		await Promise.resolve();
+	}
+
+	async search(criteria: ApiTokenCriteria = {}): Promise<ApiToken[]> {
+		const tokens = this.tokens
+			.values()
+			.filter(
+				token =>
+					(criteria.id === undefined || token.id === criteria.id) &&
+					(criteria.ownerId === undefined || token.ownerId === criteria.ownerId) &&
+					(criteria.secretHash === undefined || token.secretHash === criteria.secretHash)
+			)
+			.toArray()
+			.toSorted((left, right) => right.createdAt.localeCompare(left.createdAt));
+		await Promise.resolve();
+
+		return tokens;
 	}
 }

@@ -12,7 +12,7 @@ describe('IssueApiToken', () => {
 			const parameters = IssueApiTokenParametersMother.create();
 
 			const issued = await useCase.execute(parameters);
-			const [stored] = await repository.findAllByOwner(parameters.ownerId);
+			const [stored] = await repository.search({ ownerId: parameters.ownerId });
 
 			expect(issued.secret).toBe('fa_test_secret');
 			expect(stored.secretHash).toBe('hash:fa_test_secret');

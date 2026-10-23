@@ -16,7 +16,7 @@ describe('RevokeApiToken', () => {
 			const isRevoked = await useCase.execute(parameters);
 
 			expect(isRevoked).toBe(false);
-			expect(await repository.findAllByOwner('user-2')).toHaveLength(1);
+			expect(await repository.search({ ownerId: 'user-2' })).toHaveLength(1);
 		});
 	});
 });

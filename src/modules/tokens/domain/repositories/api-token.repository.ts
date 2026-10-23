@@ -1,8 +1,21 @@
 import type { ApiToken } from '../api-token';
 
-export interface ApiTokenRepository {
-	deleteByIdAndOwner(id: string, ownerId: string): Promise<boolean>;
-	findAllByOwner(ownerId: string): Promise<ApiToken[]>;
-	findByHash(hash: string): Promise<ApiToken | undefined>;
-	save(token: ApiToken): Promise<void>;
+interface ApiTokenCriteria {
+	id?: string;
+	ownerId?: string;
+	secretHash?: string;
 }
+
+interface ApiTokenDeleteCriteria {
+	id: string;
+	ownerId: string;
+}
+
+interface ApiTokenRepository {
+	delete(criteria: ApiTokenDeleteCriteria): Promise<boolean>;
+	find(criteria: ApiTokenCriteria): Promise<ApiToken | undefined>;
+	save(token: ApiToken): Promise<void>;
+	search(criteria?: ApiTokenCriteria): Promise<ApiToken[]>;
+}
+
+export type { ApiTokenCriteria, ApiTokenDeleteCriteria, ApiTokenRepository };
