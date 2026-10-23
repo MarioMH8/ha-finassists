@@ -1,4 +1,4 @@
-import type { Budget } from './budget';
+import type { Budget } from '../budget';
 
 interface BudgetCriteria {
 	accountId?: string;

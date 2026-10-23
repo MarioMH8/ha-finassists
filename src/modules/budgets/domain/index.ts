@@ -18,4 +18,9 @@ export {
 	BudgetPeriodOverlapError,
 	BudgetPlannedAmountInvalidError,
 } from './budget.error';
-export type { BudgetActualsQuery, BudgetCriteria, BudgetDeleteCriteria, BudgetRepository } from './budget.repository';
+export type {
+	BudgetActualsQuery,
+	BudgetCriteria,
+	BudgetDeleteCriteria,
+	BudgetRepository,
+} from './repositories/budget.repository';

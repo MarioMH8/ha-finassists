@@ -1,3 +1,8 @@
+export type { ScheduleCriteria, ScheduleRepository } from './repositories/schedule.repository';
+export type {
+	ScheduleOccurrenceCriteria,
+	ScheduleOccurrenceRepository,
+} from './repositories/schedule-occurrence.repository';
 export type {
 	CreateScheduledPaymentInput,
 	ScheduleFrequency,
@@ -21,7 +26,6 @@ export {
 	ScheduleTextInvalidError,
 	ScheduleTransitionInvalidError,
 } from './schedule.error';
-export type { ScheduleCriteria, ScheduleRepository } from './schedule.repository';
 export {
 	type LedgerTransactionReference,
 	OCCURRENCE_STATUS,
@@ -45,4 +49,3 @@ export {
 	ScheduleOccurrenceTransitionInvalidError,
 	ScheduleOccurrenceUnavailableError,
 } from './schedule-occurrence.error';
-export type { ScheduleOccurrenceRepository } from './schedule-occurrence.repository';

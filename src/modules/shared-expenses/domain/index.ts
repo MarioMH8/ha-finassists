@@ -11,6 +11,11 @@ export {
 	SharedExpenseParticipantNameInvalidError,
 	SharedExpenseParticipantNotFoundError,
 } from './participant.error';
+export type {
+	ListSharedExpenseParticipantsOptions,
+	ListSharedExpensesOptions,
+	SharedExpenseRepository,
+} from './repositories/shared-expense.repository';
 export {
 	type BuildSharedExpenseInput,
 	SHARED_EXPENSE_ACTOR_KIND,
@@ -44,8 +49,3 @@ export {
 	SharedExpenseSettlementTransitionInvalidError,
 	SharedExpenseTransitionInvalidError,
 } from './shared-expense.error';
-export type {
-	ListSharedExpenseParticipantsOptions,
-	ListSharedExpensesOptions,
-	SharedExpenseRepository,
-} from './shared-expense.repository';

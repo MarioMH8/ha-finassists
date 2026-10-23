@@ -1,8 +1,8 @@
 import type { LedgerRepository } from '../../ledger/domain';
+import type { ScheduleOccurrenceRepository, ScheduleRepository } from '../domain';
 import type { CreateScheduledPaymentInput, UpdateScheduledPaymentInput } from '../domain/schedule';
 import { SCHEDULE_STATUS, ScheduledPayment } from '../domain/schedule';
 import { ScheduleNotFoundError } from '../domain/schedule.error';
-import type { ScheduleRepository } from '../domain/schedule.repository';
 import type { LedgerTransactionReference } from '../domain/schedule-occurrence';
 import { ScheduleOccurrence } from '../domain/schedule-occurrence';
 import {
@@ -13,7 +13,6 @@ import {
 	ScheduleOccurrenceLedgerTransactionNotFoundError,
 	ScheduleOccurrenceNotFoundError,
 } from '../domain/schedule-occurrence.error';
-import type { ScheduleOccurrenceRepository } from '../domain/schedule-occurrence.repository';
 
 class CreateSchedule {
 	constructor(private readonly schedules: ScheduleRepository) {}

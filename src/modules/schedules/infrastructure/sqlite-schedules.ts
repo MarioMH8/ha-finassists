@@ -1,17 +1,19 @@
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
-import type { ScheduleFrequency, ScheduleStatus } from '../domain/schedule';
-import { ScheduledPayment } from '../domain/schedule';
-import type { ScheduleCriteria, ScheduleRepository } from '../domain/schedule.repository';
+import type {
+	ScheduleCriteria,
+	ScheduleFrequency,
+	ScheduleOccurrenceCriteria,
+	ScheduleOccurrenceRepository,
+	ScheduleRepository,
+	ScheduleStatus,
+} from '../domain';
+import { ScheduledPayment } from '../domain';
 import { ScheduleOccurrence } from '../domain/schedule-occurrence';
 import {
 	ScheduleOccurrenceIdentityConflictError,
 	ScheduleOccurrenceLinkConflictError,
 } from '../domain/schedule-occurrence.error';
-import type {
-	ScheduleOccurrenceCriteria,
-	ScheduleOccurrenceRepository,
-} from '../domain/schedule-occurrence.repository';
 
 interface ScheduleRow {
 	account_id: string;
