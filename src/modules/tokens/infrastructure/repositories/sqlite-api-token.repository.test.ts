@@ -1,3 +1,4 @@
+import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
@@ -12,6 +13,7 @@ describe('SqliteApiTokenRepository', () => {
 	describe('save', () => {
 		it('persists tokens and retrieves them by owner and secret hash', async () => {
 			database = new Database(':memory:');
+			migrateDatabase(database);
 			const repository = new SqliteApiTokenRepository(database);
 			const token = ApiTokenMother.create({ id: 'token-1', ownerId: 'user-1', secretHash: 'sha256-hash' });
 

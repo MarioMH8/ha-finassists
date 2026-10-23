@@ -11,12 +11,48 @@ describe('loadServerConfig', () => {
 		});
 
 		expect(config).toEqual({
+			appShellSettings: { applicationName: 'Fin Assist', showLogo: true, showNavigation: true },
+			bootstrapCapability: undefined,
 			databasePath: '/data/fin-assist.sqlite',
 			developmentActor: undefined,
 			developmentMode: false,
 			port: 8099,
+			supervisorToken: undefined,
 			trustedIngressIp: DEFAULT_TRUSTED_INGRESS_IP,
 		});
+	});
+
+	it('accepts a Supervisor token for add-on discovery provisioning', async () => {
+		const config = await loadServerConfig({
+			environment: { NODE_ENV: 'production', SUPERVISOR_TOKEN: 'supervisor-token' },
+			optionsPath: './data/fin-assist-options-not-found.json',
+		});
+
+		expect(config.supervisorToken).toBe('supervisor-token');
+	});
+
+	it('accepts a valid Supervisor IP override', async () => {
+		const config = await loadServerConfig({
+			environment: { NODE_ENV: 'production', SUPERVISOR_IP: '192.168.1.10' },
+			optionsPath: '/tmp/fin-assist-options-not-found.json',
+		});
+
+		expect(config.trustedIngressIp).toBe('192.168.1.10');
+	});
+
+	it('rejects an invalid Supervisor IP override', async () => {
+		let configError: unknown;
+		try {
+			await loadServerConfig({
+				environment: { NODE_ENV: 'production', SUPERVISOR_IP: '[invalid]' },
+				optionsPath: '/tmp/fin-assist-options-not-found.json',
+			});
+		} catch (error) {
+			configError = error;
+		}
+
+		expect(configError).toBeInstanceOf(Error);
+		expect((configError as Error).message).toBe('SUPERVISOR_IP must contain a valid IPv4 or IPv6 address');
 	});
 
 	it('rejects development identity configuration outside development mode', async () => {

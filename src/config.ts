@@ -1,13 +1,18 @@
 import { isIP } from 'node:net';
 
+import type { AppShellSettings } from '@modules/app-configuration/domain';
+import { DEFAULT_APP_SHELL_SETTINGS } from '@modules/app-configuration/domain';
 import type { HomeAssistantActor } from '@modules/home-assistant';
 import { DEFAULT_TRUSTED_INGRESS_IP } from '@modules/home-assistant';
 
 interface ServerConfig {
+	appShellSettings: AppShellSettings;
+	bootstrapCapability: string | undefined;
 	databasePath: string;
 	developmentActor: HomeAssistantActor | undefined;
 	developmentMode: boolean;
 	port: number;
+	supervisorToken: string | undefined;
 	trustedIngressIp: string;
 }
 
@@ -19,6 +24,8 @@ interface ServerEnvironment {
 	NODE_ENV?: string;
 	PORT?: string;
 	SUPERVISOR_IP?: string;
+	SUPERVISOR_TOKEN?: string;
+	SYSTEM_CREDENTIAL_BOOTSTRAP_CAPABILITY?: string;
 }
 
 interface LoadServerConfigOptions {
@@ -38,6 +45,17 @@ async function readOptions(optionsPath: string): Promise<unknown> {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function hasControlCharacters(value: string): boolean {
+	for (const character of value) {
+		const codePoint = character.codePointAt(0) ?? 0;
+		if (codePoint === 127 || codePoint <= 31) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function readOptionalEnvironmentValue(value: string | undefined): string | undefined {
@@ -87,8 +105,31 @@ async function loadServerConfig({
 		DEFAULT_TRUSTED_INGRESS_IP;
 	const trustedIngressIp = configuredIp.trim();
 
-	if (!isDevelopment && isIP(trustedIngressIp) === 0) {
+	if (isIP(trustedIngressIp) === 0) {
 		throw new Error('SUPERVISOR_IP must contain a valid IPv4 or IPv6 address');
+	}
+
+	const configuredName =
+		isRecord(options) && typeof options.application_name === 'string' ? options.application_name : '';
+	const normalizedName = configuredName.trim();
+	const appShellSettings: AppShellSettings = {
+		applicationName:
+			normalizedName.length > 0 && normalizedName.length <= 80 && !hasControlCharacters(normalizedName)
+				? normalizedName
+				: DEFAULT_APP_SHELL_SETTINGS.applicationName,
+		showLogo:
+			isRecord(options) && typeof options.show_logo === 'boolean'
+				? options.show_logo
+				: DEFAULT_APP_SHELL_SETTINGS.showLogo,
+		showNavigation:
+			isRecord(options) && typeof options.show_navigation === 'boolean'
+				? options.show_navigation
+				: DEFAULT_APP_SHELL_SETTINGS.showNavigation,
+	};
+
+	const bootstrapCapability = readOptionalEnvironmentValue(environment.SYSTEM_CREDENTIAL_BOOTSTRAP_CAPABILITY);
+	if (bootstrapCapability !== undefined && bootstrapCapability.length < 32) {
+		throw new Error('SYSTEM_CREDENTIAL_BOOTSTRAP_CAPABILITY must contain at least 32 characters');
 	}
 
 	const port = environment.PORT === undefined ? 8099 : Number(environment.PORT);
@@ -97,10 +138,13 @@ async function loadServerConfig({
 	}
 
 	return {
+		appShellSettings,
+		bootstrapCapability,
 		databasePath,
 		developmentActor: isDevelopment ? createDevelopmentActor(environment) : undefined,
 		developmentMode: isDevelopment,
 		port,
+		supervisorToken: readOptionalEnvironmentValue(environment.SUPERVISOR_TOKEN),
 		trustedIngressIp,
 	};
 }

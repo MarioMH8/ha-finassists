@@ -30,6 +30,37 @@
   font-weight: 500;
 }
 
+nav {
+  display: flex;
+  gap: 8px;
+  padding: 10px 24px 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+nav button {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+nav button[aria-current='page'] {
+  border-bottom-color: var(--accent);
+  color: var(--primary-text-color, #202124);
+  font-weight: 650;
+}
+
+nav button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
 .main-content {
   display: grid;
   width: min(100% - 32px, 760px);
@@ -46,6 +77,11 @@
 @media (max-width: 540px) {
   .app-header {
     padding: 0 16px;
+  }
+
+  nav {
+    padding-right: 16px;
+    padding-left: 16px;
   }
 
   .main-content {

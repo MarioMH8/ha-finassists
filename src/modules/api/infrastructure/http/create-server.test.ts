@@ -1,5 +1,17 @@
-import { IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
+import { migrateDatabase } from '@modules/storage/infrastructure';
+import {
+	AuthenticateSystemCredential,
+	ExchangeSystemCredential,
+	RevokeSystemCredential,
+	RotateSystemCredential,
+} from '@modules/system-credentials/application';
+import {
+	SqliteSystemCredentialRepository,
+	WebCryptoSystemCredentialService,
+} from '@modules/system-credentials/infrastructure';
+import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
 import { InMemoryApiTokenRepository, WebCryptoTokenCredentialService } from '@modules/tokens/infrastructure';
+import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
 import { createServer } from './create-server';
@@ -41,15 +53,39 @@ function isTokenMetadataList(value: unknown): value is TokenMetadataResponse[] {
 function createTokenUseCases() {
 	const repository = new InMemoryApiTokenRepository();
 
+	const credentialService = new WebCryptoTokenCredentialService();
+
 	return {
-		issue: new IssueApiToken(repository, new WebCryptoTokenCredentialService()),
+		authenticate: new AuthenticateApiToken(repository, credentialService),
+		issue: new IssueApiToken(repository, credentialService),
 		list: new ListApiTokens(repository),
+		repository,
 		revoke: new RevokeApiToken(repository),
 	};
 }
 
 describe('createServer', () => {
 	let server!: ReturnType<typeof createServer>;
+	let systemDatabase: Database | undefined;
+
+	async function createSystemCredentialUseCases(capability: string) {
+		systemDatabase = new Database(':memory:');
+		migrateDatabase(systemDatabase);
+		const repository = new SqliteSystemCredentialRepository(systemDatabase);
+		const service = new WebCryptoSystemCredentialService();
+		repository.configureBootstrapCapability(
+			await service.hash(capability),
+			new Date(Date.now() + 60_000).toISOString()
+		);
+		const now = () => new Date();
+
+		return {
+			authenticate: new AuthenticateSystemCredential(repository, service),
+			exchange: new ExchangeSystemCredential(repository, service, now),
+			revoke: new RevokeSystemCredential(repository, service),
+			rotate: new RotateSystemCredential(repository, service, now),
+		};
+	}
 
 	function requestUrl(pathname: string): URL {
 		const url = new URL(pathname, server.url);
@@ -60,6 +96,8 @@ describe('createServer', () => {
 
 	afterEach(async () => {
 		await server.stop(true);
+		systemDatabase?.close();
+		systemDatabase = undefined;
 	});
 
 	it('uses the configured development actor and bypasses Ingress peer checks', async () => {
@@ -73,7 +111,7 @@ describe('createServer', () => {
 			developmentMode: true,
 			port: 0,
 			tokenUseCases: createTokenUseCases(),
-			trustedIngressIp: '[IP_ADDRESS]',
+			trustedIngressIp: '172.30.32.2',
 		});
 
 		const [pageResponse, sessionResponse, tokenResponse, reloadResponse, versionResponse] = await Promise.all([
@@ -102,6 +140,71 @@ describe('createServer', () => {
 			username: 'dev',
 		});
 		expect(tokenResponse.status).toBe(200);
+	});
+
+	it('exchanges, rotates, and revokes the dedicated system credential', async () => {
+		const capability = 'random-bootstrap-capability-value-of-at-least-32-characters';
+		const systemCredentialUseCases = await createSystemCredentialUseCases(capability);
+		server = createServer({
+			port: 0,
+			systemCredentialUseCases,
+			tokenUseCases: createTokenUseCases(),
+			trustedIngressIp: '[IP_ADDRESS]',
+		});
+
+		const exchangeResponse = await fetch(new URL('/api/v1/system-credentials/exchange', server.url), {
+			body: JSON.stringify({ bootstrapCapability: capability }),
+			headers: { 'Content-Type': 'application/json' },
+			method: 'POST',
+		});
+		const exchanged = (await exchangeResponse.json()) as { credential: string; id: string };
+		expect(exchangeResponse.status).toBe(201);
+		expect(exchangeResponse.headers.get('cache-control')).toBe('no-store');
+		expect(exchanged.id).toBe('home-assistant-integration');
+		expect(exchanged.credential.startsWith('fa_system_')).toBe(true);
+
+		const replayResponse = await fetch(new URL('/api/v1/system-credentials/exchange', server.url), {
+			body: JSON.stringify({ bootstrapCapability: capability }),
+			headers: { 'Content-Type': 'application/json' },
+			method: 'POST',
+		});
+		expect(replayResponse.status).toBe(401);
+
+		const personalTokens = createTokenUseCases();
+		const personal = await personalTokens.issue.execute({ name: 'Personal', ownerId: 'user-1' });
+		const personalRotationResponse = await fetch(new URL('/api/v1/system-credentials/current', server.url), {
+			headers: { Authorization: `Bearer ${personal.secret}` },
+			method: 'PUT',
+		});
+		expect(personalRotationResponse.status).toBe(401);
+
+		const rotateResponse = await fetch(new URL('/api/v1/system-credentials/current', server.url), {
+			headers: { Authorization: `Bearer ${exchanged.credential}` },
+			method: 'PUT',
+		});
+		const rotated = (await rotateResponse.json()) as { credential: string; id: string };
+		expect(rotateResponse.status).toBe(200);
+		expect(rotated.id).toBe('home-assistant-integration');
+		expect(rotated.credential).not.toBe(exchanged.credential);
+
+		const oldCredentialResponse = await fetch(new URL('/api/v1/books', server.url), {
+			headers: { Authorization: `Bearer ${exchanged.credential}` },
+		});
+		const activeCredentialResponse = await fetch(new URL('/api/v1/books', server.url), {
+			headers: { Authorization: `Bearer ${rotated.credential}` },
+		});
+		expect(oldCredentialResponse.status).toBe(401);
+		expect(activeCredentialResponse.status).toBe(404);
+
+		const revokeResponse = await fetch(new URL('/api/v1/system-credentials/current', server.url), {
+			headers: { Authorization: `Bearer ${rotated.credential}` },
+			method: 'DELETE',
+		});
+		expect(revokeResponse.status).toBe(204);
+		const revokedCredentialResponse = await fetch(new URL('/api/v1/books', server.url), {
+			headers: { Authorization: `Bearer ${rotated.credential}` },
+		});
+		expect(revokedCredentialResponse.status).toBe(401);
 	});
 
 	it('serves the health endpoint', async () => {
@@ -148,7 +251,7 @@ describe('createServer', () => {
 		expect(response.status).toBe(200);
 		expect(response.headers.get('vary')).toContain('Accept-Language');
 		expect(html).toContain('<html lang="es">');
-		expect(html).toContain('Conecta tus herramientas de forma segura');
+		expect(html).toContain('Tus finanzas, a la vista');
 		expect(html).toContain('data-language="es"');
 		expect(html).toContain('id="root"');
 		expect(html).toContain('src="./client.js"');
@@ -182,6 +285,33 @@ describe('createServer', () => {
 		}
 		expect(script).toContain(moduleClass);
 		expect(stylesheet).toContain(`.${moduleClass}`);
+	});
+
+	it('requires a valid bearer token for external financial API requests', async () => {
+		const tokenUseCases = createTokenUseCases();
+		const issued = await tokenUseCases.issue.execute({ name: 'External client', ownerId: 'token-owner' });
+		server = createServer({ port: 0, tokenUseCases, trustedIngressIp: '192.0.2.1' });
+
+		const missingTokenResponse = await fetch(new URL('/api/v1/accounts', server.url), {
+			headers: { 'X-Remote-User-Id': 'spoofed-user' },
+		});
+		const invalidTokenResponse = await fetch(new URL('/api/v1/accounts', server.url), {
+			headers: { Authorization: 'Bearer invalid-token' },
+		});
+		const validTokenResponse = await fetch(new URL('/api/v1/accounts', server.url), {
+			headers: { Authorization: `Bearer ${issued.secret}` },
+		});
+
+		expect(missingTokenResponse.status).toBe(401);
+		expect(invalidTokenResponse.status).toBe(401);
+		expect(validTokenResponse.status).toBe(404);
+
+		await tokenUseCases.revoke.execute({ id: issued.token.id, ownerId: 'token-owner' });
+		const revokedTokenResponse = await fetch(new URL('/api/v1/accounts', server.url), {
+			headers: { Authorization: `Bearer ${issued.secret}` },
+		});
+
+		expect(revokedTokenResponse.status).toBe(401);
 	});
 
 	it('keeps the MCP endpoint out of the web interface', async () => {

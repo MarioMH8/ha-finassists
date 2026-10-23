@@ -13,19 +13,7 @@ interface TokenRow {
 }
 
 export class SqliteApiTokenRepository implements ApiTokenRepository {
-	constructor(private readonly database: Database) {
-		this.database.run(`
-			CREATE TABLE IF NOT EXISTS api_tokens (
-				id TEXT PRIMARY KEY,
-				owner_id TEXT NOT NULL,
-				name TEXT NOT NULL,
-				token_prefix TEXT NOT NULL,
-				secret_hash TEXT NOT NULL UNIQUE,
-				created_at TEXT NOT NULL
-			)
-		`);
-		this.database.run('CREATE INDEX IF NOT EXISTS api_tokens_owner_index ON api_tokens(owner_id)');
-	}
+	constructor(private readonly database: Database) {}
 
 	async deleteByIdAndOwner(id: string, ownerId: string): Promise<boolean> {
 		const result = this.database.query('DELETE FROM api_tokens WHERE id = ? AND owner_id = ?').run(id, ownerId);

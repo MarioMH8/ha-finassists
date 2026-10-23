@@ -1,4 +1,5 @@
 const ACTOR_KIND = {
+	HOME_ASSISTANT_INTEGRATION: 'home_assistant_integration',
 	HOME_ASSISTANT_USER: 'home_assistant_user',
 	UNKNOWN: 'unknown',
 } as const;
@@ -10,10 +11,21 @@ interface HomeAssistantActor {
 	username?: string;
 }
 
+interface HomeAssistantIntegrationActor {
+	id: string;
+	kind: typeof ACTOR_KIND.HOME_ASSISTANT_INTEGRATION;
+}
+
 interface UnknownActor {
 	kind: typeof ACTOR_KIND.UNKNOWN;
 }
 
-type IngressActor = HomeAssistantActor | UnknownActor;
+type IngressActor = HomeAssistantActor | HomeAssistantIntegrationActor | UnknownActor;
 
-export { ACTOR_KIND, type HomeAssistantActor, type IngressActor, type UnknownActor };
+export {
+	ACTOR_KIND,
+	type HomeAssistantActor,
+	type HomeAssistantIntegrationActor,
+	type IngressActor,
+	type UnknownActor,
+};

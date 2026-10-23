@@ -5,9 +5,14 @@ import { fileURLToPath } from 'node:url';
 
 import type { Language } from '@app/i18n/language';
 import { LANGUAGE } from '@app/i18n/language';
+import type { AppShellSettings } from '@modules/app-configuration/domain';
 
 interface ServerRenderer {
-	renderPage(language: Language, isDevelopmentMode: boolean): Promise<ReadableStream<Uint8Array>>;
+	renderPage(
+		language: Language,
+		isDevelopmentMode: boolean,
+		settings: AppShellSettings
+	): Promise<ReadableStream<Uint8Array>>;
 }
 
 interface BuiltWebAssets {
@@ -113,13 +118,13 @@ function getLanguage(request: Request): Language {
 	return isPrefersSpanish ? LANGUAGE.SPANISH : LANGUAGE.ENGLISH;
 }
 
-async function serveHtml(request: Request, isDevelopmentMode: boolean): Promise<Response> {
+async function serveHtml(request: Request, isDevelopmentMode: boolean, settings: AppShellSettings): Promise<Response> {
 	const language = getLanguage(request);
 	const renderer =
 		!isDevelopmentMode && Bun.env.NODE_ENV === 'production'
 			? await getProductionRenderer()
 			: await getDevelopmentRenderer();
-	const stream = await renderer.renderPage(language, isDevelopmentMode);
+	const stream = await renderer.renderPage(language, isDevelopmentMode, settings);
 
 	return new Response(stream, {
 		headers: {
@@ -143,7 +148,12 @@ async function prepareWebAssets(isDevelopmentMode: boolean): Promise<void> {
 	]);
 }
 
-async function serveWebAsset(pathname: string, request: Request, isDevelopmentMode: boolean): Promise<Response> {
+async function serveWebAsset(
+	pathname: string,
+	request: Request,
+	isDevelopmentMode: boolean,
+	settings: AppShellSettings
+): Promise<Response> {
 	if (isDevelopmentMode && pathname.endsWith('/__dev/version')) {
 		return new Response(`${developmentVersion}:${await getSourceVersion(sourceDirectory)}`, {
 			headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain; charset=utf-8' },
@@ -181,7 +191,7 @@ async function serveWebAsset(pathname: string, request: Request, isDevelopmentMo
 		});
 	}
 
-	return serveHtml(request, isDevelopmentMode);
+	return serveHtml(request, isDevelopmentMode, settings);
 }
 
 export { prepareWebAssets, serveWebAsset };
