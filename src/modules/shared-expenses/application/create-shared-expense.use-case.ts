@@ -22,7 +22,7 @@ class CreateSharedExpense {
 	) {}
 
 	execute(input: CreateSharedExpenseInput): SharedExpense {
-		const book = this.books.find(input.bookId);
+		const book = this.books.find({ id: input.bookId });
 		if (!book) {
 			throw new Error('Book not found');
 		}

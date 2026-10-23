@@ -4,7 +4,14 @@ class ArchiveBook {
 	constructor(private readonly repository: BookRepository) {}
 
 	execute(id: string): boolean {
-		return this.repository.archive(id, new Date().toISOString());
+		const book = this.repository.find({ id });
+		if (book?.archivedAt !== null) {
+			return false;
+		}
+
+		this.repository.save(book.archive(new Date().toISOString()));
+
+		return true;
 	}
 }
 

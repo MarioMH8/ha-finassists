@@ -1,6 +1,7 @@
-import type { Database } from 'bun:sqlite';
+import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
-import type { Book, BookRepository } from '../../domain';
+import type { BookCriteria, BookRepository } from '../../domain';
+import { Book } from '../../domain';
 
 interface BookRow {
 	archived_at: null | string;
@@ -12,79 +13,90 @@ interface BookRow {
 }
 
 function toBook(row: BookRow): Book {
-	return {
+	return Book.restore({
 		archivedAt: row.archived_at,
 		createdAt: row.created_at,
 		currencyCode: row.currency_code,
 		id: row.id,
 		isDefault: row.is_default === 1,
 		name: row.name,
-	};
+	});
+}
+
+function where(criteria: BookCriteria): { parameters: (number | string)[]; sql: string } {
+	const clauses: string[] = [];
+	const parameters: (number | string)[] = [];
+
+	if (criteria.id !== undefined) {
+		clauses.push('id = ?');
+		parameters.push(criteria.id);
+	}
+	if (criteria.name !== undefined) {
+		clauses.push('name = ?');
+		parameters.push(criteria.name);
+	}
+	if (criteria.currencyCode !== undefined) {
+		clauses.push('currency_code = ?');
+		parameters.push(criteria.currencyCode);
+	}
+	if (criteria.isDefault !== undefined) {
+		clauses.push('is_default = ?');
+		parameters.push(criteria.isDefault ? 1 : 0);
+	}
+	if (criteria.archivedAt === null) {
+		clauses.push('archived_at IS NULL');
+	} else if (criteria.archivedAt !== undefined) {
+		clauses.push('archived_at = ?');
+		parameters.push(criteria.archivedAt);
+	}
+
+	return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
 }
 
 class SqliteBookRepository implements BookRepository {
 	constructor(private readonly database: Database) {}
 
-	archive(id: string, archivedAt: string): boolean {
-		return (
-			this.database
-				.query('UPDATE books SET archived_at = ? WHERE id = ? AND archived_at IS NULL')
-				.run(archivedAt, id).changes > 0
+	delete({ id }: { id: string }): boolean {
+		const deleteBook = this.database.transaction(
+			() =>
+				this.database
+					.query(
+						`DELETE FROM books WHERE id = ?
+					AND NOT EXISTS (SELECT 1 FROM accounts WHERE accounts.book_id = books.id)
+					AND NOT EXISTS (SELECT 1 FROM categories WHERE categories.book_id = books.id)
+					AND NOT EXISTS (SELECT 1 FROM classes WHERE classes.book_id = books.id)
+					AND NOT EXISTS (SELECT 1 FROM transactions WHERE transactions.book_id = books.id)
+					AND NOT EXISTS (SELECT 1 FROM transfers WHERE transfers.book_id = books.id)
+					AND NOT EXISTS (SELECT 1 FROM statement_imports WHERE statement_imports.book_id = books.id)`
+					)
+					.run(id).changes > 0
 		);
-	}
-
-	create(book: Book): void {
-		this.database
-			.query(
-				'INSERT INTO books (id, name, currency_code, is_default, archived_at, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-			)
-			.run(book.id, book.name, book.currencyCode, book.isDefault ? 1 : 0, book.archivedAt, book.createdAt);
-	}
-
-	deleteIfEmpty(id: string): boolean {
-		const deleteBook = this.database.transaction(() => {
-			const references = ['accounts', 'categories', 'classes', 'transactions', 'transfers', 'statement_imports'];
-			for (const table of references) {
-				const result = this.database.query(`SELECT 1 FROM ${table} WHERE book_id = ? LIMIT 1`).get(id);
-				if (result) {
-					return false;
-				}
-			}
-
-			return this.database.query('DELETE FROM books WHERE id = ?').run(id).changes > 0;
-		});
 
 		return deleteBook();
 	}
 
-	ensureDefault(book: Book): Book {
-		const ensure = this.database.transaction(() => {
-			this.database
-				.query(
-					'INSERT INTO books (id, name, currency_code, is_default, archived_at, created_at) VALUES (?, ?, ?, 1, NULL, ?) ON CONFLICT(id) DO NOTHING'
-				)
-				.run(book.id, book.name, book.currencyCode, book.createdAt);
-			const row = this.database.query('SELECT * FROM books WHERE is_default = 1').get() as BookRow | null;
-			if (!row) {
-				throw new Error('The default financial book could not be created');
-			}
-
-			return toBook(row);
-		});
-
-		return ensure();
+	find(criteria: BookCriteria): Book | undefined {
+		return this.search(criteria)[0];
 	}
 
-	find(id: string): Book | undefined {
-		const row = this.database.query('SELECT * FROM books WHERE id = ?').get(id) as BookRow | null;
-
-		return row ? toBook(row) : undefined;
+	save(book: Book): void {
+		this.database
+			.query(
+				`INSERT INTO books (id, name, currency_code, is_default, archived_at, created_at)
+				VALUES (?, ?, ?, ?, ?, ?)
+				ON CONFLICT(id) DO UPDATE SET name = excluded.name, currency_code = excluded.currency_code,
+				is_default = excluded.is_default, archived_at = excluded.archived_at, created_at = excluded.created_at`
+			)
+			.run(book.id, book.name, book.currencyCode, book.isDefault ? 1 : 0, book.archivedAt, book.createdAt);
 	}
 
-	list(): Book[] {
+	search(criteria: BookCriteria = {}): Book[] {
+		const filter = where(criteria);
 		const rows = this.database
-			.query('SELECT * FROM books ORDER BY archived_at IS NOT NULL, is_default DESC, name COLLATE NOCASE, id')
-			.all() as BookRow[];
+			.query<BookRow, SQLQueryBindings[]>(
+				`SELECT * FROM books${filter.sql} ORDER BY archived_at IS NOT NULL, is_default DESC, name COLLATE NOCASE, id`
+			)
+			.all(...filter.parameters);
 
 		return rows.map(row => toBook(row));
 	}

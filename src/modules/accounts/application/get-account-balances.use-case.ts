@@ -24,7 +24,7 @@ class GetAccountBalances {
 			throw new Error('asOf must be a valid YYYY-MM-DD date');
 		}
 
-		const book = this.books.find(bookId);
+		const book = this.books.find({ id: bookId });
 		const account = book ? this.accounts.find(bookId, id) : undefined;
 		if (!book || !account) {
 			throw new Error('Account not found');

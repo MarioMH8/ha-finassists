@@ -1,13 +1,19 @@
 import type { BookRepository } from '../domain';
-import { createBook } from '../domain';
+import { Book } from '../domain';
 
 class EnsureDefaultBook {
 	constructor(private readonly repository: BookRepository) {}
 
-	execute(): ReturnType<BookRepository['ensureDefault']> {
-		return this.repository.ensureDefault(
-			createBook({ currencyCode: 'EUR', id: 'default', isDefault: true, name: 'Household' })
-		);
+	execute(): Book {
+		const existing = this.repository.find({ isDefault: true });
+		if (existing) {
+			return existing;
+		}
+
+		const book = Book.create({ currencyCode: 'EUR', id: 'default', isDefault: true, name: 'Household' });
+		this.repository.save(book);
+
+		return book;
 	}
 }
 

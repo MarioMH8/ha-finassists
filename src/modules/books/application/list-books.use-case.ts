@@ -3,8 +3,8 @@ import type { BookRepository } from '../domain';
 class ListBooks {
 	constructor(private readonly repository: BookRepository) {}
 
-	execute(): ReturnType<BookRepository['list']> {
-		return this.repository.list();
+	execute(): ReturnType<BookRepository['search']> {
+		return this.repository.search();
 	}
 }
 

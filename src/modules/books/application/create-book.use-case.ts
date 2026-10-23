@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { BookRepository } from '../domain';
-import { createBook } from '../domain';
+import { Book } from '../domain';
 
 interface CreateBookInput {
 	currencyCode: string;
@@ -11,9 +11,9 @@ interface CreateBookInput {
 class CreateBook {
 	constructor(private readonly repository: BookRepository) {}
 
-	execute(input: CreateBookInput): ReturnType<typeof createBook> {
-		const book = createBook({ ...input, id: randomUUID() });
-		this.repository.create(book);
+	execute(input: CreateBookInput): Book {
+		const book = Book.create({ ...input, id: randomUUID() });
+		this.repository.save(book);
 
 		return book;
 	}

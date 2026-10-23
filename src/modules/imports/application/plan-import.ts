@@ -71,7 +71,7 @@ function resolveLimits(limits: Partial<ImportLimits> | undefined): ImportLimits 
 }
 
 function selectBookAndAccount(dependencies: ImportDependencies, bookId: string, accountId: string): string {
-	const book = dependencies.books.find(bookId);
+	const book = dependencies.books.find({ id: bookId });
 	if (!book) {
 		throw new ImportError('book-not-found', `Book "${bookId}" does not exist.`);
 	}

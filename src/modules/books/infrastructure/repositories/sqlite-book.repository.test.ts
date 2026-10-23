@@ -23,6 +23,8 @@ describe('book use cases', () => {
 
 		expect(first).toEqual(second);
 		expect(first).toMatchObject({ currencyCode: 'EUR', id: 'default', isDefault: true, name: 'Household' });
+		expect(repository.find({ id: first.id })).toEqual(first);
+		expect(repository.search({ isDefault: true })).toEqual([first]);
 		expect(new ListBooks(repository).execute().map(book => book.id)).toEqual(['default', created.id]);
 		database.close();
 	});
@@ -35,6 +37,11 @@ describe('book use cases', () => {
 
 		expect(bookCleanup.execute(book.id)).toBe(true);
 		expect(bookCleanup.execute(book.id)).toBe(false);
+		database
+			.query('INSERT INTO accounts (id, book_id, name, kind, opening_balance_minor) VALUES (?, ?, ?, ?, ?)')
+			.run('account-1', 'default', 'Cash', 'checking', 0);
+		expect(bookCleanup.execute('default')).toBe(false);
+		expect(repository.find({ id: 'default' })).toBeDefined();
 		expect(new ArchiveBook(repository).execute('default')).toBe(true);
 		expect(new ListBooks(repository).execute()[0]?.archivedAt).not.toBeNull();
 		database.close();

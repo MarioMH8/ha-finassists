@@ -1,4 +1,4 @@
-import { CreateBook, EnsureDefaultBook } from '@modules/books/application';
+import { ArchiveBook, CreateBook, EnsureDefaultBook } from '@modules/books/application';
 import { SqliteBookRepository } from '@modules/books/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
@@ -72,7 +72,7 @@ describe('account use cases', () => {
 			'safe integer'
 		);
 		expect(() => create.execute({ ...valid, bookId: 'missing' })).toThrow('Book not found');
-		books.archive(defaultBook.id, new Date().toISOString());
+		new ArchiveBook(books).execute(defaultBook.id);
 		expect(() => create.execute(valid)).toThrow('archived book');
 		database.close();
 	});

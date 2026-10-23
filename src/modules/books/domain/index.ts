@@ -1,2 +1,3 @@
-export { type Book, type BookInput, createBook } from './book';
-export type { BookRepository } from './book.repository';
+export { Book, type BookInput, type PersistedBookInput } from './book';
+export { BookAlreadyArchivedError, BookIdInvalidError, BookNameInvalidError } from './book.error';
+export type { BookCriteria, BookRepository } from './repositories/book.repository';

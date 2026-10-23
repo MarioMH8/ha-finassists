@@ -1,6 +1,8 @@
 import { Currency } from '@modules/money/domain';
 
-const JSON_NULL = JSON.parse('null') as null;
+import { BookAlreadyArchivedError, BookIdInvalidError, BookNameInvalidError } from './book.error';
+
+const NOT_ARCHIVED = JSON.parse('null') as null;
 
 interface BookInput {
 	archivedAt?: null | string;
@@ -11,33 +13,60 @@ interface BookInput {
 	name: string;
 }
 
-interface Book {
+interface PersistedBookInput extends BookInput {
 	archivedAt: null | string;
 	createdAt: string;
-	currencyCode: string;
-	id: string;
 	isDefault: boolean;
-	name: string;
 }
 
-function createBook(input: BookInput): Book {
-	const name = input.name.trim();
-	if (name.length === 0 || name.length > 80) {
-		throw new Error('Book name must contain between 1 and 80 characters');
+class Book {
+	private constructor(
+		readonly archivedAt: null | string,
+		readonly createdAt: string,
+		readonly currencyCode: string,
+		readonly id: string,
+		readonly isDefault: boolean,
+		readonly name: string
+	) {}
+
+	static create(input: BookInput): Book {
+		const name = input.name.trim();
+		if (name.length === 0 || name.length > 80) {
+			throw new BookNameInvalidError();
+		}
+
+		if (input.id.trim().length === 0) {
+			throw new BookIdInvalidError();
+		}
+
+		return new this(
+			input.archivedAt ?? NOT_ARCHIVED,
+			input.createdAt ?? new Date().toISOString(),
+			Currency.create(input.currencyCode).code,
+			input.id,
+			input.isDefault ?? false,
+			name
+		);
 	}
 
-	if (input.id.trim().length === 0) {
-		throw new Error('Book id must not be empty');
+	static restore(input: PersistedBookInput): Book {
+		return this.create(input);
 	}
 
-	return {
-		archivedAt: input.archivedAt ?? JSON_NULL,
-		createdAt: input.createdAt ?? new Date().toISOString(),
-		currencyCode: Currency.create(input.currencyCode).code,
-		id: input.id,
-		isDefault: input.isDefault ?? false,
-		name,
-	};
+	archive(archivedAt: string): Book {
+		if (this.archivedAt !== NOT_ARCHIVED) {
+			throw new BookAlreadyArchivedError(this.id);
+		}
+
+		return Book.create({
+			archivedAt,
+			createdAt: this.createdAt,
+			currencyCode: this.currencyCode,
+			id: this.id,
+			isDefault: this.isDefault,
+			name: this.name,
+		});
+	}
 }
 
-export { type Book, type BookInput, createBook };
+export { Book, type BookInput, type PersistedBookInput };

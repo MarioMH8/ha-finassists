@@ -4,7 +4,7 @@ class DeleteBook {
 	constructor(private readonly repository: BookRepository) {}
 
 	execute(id: string): boolean {
-		return this.repository.deleteIfEmpty(id);
+		return this.repository.delete({ id });
 	}
 }
 

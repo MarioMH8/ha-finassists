@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 import { SqliteAccountRepository } from '@modules/accounts/infrastructure';
-import { CreateBook, EnsureDefaultBook } from '@modules/books/application';
+import { ArchiveBook, CreateBook, EnsureDefaultBook } from '@modules/books/application';
 import { SqliteBookRepository } from '@modules/books/infrastructure';
 import type { LedgerRepository } from '@modules/ledger/domain';
 import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
@@ -188,7 +188,7 @@ describe('book and account selection', () => {
 		);
 		accounts.close(book.id, 'cash', '2024-01-01T00:00:00.000Z');
 		expect(failure(() => preview.execute(request(book.id, 'qif', content))).code).toBe('account-closed');
-		books.archive(other.id, '2024-01-01T00:00:00.000Z');
+		new ArchiveBook(books).execute(other.id);
 		expect(failure(() => preview.execute(request(other.id, 'qif', content, 'foreign'))).code).toBe('book-archived');
 	});
 

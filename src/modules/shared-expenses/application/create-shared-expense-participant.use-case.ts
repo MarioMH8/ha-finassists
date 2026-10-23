@@ -16,7 +16,7 @@ class CreateSharedExpenseParticipant {
 	) {}
 
 	execute(input: CreateSharedExpenseParticipantInput): SharedExpenseParticipant {
-		const book = this.books.find(input.bookId);
+		const book = this.books.find({ id: input.bookId });
 		if (!book) {
 			throw new Error('Book not found');
 		}
