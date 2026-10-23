@@ -10,6 +10,7 @@ import {
 	GenerateScheduleOccurrences,
 	ListSchedules,
 	RecordScheduleOccurrence,
+	UpdateSchedule,
 } from '../application';
 import {
 	initializeScheduleSchema,
@@ -61,6 +62,50 @@ describe('SQLite schedules', () => {
 		database.close();
 	});
 
+	it('finds and searches schedules using generic criteria', () => {
+		const { database, schedules } = setup();
+		const created = new CreateSchedule(schedules).execute({
+			accountId: 'account-1',
+			amountMinor: -1250,
+			bookId: 'book-1',
+			frequency: 'monthly',
+			id: 'schedule-1',
+			startDate: '2025-01-31',
+		});
+
+		expect(schedules.find({ bookId: 'book-1', id: created.id })).toEqual(created);
+		expect(schedules.search({ bookId: 'book-1', status: 'active' })).toEqual([created]);
+		expect(schedules.find({ bookId: 'book-2', id: created.id })).toBeUndefined();
+		// eslint-disable-next-line unicorn/no-null -- Check SQL NULL criteria separately from omitted filters.
+		expect(schedules.search({ bookId: 'book-1', endDate: null })).toEqual([created]);
+		database.close();
+	});
+
+	it('updates a schedule without rewriting its generated occurrence history', () => {
+		const { database, occurrences, schedules } = setup();
+		const created = new CreateSchedule(schedules).execute({
+			accountId: 'account-1',
+			amountMinor: -1250,
+			bookId: 'book-1',
+			frequency: 'one_time',
+			id: 'schedule-1',
+			startDate: '2025-01-31',
+		});
+		const [occurrence] = new GenerateScheduleOccurrences(schedules, occurrences, () => 'occ-1').execute(
+			'book-1',
+			created.id,
+			'2025-01-31'
+		);
+		const updated = new UpdateSchedule(schedules).execute('book-1', created.id, {
+			amountMinor: -1300,
+			payee: 'Updated payee',
+		});
+
+		expect(schedules.find({ bookId: 'book-1', id: created.id })).toEqual(updated);
+		expect(occurrences.find('book-1', occurrence.id)).toEqual(occurrence);
+		database.close();
+	});
+
 	it('generates bounded installments once and marks a finite schedule completed', () => {
 		const { database, occurrences, schedules } = setup();
 		const schedule = new CreateSchedule(schedules).execute({
@@ -83,7 +128,7 @@ describe('SQLite schedules', () => {
 			'2025-03-31',
 		]);
 		expect(generate.execute('book-1', schedule.id, '2025-12-31')).toEqual([]);
-		expect(schedules.find('book-1', schedule.id)?.status).toBe('completed');
+		expect(schedules.find({ bookId: 'book-1', id: schedule.id })?.status).toBe('completed');
 		expect(occurrences.listForSchedule('book-1', schedule.id)).toHaveLength(3);
 		database.close();
 	});

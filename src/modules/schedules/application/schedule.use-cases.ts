@@ -17,7 +17,7 @@ class CreateSchedule {
 
 	execute(input: CreateScheduledPaymentInput, createdAt?: string): ScheduledPayment {
 		const schedule = createScheduledPayment(input, createdAt);
-		this.schedules.create(schedule);
+		this.schedules.save(schedule);
 
 		return schedule;
 	}
@@ -27,7 +27,7 @@ class ListSchedules {
 	constructor(private readonly schedules: ScheduleRepository) {}
 
 	execute(bookId: string): ScheduledPayment[] {
-		return this.schedules.list(bookId);
+		return this.schedules.search({ bookId });
 	}
 }
 
@@ -50,9 +50,7 @@ class UpdateSchedule {
 	execute(bookId: string, scheduleId: string, changes: UpdateScheduledPaymentInput): ScheduledPayment {
 		const existing = requireSchedule(this.schedules, bookId, scheduleId);
 		const updated = updateScheduledPayment(existing, changes);
-		if (!this.schedules.update(updated)) {
-			throw new Error('Schedule could not be updated');
-		}
+		this.schedules.save(updated);
 
 		return updated;
 	}
@@ -64,9 +62,7 @@ class ChangeScheduleStatus {
 	execute(bookId: string, scheduleId: string, status: 'active' | 'canceled' | 'paused'): ScheduledPayment {
 		const existing = requireSchedule(this.schedules, bookId, scheduleId);
 		const updated = transitionScheduleStatus(existing, status);
-		if (!this.schedules.update(updated)) {
-			throw new Error('Schedule could not be updated');
-		}
+		this.schedules.save(updated);
 
 		return updated;
 	}
@@ -100,7 +96,7 @@ class GenerateScheduleOccurrences {
 		while (generated.length < maxOccurrences) {
 			const dueDate = dueDateAtOccurrence(schedule, occurrenceNumber);
 			if (dueDate === undefined) {
-				this.schedules.update({ ...schedule, status: SCHEDULE_STATUS.COMPLETED });
+				this.schedules.save({ ...schedule, status: SCHEDULE_STATUS.COMPLETED });
 				break;
 			}
 			if (dueDate > throughDate) {
@@ -112,7 +108,7 @@ class GenerateScheduleOccurrences {
 				generated.push(occurrence);
 				occurrenceNumber += 1;
 				if (dueDateAtOccurrence(schedule, occurrenceNumber) === undefined) {
-					this.schedules.update({ ...schedule, status: SCHEDULE_STATUS.COMPLETED });
+					this.schedules.save({ ...schedule, status: SCHEDULE_STATUS.COMPLETED });
 					break;
 				}
 				continue;
@@ -172,7 +168,7 @@ class RecordScheduleOccurrence {
 }
 
 function requireSchedule(repository: ScheduleRepository, bookId: string, scheduleId: string): ScheduledPayment {
-	const schedule = repository.find(bookId, scheduleId);
+	const schedule = repository.find({ bookId, id: scheduleId });
 	if (!schedule) {
 		throw new Error('Schedule was not found in this book');
 	}

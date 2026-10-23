@@ -1,7 +1,7 @@
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
 import type { ScheduledPayment, ScheduleFrequency, ScheduleStatus } from '../domain/schedule';
-import type { ScheduleRepository } from '../domain/schedule.repository';
+import type { ScheduleCriteria, ScheduleRepository } from '../domain/schedule.repository';
 import type { LedgerTransactionReference, ScheduleOccurrence } from '../domain/schedule-occurrence';
 import type { ScheduleOccurrenceRepository } from '../domain/schedule-occurrence.repository';
 
@@ -59,6 +59,41 @@ function toSchedule(row: ScheduleRow): ScheduledPayment {
 	};
 }
 
+function where(criteria: ScheduleCriteria): { parameters: SQLQueryBindings[]; sql: string } {
+	const clauses: string[] = [];
+	const parameters: SQLQueryBindings[] = [];
+
+	function add(column: string, value: null | number | string | undefined): void {
+		if (value === undefined) {
+			return;
+		}
+		if (value === null) {
+			clauses.push(`${column} IS NULL`);
+
+			return;
+		}
+
+		clauses.push(`${column} = ?`);
+		parameters.push(value);
+	}
+
+	add('account_id', criteria.accountId);
+	add('amount_minor', criteria.amountMinor);
+	add('book_id', criteria.bookId);
+	add('created_at', criteria.createdAt);
+	add('end_date', criteria.endDate);
+	add('frequency', criteria.frequency);
+	add('id', criteria.id);
+	add('interval', criteria.interval);
+	add('memo', criteria.memo);
+	add('occurrence_limit', criteria.occurrenceLimit);
+	add('payee', criteria.payee);
+	add('start_date', criteria.startDate);
+	add('status', criteria.status);
+
+	return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
+}
+
 function toOccurrence(row: OccurrenceRow): ScheduleOccurrence {
 	return {
 		accountId: row.account_id,
@@ -80,12 +115,20 @@ function toOccurrence(row: OccurrenceRow): ScheduleOccurrence {
 class SqliteScheduleRepository implements ScheduleRepository {
 	constructor(private readonly database: Database) {}
 
-	create(schedule: ScheduledPayment): void {
+	find(criteria: ScheduleCriteria): ScheduledPayment | undefined {
+		return this.search(criteria)[0];
+	}
+
+	save(schedule: ScheduledPayment): void {
 		this.database
 			.query(
 				`INSERT INTO scheduled_payments
 					(id, book_id, account_id, frequency, interval, start_date, end_date, occurrence_limit, amount_minor, payee, memo, status, created_at)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+				ON CONFLICT (book_id, id) DO UPDATE SET
+					account_id = excluded.account_id, frequency = excluded.frequency, interval = excluded.interval,
+					start_date = excluded.start_date, end_date = excluded.end_date, occurrence_limit = excluded.occurrence_limit,
+					amount_minor = excluded.amount_minor, payee = excluded.payee, memo = excluded.memo, status = excluded.status`
 			)
 			.run(
 				schedule.id,
@@ -104,46 +147,15 @@ class SqliteScheduleRepository implements ScheduleRepository {
 			);
 	}
 
-	find(bookId: string, id: string): ScheduledPayment | undefined {
-		const row = this.database
-			.query('SELECT * FROM scheduled_payments WHERE book_id = ? AND id = ?')
-			.get(bookId, id) as null | ScheduleRow;
-
-		return row ? toSchedule(row) : undefined;
-	}
-
-	list(bookId: string): ScheduledPayment[] {
+	search(criteria: ScheduleCriteria = {}): ScheduledPayment[] {
+		const filter = where(criteria);
 		const rows = this.database
-			.query('SELECT * FROM scheduled_payments WHERE book_id = ? ORDER BY start_date, id')
-			.all(bookId) as ScheduleRow[];
+			.query<ScheduleRow, SQLQueryBindings[]>(
+				`SELECT * FROM scheduled_payments${filter.sql} ORDER BY start_date, id`
+			)
+			.all(...filter.parameters);
 
 		return rows.map(row => toSchedule(row));
-	}
-
-	update(schedule: ScheduledPayment): boolean {
-		return (
-			this.database
-				.query(
-					`UPDATE scheduled_payments SET
-					account_id = ?, frequency = ?, interval = ?, start_date = ?, end_date = ?, occurrence_limit = ?,
-					amount_minor = ?, payee = ?, memo = ?, status = ?
-					WHERE book_id = ? AND id = ?`
-				)
-				.run(
-					schedule.accountId,
-					schedule.frequency,
-					schedule.interval,
-					schedule.startDate,
-					toNullableSqlBinding(schedule.endDate),
-					toNullableSqlBinding(schedule.occurrenceLimit),
-					schedule.amountMinor,
-					schedule.payee,
-					schedule.memo,
-					schedule.status,
-					schedule.bookId,
-					schedule.id
-				).changes > 0
-		);
 	}
 }
 

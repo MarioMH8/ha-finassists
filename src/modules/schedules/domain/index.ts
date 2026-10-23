@@ -13,7 +13,7 @@ export {
 	type UpdateScheduledPaymentInput,
 	validateScheduledPayment,
 } from './schedule';
-export type { ScheduleRepository } from './schedule.repository';
+export type { ScheduleCriteria, ScheduleRepository } from './schedule.repository';
 export {
 	createScheduleOccurrence,
 	type LedgerTransactionReference,
