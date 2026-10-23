@@ -32,7 +32,7 @@ class CreateAccount {
 			...input,
 			id: randomUUID(),
 		});
-		this.accounts.create(account);
+		this.accounts.save(account);
 
 		return account;
 	}

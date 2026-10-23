@@ -1,7 +1,15 @@
-import type { Database } from 'bun:sqlite';
+import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
-import type { AccountKind, AccountRepository, ListAccountsOptions, TransactionTotals } from '../../domain';
-import { Account } from '../../domain';
+import type {
+	AccountCriteria,
+	AccountDeleteCriteria,
+	AccountKind,
+	AccountRepository,
+	AccountTransactionTotalsCriteria,
+	AccountTransactionTotalsQuery,
+	TransactionTotals,
+} from '../../domain';
+import { Account, AccountIdentityConflictError } from '../../domain';
 
 interface AccountRow {
 	book_id: string;
@@ -30,68 +38,106 @@ function toAccount(row: AccountRow): Account {
 	});
 }
 
-class SqliteAccountRepository implements AccountRepository {
+function where(criteria: AccountCriteria): { parameters: SQLQueryBindings[]; sql: string } {
+	const clauses: string[] = [];
+	const parameters: SQLQueryBindings[] = [];
+
+	function add(column: string, value: null | number | string | undefined): void {
+		if (value === undefined) {
+			return;
+		}
+		if (value === null) {
+			clauses.push(`${column} IS NULL`);
+
+			return;
+		}
+
+		clauses.push(`${column} = ?`);
+		parameters.push(value);
+	}
+
+	add('book_id', criteria.bookId);
+	if (criteria.closed !== undefined) {
+		clauses.push(criteria.closed ? 'closed_at IS NOT NULL' : 'closed_at IS NULL');
+	}
+	add('created_at', criteria.createdAt);
+	add('id', criteria.id);
+	add('kind', criteria.kind);
+	add('name', criteria.name);
+	add('opening_balance_minor', criteria.openingBalanceMinor);
+
+	return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
+}
+
+class SqliteAccountRepository implements AccountRepository, AccountTransactionTotalsQuery {
 	constructor(private readonly database: Database) {}
 
-	close(bookId: string, id: string, closedAt: string): boolean {
-		return (
+	delete({ bookId, id }: AccountDeleteCriteria): boolean {
+		try {
+			return this.database.query('DELETE FROM accounts WHERE book_id = ? AND id = ?').run(bookId, id).changes > 0;
+		} catch (error) {
+			if (error instanceof Error && error.message.includes('FOREIGN KEY constraint failed')) {
+				return false;
+			}
+
+			throw error;
+		}
+	}
+
+	find(criteria: AccountCriteria): Account | undefined {
+		return this.search(criteria)[0];
+	}
+
+	save(account: Account): void {
+		const save = this.database.transaction(() => {
+			const existing = this.database
+				.query<{ book_id: string }, [string]>('SELECT book_id FROM accounts WHERE id = ?')
+				.get(account.id);
+			if (existing && existing.book_id !== account.bookId) {
+				throw new AccountIdentityConflictError();
+			}
+
 			this.database
-				.query('UPDATE accounts SET closed_at = ? WHERE book_id = ? AND id = ? AND closed_at IS NULL')
-				.run(closedAt, bookId, id).changes > 0
-		);
+				.query(
+					`INSERT INTO accounts (id, book_id, name, kind, opening_balance_minor, closed_at, created_at)
+					VALUES (?, ?, ?, ?, ?, ?, ?)
+					ON CONFLICT(id) DO UPDATE SET name = excluded.name, kind = excluded.kind,
+					opening_balance_minor = excluded.opening_balance_minor, closed_at = excluded.closed_at,
+					created_at = excluded.created_at WHERE accounts.book_id = excluded.book_id`
+				)
+				.run(
+					account.id,
+					account.bookId,
+					account.name,
+					account.kind,
+					account.openingBalanceMinor,
+					account.closedAt,
+					account.createdAt
+				);
+		});
+
+		save();
 	}
 
-	create(account: Account): void {
-		this.database
-			.query(
-				'INSERT INTO accounts (id, book_id, name, kind, opening_balance_minor, closed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
-			)
-			.run(
-				account.id,
-				account.bookId,
-				account.name,
-				account.kind,
-				account.openingBalanceMinor,
-				account.closedAt,
-				account.createdAt
-			);
-	}
-
-	find(bookId: string, id: string): Account | undefined {
-		const row = this.database
-			.query('SELECT * FROM accounts WHERE book_id = ? AND id = ?')
-			.get(bookId, id) as AccountRow | null;
-
-		return row ? toAccount(row) : undefined;
-	}
-
-	list(bookId: string, options: ListAccountsOptions = {}): Account[] {
-		const closedFilter = options.includeClosed ? '' : 'AND closed_at IS NULL';
+	search(criteria: AccountCriteria = {}): Account[] {
+		const filter = where(criteria);
 		const rows = this.database
-			.query(
-				`SELECT * FROM accounts WHERE book_id = ? ${closedFilter} ORDER BY closed_at IS NOT NULL, name COLLATE NOCASE, id`
+			.query<AccountRow, SQLQueryBindings[]>(
+				`SELECT * FROM accounts${filter.sql} ORDER BY closed_at IS NOT NULL, name COLLATE NOCASE, id`
 			)
-			.all(bookId) as AccountRow[];
+			.all(...filter.parameters);
 
 		return rows.map(row => toAccount(row));
 	}
 
-	reopen(bookId: string, id: string): boolean {
-		return (
-			this.database
-				.query('UPDATE accounts SET closed_at = NULL WHERE book_id = ? AND id = ? AND closed_at IS NOT NULL')
-				.run(bookId, id).changes > 0
-		);
-	}
-
-	sumTransactionsByStatus(bookId: string, accountId: string, asOf?: string): TransactionTotals {
+	sumByStatus({ accountId, asOf, bookId }: AccountTransactionTotalsCriteria): TransactionTotals {
 		const dateFilter = asOf === undefined ? '' : 'AND substr(transaction_date, 1, 10) <= ?';
 		const parameters = asOf === undefined ? [bookId, accountId] : [bookId, accountId, asOf];
 		const rows = this.database
-			.query(
+			.query<StatusTotalRow, SQLQueryBindings[]>(
 				`SELECT status, SUM(amount_minor) AS total FROM transactions WHERE book_id = ? AND account_id = ? ${dateFilter} GROUP BY status`
 			)
-			.all(...parameters) as StatusTotalRow[];
+			.all(...parameters);
 
 		const totals: TransactionTotals = { cleared: 0, reconciled: 0, uncleared: 0 };
 		for (const row of rows) {

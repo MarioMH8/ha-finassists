@@ -45,7 +45,7 @@ class CreateBudget {
 			throw new BudgetBookArchivedError();
 		}
 
-		const account = this.accounts.find(input.bookId, input.accountId);
+		const account = this.accounts.find({ bookId: input.bookId, id: input.accountId });
 		if (!account) {
 			throw new BudgetAccountNotFoundError();
 		}

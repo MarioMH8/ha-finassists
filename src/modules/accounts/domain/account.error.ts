@@ -47,6 +47,13 @@ class AccountIdInvalidError extends Error {
 	}
 }
 
+class AccountIdentityConflictError extends Error {
+	constructor() {
+		super('Account id already belongs to a different book');
+		this.name = 'AccountIdentityConflictError';
+	}
+}
+
 class AccountKindInvalidError extends Error {
 	constructor(kinds: readonly string[]) {
 		super(`Account kind must be one of: ${kinds.join(', ')}`);
@@ -89,6 +96,7 @@ export {
 	AccountBookArchivedError,
 	AccountBookIdInvalidError,
 	AccountBookNotFoundError,
+	AccountIdentityConflictError,
 	AccountIdInvalidError,
 	AccountKindInvalidError,
 	AccountNameInvalidError,

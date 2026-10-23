@@ -119,7 +119,7 @@ function setup(): { database: Database; useCases: FinanceUseCases } {
 	const sharedExpenses = new SqliteSharedExpenseRepository(database);
 	const useCases: FinanceUseCases = {
 		accounts: {
-			balances: new GetAccountBalances(accounts, books),
+			balances: new GetAccountBalances(accounts, accounts, books),
 			close: new CloseAccount(accounts),
 			create: new CreateAccount(accounts, books),
 			list: new ListAccounts(accounts),

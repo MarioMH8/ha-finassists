@@ -5,7 +5,13 @@ import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
 import { CloseAccount, CreateAccount, GetAccountBalances, ListAccounts, ReopenAccount } from '../../application';
-import { AccountAsOfDateInvalidError, AccountBookArchivedError, AccountBookNotFoundError } from '../../domain';
+import {
+	Account,
+	AccountAsOfDateInvalidError,
+	AccountBookArchivedError,
+	AccountBookNotFoundError,
+	AccountIdentityConflictError,
+} from '../../domain';
 import { SqliteAccountRepository } from './sqlite-account.repository';
 
 type Status = 'cleared' | 'reconciled' | 'uncleared';
@@ -30,7 +36,7 @@ function setup() {
 	return {
 		accounts,
 		addTransaction,
-		balances: new GetAccountBalances(accounts, books),
+		balances: new GetAccountBalances(accounts, accounts, books),
 		books,
 		close: new CloseAccount(accounts),
 		create: new CreateAccount(accounts, books),
@@ -141,6 +147,85 @@ describe('account use cases', () => {
 				)
 				.run(defaultBook.id)
 		).toThrow();
+		database.close();
+	});
+});
+
+describe('account repository', () => {
+	it('searches accounts using typed criteria and finds the first exact match', () => {
+		const { accounts, close, create, database, defaultBook } = setup();
+		const open = create.execute({
+			bookId: defaultBook.id,
+			kind: 'checking',
+			name: 'Open',
+			openingBalanceMinor: 0,
+		});
+		const closed = create.execute({
+			bookId: defaultBook.id,
+			kind: 'savings',
+			name: 'Closed',
+			openingBalanceMinor: 0,
+		});
+		close.execute(defaultBook.id, closed.id);
+
+		expect(accounts.search({ bookId: defaultBook.id, closed: false }).map(account => account.id)).toEqual([
+			open.id,
+		]);
+		expect(accounts.search({ bookId: defaultBook.id, closed: true }).map(account => account.id)).toEqual([
+			closed.id,
+		]);
+		expect(accounts.search({ bookId: defaultBook.id }).map(account => account.id)).toEqual([open.id, closed.id]);
+		expect(accounts.find({ bookId: defaultBook.id, id: closed.id })).toMatchObject({ id: closed.id });
+		database.close();
+	});
+
+	it('prevents deletion while transactions reference the account', () => {
+		const { accounts, addTransaction, create, database, defaultBook } = setup();
+		const referenced = create.execute({
+			bookId: defaultBook.id,
+			kind: 'checking',
+			name: 'Referenced',
+			openingBalanceMinor: 0,
+		});
+		const unreferenced = create.execute({
+			bookId: defaultBook.id,
+			kind: 'savings',
+			name: 'Unreferenced',
+			openingBalanceMinor: 0,
+		});
+		addTransaction(defaultBook.id, referenced.id, '2026-01-01', 100, 'cleared');
+
+		expect(accounts.delete({ bookId: defaultBook.id, id: referenced.id })).toBe(false);
+		expect(accounts.find({ bookId: defaultBook.id, id: referenced.id })).toBeDefined();
+		expect(accounts.delete({ bookId: defaultBook.id, id: unreferenced.id })).toBe(true);
+		expect(accounts.delete({ bookId: defaultBook.id, id: unreferenced.id })).toBe(false);
+		database.close();
+	});
+
+	it('rejects changing an account identity to another book', () => {
+		const { accounts, books, database, defaultBook } = setup();
+		const other = new CreateBook(books).execute({ currencyCode: 'USD', name: 'Other' });
+		const account = Account.create({
+			bookId: defaultBook.id,
+			id: 'fixed-account-id',
+			kind: 'checking',
+			name: 'Original',
+			openingBalanceMinor: 0,
+		});
+		accounts.save(account);
+
+		expect(() =>
+			accounts.save(
+				Account.create({
+					bookId: other.id,
+					id: account.id,
+					kind: 'checking',
+					name: 'Changed',
+					openingBalanceMinor: 0,
+				})
+			)
+		).toThrow(AccountIdentityConflictError);
+		expect(accounts.find({ bookId: defaultBook.id, id: account.id })).toMatchObject({ name: 'Original' });
 		database.close();
 	});
 });

@@ -14,6 +14,7 @@ export {
 	AccountBookArchivedError,
 	AccountBookIdInvalidError,
 	AccountBookNotFoundError,
+	AccountIdentityConflictError,
 	AccountIdInvalidError,
 	AccountKindInvalidError,
 	AccountNameInvalidError,
@@ -21,4 +22,8 @@ export {
 	AccountNotFoundError,
 	AccountOpeningBalanceInvalidError,
 } from './account.error';
-export type { AccountRepository, ListAccountsOptions } from './account.repository';
+export type { AccountCriteria, AccountDeleteCriteria, AccountRepository } from './repositories/account.repository';
+export type {
+	AccountTransactionTotalsCriteria,
+	AccountTransactionTotalsQuery,
+} from './repositories/account-transaction-totals.query';

@@ -1,7 +1,7 @@
 import type { BookRepository } from '@modules/books/domain';
 import { Currency } from '@modules/money/domain';
 
-import type { AccountBalances, AccountRepository } from '../domain';
+import type { AccountBalances, AccountRepository, AccountTransactionTotalsQuery } from '../domain';
 import { AccountAsOfDateInvalidError, AccountNotFoundError } from '../domain';
 
 interface GetAccountBalancesInput {
@@ -16,6 +16,7 @@ interface GetAccountBalancesInput {
 class GetAccountBalances {
 	constructor(
 		private readonly accounts: AccountRepository,
+		private readonly transactionTotals: AccountTransactionTotalsQuery,
 		private readonly books: BookRepository
 	) {}
 
@@ -25,12 +26,12 @@ class GetAccountBalances {
 		}
 
 		const book = this.books.find({ id: bookId });
-		const account = book ? this.accounts.find(bookId, id) : undefined;
+		const account = book ? this.accounts.find({ bookId, id }) : undefined;
 		if (!book || !account) {
 			throw new AccountNotFoundError();
 		}
 
-		const totals = this.accounts.sumTransactionsByStatus(bookId, id, asOf);
+		const totals = this.transactionTotals.sumByStatus({ accountId: id, asOf, bookId });
 
 		return account.balances(totals, Currency.create(book.currencyCode));
 	}

@@ -8,8 +8,8 @@ interface ListAccountsInput {
 class ListAccounts {
 	constructor(private readonly repository: AccountRepository) {}
 
-	execute({ bookId, includeClosed }: ListAccountsInput): ReturnType<AccountRepository['list']> {
-		return this.repository.list(bookId, { includeClosed });
+	execute({ bookId, includeClosed }: ListAccountsInput): ReturnType<AccountRepository['search']> {
+		return this.repository.search({ bookId, ...(!includeClosed && { closed: false }) });
 	}
 }
 

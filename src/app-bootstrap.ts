@@ -136,7 +136,7 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 	};
 	const financeUseCases = {
 		accounts: {
-			balances: new GetAccountBalances(accountRepository, bookRepository),
+			balances: new GetAccountBalances(accountRepository, accountRepository, bookRepository),
 			close: new CloseAccount(accountRepository),
 			create: new CreateAccount(accountRepository, bookRepository),
 			list: new ListAccounts(accountRepository),

@@ -7,7 +7,14 @@ class CloseAccount {
 	 *Returns false when the account is missing in the book or already closed.
 	 */
 	execute(bookId: string, id: string): boolean {
-		return this.repository.close(bookId, id, new Date().toISOString());
+		const account = this.repository.find({ bookId, id });
+		if (account?.closedAt !== null) {
+			return false;
+		}
+
+		this.repository.save(account.close(new Date().toISOString()));
+
+		return true;
 	}
 }
 

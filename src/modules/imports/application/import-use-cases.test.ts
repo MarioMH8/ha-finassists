@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
+import { CloseAccount } from '@modules/accounts/application';
 import { SqliteAccountRepository } from '@modules/accounts/infrastructure';
 import { ArchiveBook, CreateBook, EnsureDefaultBook } from '@modules/books/application';
 import { SqliteBookRepository } from '@modules/books/infrastructure';
@@ -186,7 +187,7 @@ describe('book and account selection', () => {
 		expect(failure(() => preview.execute(request(book.id, 'qif', content, 'foreign'))).code).toBe(
 			'account-not-found'
 		);
-		accounts.close(book.id, 'cash', '2024-01-01T00:00:00.000Z');
+		new CloseAccount(accounts).execute(book.id, 'cash');
 		expect(failure(() => preview.execute(request(book.id, 'qif', content))).code).toBe('account-closed');
 		new ArchiveBook(books).execute(other.id);
 		expect(failure(() => preview.execute(request(other.id, 'qif', content, 'foreign'))).code).toBe('book-archived');

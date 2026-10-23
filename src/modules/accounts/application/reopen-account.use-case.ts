@@ -7,7 +7,14 @@ class ReopenAccount {
 	 *Returns false when the account is missing in the book or not closed.
 	 */
 	execute(bookId: string, id: string): boolean {
-		return this.repository.reopen(bookId, id);
+		const account = this.repository.find({ bookId, id });
+		if (!account?.closedAt) {
+			return false;
+		}
+
+		this.repository.save(account.reopen());
+
+		return true;
 	}
 }
 

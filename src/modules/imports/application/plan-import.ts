@@ -78,7 +78,7 @@ function selectBookAndAccount(dependencies: ImportDependencies, bookId: string, 
 	if (book.archivedAt) {
 		throw new ImportError('book-archived', `Book "${book.name}" is archived.`);
 	}
-	const account = dependencies.accounts.find(bookId, accountId);
+	const account = dependencies.accounts.find({ bookId, id: accountId });
 	if (!account) {
 		throw new ImportError('account-not-found', `Account "${accountId}" does not exist in book "${book.name}".`);
 	}
