@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test';
 
-import { createSharedExpense, createSharedExpenseParticipant, SHARED_EXPENSE_SETTLEMENT_STATUS } from '.';
+import { createSharedExpense, SHARED_EXPENSE_SETTLEMENT_STATUS, SharedExpenseParticipant } from '.';
 
 function participant(id: string, bookId = 'book-a') {
-	return createSharedExpenseParticipant({ bookId, id, name: `Person ${id}` });
+	return SharedExpenseParticipant.create({ bookId, id, name: `Person ${id}` });
 }
 
 function create(

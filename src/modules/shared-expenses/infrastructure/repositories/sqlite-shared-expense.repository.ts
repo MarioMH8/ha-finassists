@@ -3,10 +3,10 @@ import type { Database } from 'bun:sqlite';
 import type {
 	SharedExpense,
 	SharedExpenseActor,
-	SharedExpenseParticipant,
 	SharedExpenseRepository,
 	SharedExpenseSettlementStatus,
 } from '../../domain';
+import { SharedExpenseParticipant } from '../../domain';
 
 interface ExpenseRow {
 	actor_id: null | string;
@@ -63,13 +63,13 @@ function toActor(kind: SharedExpenseActor['kind'], id: null | string): SharedExp
 }
 
 function toParticipant(row: ParticipantRow): SharedExpenseParticipant {
-	return {
+	return SharedExpenseParticipant.restore({
 		bookId: row.book_id,
 		createdAt: row.created_at,
 		id: row.id,
 		name: row.name,
 		...(row.removed_at !== null && { removedAt: row.removed_at }),
-	};
+	});
 }
 
 function assertConsistent(expense: SharedExpense): void {

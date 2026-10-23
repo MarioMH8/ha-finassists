@@ -4,6 +4,7 @@ import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
+import { SharedExpenseParticipantBookArchivedError, SharedExpenseParticipantBookNotFoundError } from '../domain';
 import { initializeSharedExpenseSchema, SqliteSharedExpenseRepository } from '../infrastructure';
 import {
 	CloseSharedExpense,
@@ -42,6 +43,23 @@ function setup() {
 }
 
 describe('shared expense use cases', () => {
+	it('throws a semantic error when creating a participant for a missing book', () => {
+		const context = setup();
+		expect(() => context.createParticipant.execute({ bookId: 'missing', id: 'person', name: 'Person' })).toThrow(
+			SharedExpenseParticipantBookNotFoundError
+		);
+		context.database.close();
+	});
+
+	it('throws a semantic error when creating a participant for an archived book', () => {
+		const context = setup();
+		context.books.save(context.book.archive('2026-01-01T00:00:00.000Z'));
+		expect(() =>
+			context.createParticipant.execute({ bookId: context.book.id, id: 'person', name: 'Person' })
+		).toThrow(SharedExpenseParticipantBookArchivedError);
+		context.database.close();
+	});
+
 	it('records an unknown actor independently of participants and accepts a participant who is not the actor', () => {
 		const context = setup();
 		context.createParticipant.execute({ bookId: context.book.id, id: 'a', name: 'Alex' });

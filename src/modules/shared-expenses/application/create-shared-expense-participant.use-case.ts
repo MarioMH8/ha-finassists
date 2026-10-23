@@ -1,7 +1,11 @@
 import type { BookRepository } from '@modules/books/domain';
 
-import type { SharedExpenseParticipant, SharedExpenseRepository } from '../domain';
-import { createSharedExpenseParticipant } from '../domain';
+import type { SharedExpenseRepository } from '../domain';
+import {
+	SharedExpenseParticipant,
+	SharedExpenseParticipantBookArchivedError,
+	SharedExpenseParticipantBookNotFoundError,
+} from '../domain';
 
 interface CreateSharedExpenseParticipantInput {
 	bookId: string;
@@ -18,13 +22,13 @@ class CreateSharedExpenseParticipant {
 	execute(input: CreateSharedExpenseParticipantInput): SharedExpenseParticipant {
 		const book = this.books.find({ id: input.bookId });
 		if (!book) {
-			throw new Error('Book not found');
+			throw new SharedExpenseParticipantBookNotFoundError();
 		}
 		if (book.archivedAt !== null) {
-			throw new Error('Cannot add participants to an archived book');
+			throw new SharedExpenseParticipantBookArchivedError();
 		}
 
-		const participant = createSharedExpenseParticipant(input);
+		const participant = SharedExpenseParticipant.create(input);
 		this.expenses.createParticipant(participant);
 
 		return participant;

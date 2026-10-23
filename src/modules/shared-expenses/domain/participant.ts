@@ -1,3 +1,9 @@
+import {
+	SharedExpenseParticipantBookIdInvalidError,
+	SharedExpenseParticipantIdInvalidError,
+	SharedExpenseParticipantNameInvalidError,
+} from './participant.error';
+
 interface SharedExpenseParticipantInput {
 	bookId: string;
 	createdAt?: string;
@@ -6,36 +12,51 @@ interface SharedExpenseParticipantInput {
 	removedAt?: string;
 }
 
-interface SharedExpenseParticipant {
-	bookId: string;
+interface PersistedSharedExpenseParticipantInput extends SharedExpenseParticipantInput {
 	createdAt: string;
-	id: string;
-	name: string;
-	removedAt?: string;
 }
 
-function createSharedExpenseParticipant(input: SharedExpenseParticipantInput): SharedExpenseParticipant {
-	if (input.id.trim().length === 0) {
-		throw new Error('Participant id must not be empty');
-	}
-	if (input.bookId.trim().length === 0) {
-		throw new Error('Participant book id must not be empty');
-	}
-	if (input.name.trim().length === 0 || input.name.trim().length > 120) {
-		throw new Error('Participant name must contain between 1 and 120 characters');
+class SharedExpenseParticipant {
+	readonly bookId: string;
+	readonly createdAt: string;
+	readonly id: string;
+	readonly name: string;
+	declare readonly removedAt?: string;
+
+	private constructor(properties: PersistedSharedExpenseParticipantInput) {
+		this.bookId = properties.bookId;
+		this.createdAt = properties.createdAt;
+		this.id = properties.id;
+		this.name = properties.name;
+		if (properties.removedAt !== undefined) {
+			this.removedAt = properties.removedAt;
+		}
 	}
 
-	const id = input.id.trim();
-	const bookId = input.bookId.trim();
-	const name = input.name.trim();
+	static create(input: SharedExpenseParticipantInput): SharedExpenseParticipant {
+		return this.restore({
+			...input,
+			createdAt: input.createdAt ?? new Date().toISOString(),
+		});
+	}
 
-	return {
-		bookId,
-		createdAt: input.createdAt ?? new Date().toISOString(),
-		id,
-		name,
-		...(input.removedAt !== undefined && { removedAt: input.removedAt }),
-	};
+	static restore(input: PersistedSharedExpenseParticipantInput): SharedExpenseParticipant {
+		if (input.id.trim().length === 0) {
+			throw new SharedExpenseParticipantIdInvalidError();
+		}
+		if (input.bookId.trim().length === 0) {
+			throw new SharedExpenseParticipantBookIdInvalidError();
+		}
+		if (input.name.trim().length === 0 || input.name.trim().length > 120) {
+			throw new SharedExpenseParticipantNameInvalidError();
+		}
+
+		const id = input.id.trim();
+		const bookId = input.bookId.trim();
+		const name = input.name.trim();
+
+		return new this({ ...input, bookId, id, name });
+	}
 }
 
-export { createSharedExpenseParticipant, type SharedExpenseParticipant, type SharedExpenseParticipantInput };
+export { type PersistedSharedExpenseParticipantInput, SharedExpenseParticipant, type SharedExpenseParticipantInput };

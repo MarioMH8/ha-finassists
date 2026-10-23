@@ -1,8 +1,15 @@
 export {
-	createSharedExpenseParticipant,
-	type SharedExpenseParticipant,
+	type PersistedSharedExpenseParticipantInput,
+	SharedExpenseParticipant,
 	type SharedExpenseParticipantInput,
 } from './participant';
+export {
+	SharedExpenseParticipantBookArchivedError,
+	SharedExpenseParticipantBookIdInvalidError,
+	SharedExpenseParticipantBookNotFoundError,
+	SharedExpenseParticipantIdInvalidError,
+	SharedExpenseParticipantNameInvalidError,
+} from './participant.error';
 export {
 	type BuildSharedExpenseInput,
 	createSharedExpense,
