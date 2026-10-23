@@ -2,7 +2,7 @@ import { TokenManagement } from '@app/features/api-tokens';
 import { FinanceManagement } from '@app/features/finance/finance-management';
 import type { Language } from '@app/i18n/language';
 import { LocaleProvider } from '@app/i18n/locale-context';
-import type { AppShellSettings } from '@modules/app-configuration/domain';
+import type { ShellConfig } from '@modules/shell/domain';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 
@@ -10,7 +10,7 @@ import styles from './app.module.css';
 
 interface AppProps {
 	language: Language;
-	settings: AppShellSettings;
+	settings: ShellConfig;
 }
 
 function App({ language, settings }: AppProps): ReactElement {

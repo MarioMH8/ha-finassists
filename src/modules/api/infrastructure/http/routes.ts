@@ -1,7 +1,7 @@
-import type { AppShellSettings } from '@modules/app-configuration/domain';
-import { DEFAULT_APP_SHELL_SETTINGS } from '@modules/app-configuration/domain';
 import type { HomeAssistantActor, IngressActor } from '@modules/home-assistant';
 import { isTrustedIngressPeer, resolveIngressActor } from '@modules/home-assistant';
+import type { ShellConfig } from '@modules/shell/domain';
+import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import type {
 	AuthenticateSystemCredential,
 	ExchangeSystemCredential,
@@ -18,10 +18,10 @@ import { withSecurityHeaders } from './security-headers';
 import { serveWebAsset } from './web-assets';
 
 interface RequestContext {
-	appShellSettings?: AppShellSettings;
 	developmentActor?: HomeAssistantActor;
 	developmentMode?: boolean;
 	remoteAddress: string | undefined;
+	shellConfig?: ShellConfig;
 	trustedIngressIp: string;
 }
 
@@ -362,7 +362,7 @@ async function routeRequest(
 		pathname,
 		request,
 		context.developmentMode ?? false,
-		context.appShellSettings ?? DEFAULT_APP_SHELL_SETTINGS
+		context.shellConfig ?? DEFAULT_SHELL_CONFIG
 	);
 }
 

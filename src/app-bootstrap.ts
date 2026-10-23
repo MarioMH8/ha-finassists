@@ -232,11 +232,11 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 	};
 
 	const server = createServer({
-		appShellSettings: config.appShellSettings,
 		developmentActor: config.developmentActor,
 		developmentMode: config.developmentMode,
 		financeUseCases,
 		port: config.port,
+		shellConfig: config.shellConfig,
 		systemCredentialUseCases,
 		tokenUseCases,
 		trustedIngressIp: config.trustedIngressIp,

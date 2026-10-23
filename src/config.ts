@@ -1,18 +1,18 @@
 import { isIP } from 'node:net';
 
-import type { AppShellSettings } from '@modules/app-configuration/domain';
-import { DEFAULT_APP_SHELL_SETTINGS } from '@modules/app-configuration/domain';
 import type { HomeAssistantActor } from '@modules/home-assistant';
 import { DEFAULT_TRUSTED_INGRESS_IP } from '@modules/home-assistant';
+import type { ShellConfig } from '@modules/shell/domain';
+import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import { z } from 'zod';
 
 interface ServerConfig {
-	appShellSettings: AppShellSettings;
 	bootstrapCapability: string | undefined;
 	databasePath: string;
 	developmentActor: HomeAssistantActor | undefined;
 	developmentMode: boolean;
 	port: number;
+	shellConfig: ShellConfig;
 	supervisorToken: string | undefined;
 	trustedIngressIp: string;
 }
@@ -113,13 +113,13 @@ async function loadServerConfig({
 	}
 
 	const normalizedName = options.application_name?.trim() ?? '';
-	const appShellSettings: AppShellSettings = {
+	const shellConfig: ShellConfig = {
 		applicationName:
 			normalizedName.length > 0 && normalizedName.length <= 80 && !hasControlCharacters(normalizedName)
 				? normalizedName
-				: DEFAULT_APP_SHELL_SETTINGS.applicationName,
-		showLogo: options.show_logo ?? DEFAULT_APP_SHELL_SETTINGS.showLogo,
-		showNavigation: options.show_navigation ?? DEFAULT_APP_SHELL_SETTINGS.showNavigation,
+				: DEFAULT_SHELL_CONFIG.applicationName,
+		showLogo: options.show_logo ?? DEFAULT_SHELL_CONFIG.showLogo,
+		showNavigation: options.show_navigation ?? DEFAULT_SHELL_CONFIG.showNavigation,
 	};
 
 	const bootstrapCapability = readOptionalEnvironmentValue(environment.SYSTEM_CREDENTIAL_BOOTSTRAP_CAPABILITY);
@@ -133,12 +133,12 @@ async function loadServerConfig({
 	}
 
 	return {
-		appShellSettings,
 		bootstrapCapability,
 		databasePath,
 		developmentActor: isDevelopment ? createDevelopmentActor(environment) : undefined,
 		developmentMode: isDevelopment,
 		port,
+		shellConfig,
 		supervisorToken: readOptionalEnvironmentValue(environment.SUPERVISOR_TOKEN),
 		trustedIngressIp,
 	};

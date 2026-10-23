@@ -1,13 +1,13 @@
-interface AppShellSettings {
+interface ShellConfig {
 	applicationName: string;
 	showLogo: boolean;
 	showNavigation: boolean;
 }
 
-const DEFAULT_APP_SHELL_SETTINGS: AppShellSettings = {
+const DEFAULT_SHELL_CONFIG: ShellConfig = {
 	applicationName: 'Fin Assist',
 	showLogo: true,
 	showNavigation: true,
 };
 
-export { type AppShellSettings, DEFAULT_APP_SHELL_SETTINGS };
+export { DEFAULT_SHELL_CONFIG, type ShellConfig };

@@ -1,6 +1,6 @@
 import type { Language } from '@app/i18n/language';
-import type { AppShellSettings } from '@modules/app-configuration/domain';
-import { DEFAULT_APP_SHELL_SETTINGS } from '@modules/app-configuration/domain';
+import type { ShellConfig } from '@modules/shell/domain';
+import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import type { ReactElement, ReactNode } from 'react';
 
 import { App } from './app';
@@ -10,13 +10,13 @@ interface DocumentProps {
 	children: ReactNode;
 	developmentMode: boolean;
 	language: Language;
-	settings: AppShellSettings;
+	settings: ShellConfig;
 }
 
 interface WebPageProps {
 	developmentMode?: boolean;
 	language: Language;
-	settings?: AppShellSettings;
+	settings?: ShellConfig;
 }
 
 function Document({ children, developmentMode, language, settings }: DocumentProps): ReactElement {
@@ -60,11 +60,7 @@ function Document({ children, developmentMode, language, settings }: DocumentPro
 	);
 }
 
-function WebPage({
-	developmentMode = false,
-	language,
-	settings = DEFAULT_APP_SHELL_SETTINGS,
-}: WebPageProps): ReactElement {
+function WebPage({ developmentMode = false, language, settings = DEFAULT_SHELL_CONFIG }: WebPageProps): ReactElement {
 	return (
 		<Document
 			developmentMode={developmentMode}

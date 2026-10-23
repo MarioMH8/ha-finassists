@@ -5,13 +5,13 @@ import { fileURLToPath } from 'node:url';
 
 import type { Language } from '@app/i18n/language';
 import { LANGUAGE } from '@app/i18n/language';
-import type { AppShellSettings } from '@modules/app-configuration/domain';
+import type { ShellConfig } from '@modules/shell/domain';
 
 interface ServerRenderer {
 	renderPage(
 		language: Language,
 		isDevelopmentMode: boolean,
-		settings: AppShellSettings
+		settings: ShellConfig
 	): Promise<ReadableStream<Uint8Array>>;
 }
 
@@ -118,7 +118,7 @@ function getLanguage(request: Request): Language {
 	return isPrefersSpanish ? LANGUAGE.SPANISH : LANGUAGE.ENGLISH;
 }
 
-async function serveHtml(request: Request, isDevelopmentMode: boolean, settings: AppShellSettings): Promise<Response> {
+async function serveHtml(request: Request, isDevelopmentMode: boolean, settings: ShellConfig): Promise<Response> {
 	const language = getLanguage(request);
 	const renderer =
 		!isDevelopmentMode && Bun.env.NODE_ENV === 'production'
@@ -152,7 +152,7 @@ async function serveWebAsset(
 	pathname: string,
 	request: Request,
 	isDevelopmentMode: boolean,
-	settings: AppShellSettings
+	settings: ShellConfig
 ): Promise<Response> {
 	if (isDevelopmentMode && pathname.endsWith('/__dev/version')) {
 		return new Response(`${developmentVersion}:${await getSourceVersion(sourceDirectory)}`, {

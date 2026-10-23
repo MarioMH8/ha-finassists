@@ -15,12 +15,12 @@ describe('loadServerConfig', () => {
 		});
 
 		expect(config).toEqual({
-			appShellSettings: { applicationName: 'Fin Assist', showLogo: true, showNavigation: true },
 			bootstrapCapability: undefined,
 			databasePath: '/data/fin-assist.sqlite',
 			developmentActor: undefined,
 			developmentMode: false,
 			port: 8099,
+			shellConfig: { applicationName: 'Fin Assist', showLogo: true, showNavigation: true },
 			supervisorToken: undefined,
 			trustedIngressIp: DEFAULT_TRUSTED_INGRESS_IP,
 		});
@@ -45,7 +45,7 @@ describe('loadServerConfig', () => {
 				optionsPath,
 			});
 
-			expect(config.appShellSettings).toEqual({
+			expect(config.shellConfig).toEqual({
 				applicationName: 'Fin Assist',
 				showLogo: true,
 				showNavigation: false,
