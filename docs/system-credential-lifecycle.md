@@ -1,0 +1,9 @@
+# Home Assistant system credential lifecycle
+
+The native Home Assistant integration uses a dedicated system credential, separate from personal API tokens. Configure the initial bootstrap capability on the backend with `SYSTEM_CREDENTIAL_BOOTSTRAP_CAPABILITY` before setting up the integration. Use a randomly generated value of at least 32 characters and deliver it to the trusted setup flow through the supported Supervisor discovery mechanism; never place a personal API token in integration configuration.
+
+At startup, the backend stores only the capability's SHA-256 hash. The capability is valid for 15 minutes after startup and can be redeemed once through `POST /api/v1/system-credentials/exchange` with `{ "bootstrapCapability": "..." }`. A successful exchange returns `{ "credential": "fa_system_...", "id": "home-assistant-integration" }`; the response is not cacheable, and the credential secret is returned only at issuance. Store it in the Home Assistant config entry and do not log it. The integration authenticates subsequent API requests with this system credential, which is attributed as `home_assistant_integration`.
+
+To rotate, send an authenticated `PUT /api/v1/system-credentials/current` request with the current system credential. The response contains the replacement credential once; persist it before discarding the old value. To revoke, send an authenticated `DELETE /api/v1/system-credentials/current` request. Personal API tokens cannot rotate or revoke the system credential. If bootstrap provisioning is required again, configure a new capability and restart the backend; a redeemed capability cannot be reused.
+
+The Home Assistant config entry, its backups, and host administrators are within the credential trust boundary. Bootstrap delivery and config-entry storage behavior must be validated in a supported live Home Assistant/Supervisor environment before claiming the complete provisioning lifecycle is production-verified.
