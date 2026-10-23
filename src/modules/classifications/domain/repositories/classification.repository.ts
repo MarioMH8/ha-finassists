@@ -1,4 +1,4 @@
-import type { Classification, ClassificationKind } from './classification';
+import type { Classification, ClassificationKind } from '../classification';
 
 /**
  * Port for one classification dimension. Every operation is scoped to a book;
