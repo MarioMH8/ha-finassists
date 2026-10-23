@@ -1,8 +1,20 @@
-import { describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test';
 
 import { createBootstrapCapability, publishSupervisorDiscovery } from './supervisor-discovery';
 
+afterEach(() => {
+	mock.restore();
+});
+
 describe('Supervisor discovery provisioning', () => {
+	it('uses the global fetch when no fetcher is provided', async () => {
+		const fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(undefined, { status: 200 }));
+
+		await publishSupervisorDiscovery('supervisor-token', 'fa_bootstrap_capability');
+
+		expect(fetchSpy.mock.calls[0]?.[0]).toBe('http://supervisor/discovery');
+	});
+
 	it('generates a unique URL-safe bootstrap capability', () => {
 		const first = createBootstrapCapability();
 		const second = createBootstrapCapability();
