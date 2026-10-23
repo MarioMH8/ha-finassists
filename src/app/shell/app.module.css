@@ -1,5 +1,7 @@
 .app-shell {
   min-height: 100vh;
+  background: var(--primary-background-color, #fafafa);
+  color: var(--primary-text-color, #202124);
 }
 
 .app-header {
@@ -7,40 +9,42 @@
   min-height: 64px;
   align-items: center;
   gap: 14px;
-  padding: 0 24px;
+  padding: 0 max(24px, calc((100vw - 1120px) / 2));
   border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--card-background-color, var(--surface));
 }
 
 .brand-mark {
-  display: grid;
+  flex: 0 0 auto;
   width: 34px;
   height: 34px;
-  place-items: center;
+  padding: 5px;
   border-radius: 50%;
   background: var(--accent);
-  color: #102027;
-  font-size: 18px;
-  font-weight: 700;
+  color: var(--primary-text-color, #102027);
 }
 
 .app-header h1 {
   margin: 0;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.015em;
 }
 
-nav {
+.navigation {
   display: flex;
-  gap: 8px;
-  padding: 10px 24px 0;
+  gap: 4px;
+  padding: 8px max(24px, calc((100vw - 1120px) / 2)) 0;
+  overflow-x: auto;
   border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--card-background-color, var(--surface));
+  scrollbar-color: var(--muted) transparent;
 }
 
-nav button {
-  min-height: 42px;
-  padding: 8px 12px;
+.navigation button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 8px 14px;
   border: 0;
   border-bottom: 2px solid transparent;
   border-radius: 0;
@@ -50,22 +54,32 @@ nav button {
   font: inherit;
 }
 
-nav button[aria-current='page'] {
+.navigation button[aria-current='page'] {
   border-bottom-color: var(--accent);
   color: var(--primary-text-color, #202124);
   font-weight: 650;
 }
 
-nav button:focus-visible {
+.navigation button:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: -3px;
 }
 
 .main-content {
   display: grid;
-  width: min(100% - 32px, 760px);
+  width: min(100% - 48px, 1120px);
   gap: 28px;
-  margin: 40px auto;
+  margin: 36px auto 48px;
+}
+
+.main-content:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.planning-content {
+  display: grid;
+  gap: 36px;
 }
 
 .main-content footer {
@@ -74,20 +88,20 @@ nav button:focus-visible {
   text-align: center;
 }
 
-@media (max-width: 540px) {
+@media (max-width: 600px) {
   .app-header {
-    padding: 0 16px;
-  }
-
-  nav {
     padding-right: 16px;
     padding-left: 16px;
   }
 
-  .main-content {
-    width: min(100% - 24px, 760px);
-    gap: 24px;
-    margin: 24px auto;
+  .navigation {
+    padding-right: 12px;
+    padding-left: 12px;
   }
 
+  .main-content {
+    width: min(100% - 28px, 1120px);
+    gap: 24px;
+    margin: 24px auto 36px;
+  }
 }

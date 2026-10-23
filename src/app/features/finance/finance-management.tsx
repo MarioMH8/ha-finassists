@@ -1,4 +1,16 @@
 import { useLocale } from '@app/i18n/locale-context';
+import type {
+	AccountBalanceView as AccountBalance,
+	AccountView as Account,
+	ConfirmActionProps,
+} from '@modules/accounts/presentation';
+import { AccountsPanel } from '@modules/accounts/presentation';
+import type { ClassificationView as Classification } from '@modules/classifications/presentation';
+import { ClassificationsPanel } from '@modules/classifications/presentation';
+import type { ImportPreviewView as ImportPreview } from '@modules/imports/presentation';
+import { ImportsPanel } from '@modules/imports/presentation';
+import type { FinancialTransactionView as FinancialTransaction } from '@modules/ledger/presentation';
+import { TransactionsPanel } from '@modules/ledger/presentation';
 import type { ReactElement, SubmitEvent } from 'react';
 import { useEffect, useEffectEvent, useState } from 'react';
 
@@ -13,70 +25,8 @@ interface Book {
 	name: string;
 }
 
-interface Account {
-	closedAt: null | string;
-	id: string;
-	kind: string;
-	name: string;
-	openingBalanceMinor: number;
-}
-
-interface Classification {
-	archivedAt: null | string;
-	id: string;
-	name: string;
-	parentId: null | string;
-}
-
-interface TransactionPart {
-	amountMinor: number;
-	categoryId: null | string;
-	classId: null | string;
-	id: string;
-	memo: string;
-}
-
-interface FinancialTransaction {
-	accountId: string;
-	amountMinor: number;
-	id: string;
-	memo: string;
-	parts: TransactionPart[];
-	payee: string;
-	status: string;
-	transactionDate: string;
-	transferId: null | string;
-}
-
-interface AccountBalance {
-	postedMinor: number;
-	reconciledMinor: number;
-	totalMinor: number;
-}
-
 interface Page<T> {
 	items: T[];
-}
-
-interface ImportPreview {
-	canCommit: boolean;
-	currencyCode: string;
-	errorCount: number;
-	format: 'payee_csv' | 'qif' | 'statement_csv';
-	ignoredFields: Record<string, number>;
-	issues: { code: string; line: number; message: string; severity: string }[];
-	payeeDirectory: { active: boolean; code: string; line: number; name: string }[];
-	payeesNormalized: number;
-	rows: {
-		amountMinor: number;
-		line: number;
-		memo: string;
-		payee: string;
-		possibleDuplicate: boolean;
-		transactionDate: string;
-	}[];
-	summary: { firstDate: null | string; lastDate: null | string; rowCount: number; totalMinor: number };
-	warningCount: number;
 }
 
 const SECTION = {
@@ -142,14 +92,7 @@ function ConfirmAction({
 	label,
 	onConfirm,
 	prompt,
-}: {
-	cancelLabel: string;
-	className?: string;
-	disabled?: boolean;
-	label: string;
-	onConfirm: () => void;
-	prompt: string;
-}): ReactElement {
+}: ConfirmActionProps): ReactElement {
 	const [confirming, setConfirming] = useState(false);
 
 	return confirming ? (
@@ -183,7 +126,11 @@ function ConfirmAction({
 	);
 }
 
-function FinanceManagement(): ReactElement {
+interface FinanceManagementProps {
+	initialSection?: Section;
+}
+
+function FinanceManagement({ initialSection = SECTION.ACCOUNTS }: FinanceManagementProps): ReactElement {
 	const { copy, language } = useLocale();
 	const [books, setBooks] = useState<Book[]>([]);
 	const [bookId, setBookId] = useState('');
@@ -193,7 +140,7 @@ function FinanceManagement(): ReactElement {
 	const [classes, setClasses] = useState<Classification[]>([]);
 	const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
 	const [accountId, setAccountId] = useState('');
-	const [section, setSection] = useState<Section>(SECTION.ACCOUNTS);
+	const [section, setSection] = useState<Section>(initialSection);
 	const [includeArchived, setIncludeArchived] = useState(false);
 	const [includeClosed, setIncludeClosed] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -518,68 +465,6 @@ function FinanceManagement(): ReactElement {
 		return typeof value === 'string' ? value : fallback;
 	}
 
-	function renderClassificationList(kind: 'categories' | 'classes', items: Classification[]): ReactElement {
-		return (
-			<ul className={styles.list}>
-				{items.map(item => (
-					<li
-						className={styles.row}
-						key={item.id}>
-						<div>
-							<strong>{item.name}</strong>
-							{item.archivedAt && <span className={styles.badge}>{copy.financeArchived}</span>}
-						</div>
-						<div className={styles['row-actions']}>
-							{!item.archivedAt && (
-								<button
-									className={styles.secondary}
-									disabled={busy}
-									onClick={() => {
-										setEditingClassification(item);
-									}}
-									type='button'>
-									{copy.financeEdit}
-								</button>
-							)}
-							<button
-								className={styles.secondary}
-								disabled={busy}
-								onClick={() =>
-									void perform(async () => {
-										const operation = item.archivedAt ? 'restore' : 'archive';
-										await request(
-											`/api/v1/books/${encodeURIComponent(bookId)}/${kind}/${encodeURIComponent(item.id)}/${operation}`,
-											json('POST')
-										);
-										await loadBookData(bookId);
-									})
-								}
-								type='button'>
-								{item.archivedAt ? copy.financeRestore : copy.financeArchive}
-							</button>
-							<ConfirmAction
-								cancelLabel={copy.cancel}
-								className={styles.secondary}
-								disabled={busy}
-								label={copy.financeDelete}
-								onConfirm={() =>
-									void perform(async () => {
-										await request(
-											`/api/v1/books/${encodeURIComponent(bookId)}/${kind}/${encodeURIComponent(item.id)}`,
-											{ method: 'DELETE' }
-										);
-										await loadBookData(bookId);
-									})
-								}
-								prompt={copy.financeConfirmDelete}
-							/>
-						</div>
-					</li>
-				))}
-			</ul>
-		);
-	}
-
 	const activeBook = books.find(book => book.id === bookId);
 
 	return (
@@ -668,7 +553,7 @@ function FinanceManagement(): ReactElement {
 								}
 								prompt={copy.financeConfirmArchiveBook}
 							/>
-						)}{' '}
+						)}
 						{activeBook.archivedAt && <span className={styles.badge}>{copy.financeArchived}</span>}
 					</div>
 				)}
@@ -727,663 +612,138 @@ function FinanceManagement(): ReactElement {
 						))}
 					</nav>
 					{section === SECTION.ACCOUNTS && (
-						<section
-							aria-labelledby='accounts-heading'
-							className={styles.card}>
-							<div className={styles['section-title']}>
-								<div>
-									<h3 id='accounts-heading'>{copy.financeAccounts}</h3>
-									<p>{copy.financeAccountsHelp}</p>
-								</div>
-								<label className={styles.check}>
-									<input
-										checked={includeClosed}
-										onChange={event => setIncludeClosed(event.currentTarget.checked)}
-										type='checkbox'
-									/>
-									{copy.financeIncludeClosed}
-								</label>
-							</div>
-							{loadingBookData ? (
-								<p role='status'>{copy.financeLoading}</p>
-							) : accounts.length > 0 ? (
-								<ul className={styles.list}>
-									{accounts.map(account => (
-										<li
-											className={`${styles.row} ${account.id === accountId ? styles['selected-row'] : ''}`}
-											key={account.id}>
-											<button
-												className={styles['account-button']}
-												onClick={() => {
-													setAccountId(account.id);
-													setSection(SECTION.TRANSACTIONS);
-												}}
-												type='button'>
-												<strong>{account.name}</strong>
-												<span>
-													{localized(
-														`financeKind_${account.kind}` as keyof typeof copy,
-														account.kind
-													)}
-													{account.closedAt ? ` · ${copy.financeClosed}` : ''}
-												</span>
-											</button>
-											<div className={styles.balance}>
-												<strong>
-													{formatMoney(
-														balances[account.id]?.totalMinor ?? account.openingBalanceMinor
-													)}
-												</strong>
-												<small>
-													{copy.financePosted}:{' '}
-													{formatMoney(
-														balances[account.id]?.postedMinor ?? account.openingBalanceMinor
-													)}
-												</small>
-											</div>
-											<button
-												className={styles.secondary}
-												disabled={busy}
-												onClick={() =>
-													void perform(async () => {
-														await request(
-															`/api/v1/books/${encodeURIComponent(bookId)}/accounts/${encodeURIComponent(account.id)}/${account.closedAt ? 'open' : 'close'}`,
-															json('POST')
-														);
-														await loadBookData(bookId);
-													})
-												}
-												type='button'>
-												{account.closedAt ? copy.financeOpen : copy.financeClose}
-											</button>
-										</li>
-									))}
-								</ul>
-							) : (
-								<p className={styles.empty}>{copy.financeNoAccounts}</p>
-							)}
-							<form
-								className={styles['inline-form']}
-								onSubmit={event => void submitAccount(event)}>
-								<label>
-									{copy.financeAccountName}
-									<input
-										autoComplete='off'
-										maxLength={80}
-										name='name'
-										required
-									/>
-								</label>
-								<label>
-									{copy.financeAccountType}
-									<select name='kind'>
-										<option value='checking'>{copy.financeKind_checking}</option>
-										<option value='savings'>{copy.financeKind_savings}</option>
-										<option value='credit'>{copy.financeKind_credit}</option>
-										<option value='asset'>{copy.financeKind_asset}</option>
-										<option value='liability'>{copy.financeKind_liability}</option>
-									</select>
-								</label>
-								<label>
-									{copy.financeOpeningBalance}
-									<input
-										defaultValue='0'
-										inputMode='decimal'
-										name='openingBalance'
-										required
-										step='any'
-										type='number'
-									/>
-								</label>
-								<button
-									disabled={busy}
-									type='submit'>
-									{copy.financeCreateAccount}
-								</button>
-							</form>
-						</section>
+						<AccountsPanel
+							accountId={accountId}
+							accounts={accounts}
+							balances={balances}
+							busy={busy}
+							copy={copy}
+							formatMoney={formatMoney}
+							isIncludeClosed={includeClosed}
+							loadingBookData={loadingBookData}
+							localized={localized}
+							onAccountSelect={id => {
+								setAccountId(id);
+								setSection(SECTION.TRANSACTIONS);
+							}}
+							onIncludeClosedChange={setIncludeClosed}
+							onSubmitAccount={event => void submitAccount(event)}
+							onToggleAccount={account =>
+								void perform(async () => {
+									await request(
+										`/api/v1/books/${encodeURIComponent(bookId)}/accounts/${encodeURIComponent(account.id)}/${account.closedAt ? 'open' : 'close'}`,
+										json('POST')
+									);
+									await loadBookData(bookId);
+								})
+							}
+							styles={styles}
+						/>
 					)}
 					{section === SECTION.CLASSIFICATIONS && (
-						<section className={styles['two-column']}>
-							{(['categories', 'classes'] as const).map(kind => (
-								<div
-									className={styles.card}
-									key={kind}>
-									<div className={styles['section-title']}>
-										<div>
-											<h3>
-												{kind === 'categories' ? copy.financeCategories : copy.financeClasses}
-											</h3>
-											<p>
-												{kind === 'categories'
-													? copy.financeCategoriesHelp
-													: copy.financeClassesHelp}
-											</p>
-										</div>
-										<label className={styles.check}>
-											<input
-												checked={includeArchived}
-												onChange={event => setIncludeArchived(event.currentTarget.checked)}
-												type='checkbox'
-											/>
-											{copy.financeIncludeArchived}
-										</label>
-									</div>
-									{renderClassificationList(kind, kind === 'categories' ? categories : classes)}
-									<form
-										className={styles['stack-form']}
-										key={`${kind}-${editingClassification?.id ?? 'new'}`}
-										onSubmit={event => void submitClassification(event, kind)}>
-										<label>
-											{editingClassification ? copy.financeEditName : copy.financeName}
-											<input
-												autoComplete='off'
-												defaultValue={editingClassification?.name ?? ''}
-												maxLength={80}
-												name='name'
-												required
-											/>
-										</label>
-										<label>
-											{copy.financeParent}
-											<select
-												defaultValue={editingClassification?.parentId ?? ''}
-												name='parentId'>
-												<option value=''>{copy.financeNoParent}</option>
-												{(kind === 'categories' ? categories : classes)
-													.filter(
-														item =>
-															item.id !== editingClassification?.id && !item.archivedAt
-													)
-													.map(item => (
-														<option
-															key={item.id}
-															value={item.id}>
-															{item.name}
-														</option>
-													))}
-											</select>
-										</label>
-										<div className={styles['row-actions']}>
-											<button
-												disabled={busy}
-												type='submit'>
-												{editingClassification ? copy.financeSave : copy.financeCreate}
-											</button>
-											{editingClassification && (
-												<button
-													className={styles.secondary}
-													onClick={() => setEditingClassification(undefined)}
-													type='button'>
-													{copy.cancel}
-												</button>
-											)}
-										</div>
-									</form>
-								</div>
-							))}
-						</section>
+						<ClassificationsPanel
+							busy={busy}
+							categories={categories}
+							classes={classes}
+							ConfirmAction={ConfirmAction}
+							copy={copy}
+							editingClassification={editingClassification}
+							isIncludeArchived={includeArchived}
+							onCancelEdit={() => setEditingClassification(undefined)}
+							onEdit={setEditingClassification}
+							onIncludeArchivedChange={setIncludeArchived}
+							onItemAction={(kind, item, action) =>
+								void perform(async () => {
+									await request(
+										`/api/v1/books/${encodeURIComponent(bookId)}/${kind}/${encodeURIComponent(item.id)}${action === 'delete' ? '' : `/${action}`}`,
+										action === 'delete' ? { method: 'DELETE' } : json('POST')
+									);
+									await loadBookData(bookId);
+								})
+							}
+							onSubmit={(event, kind) => void submitClassification(event, kind)}
+							styles={styles}
+						/>
 					)}
 					{section === SECTION.TRANSACTIONS && (
-						<section className={styles.card}>
-							<div className={styles['section-title']}>
-								<div>
-									<h3>{copy.financeTransactions}</h3>
-									<p>{copy.financeTransactionsHelp}</p>
-								</div>
-								<label className={styles['book-select']}>
-									{copy.financeAccount}
-									<select
-										aria-label={copy.financeAccount}
-										onChange={event => setAccountId(event.currentTarget.value)}
-										value={accountId}>
-										{accounts.map(account => (
-											<option
-												disabled={Boolean(account.closedAt)}
-												key={account.id}
-												value={account.id}>
-												{account.name}
-											</option>
-										))}
-									</select>
-								</label>
-							</div>
-							{loadingTransactions ? (
-								<p role='status'>{copy.financeLoading}</p>
-							) : transactions.length > 0 ? (
-								<div className={styles['table-wrap']}>
-									<table>
-										<thead>
-											<tr>
-												<th>{copy.financeDate}</th>
-												<th>{copy.financePayee}</th>
-												<th>{copy.financeAmount}</th>
-												<th>{copy.financeStatus}</th>
-												<th>{copy.financeActions}</th>
-											</tr>
-										</thead>
-										<tbody>
-											{transactions.map(transaction => (
-												<tr key={transaction.id}>
-													<td>{formatDate(transaction.transactionDate, language)}</td>
-													<td>{transaction.payee || transaction.memo || '—'}</td>
-													<td
-														className={
-															transaction.amountMinor < 0
-																? styles.negative
-																: styles.positive
-														}>
-														{formatMoney(transaction.amountMinor)}
-													</td>
-													<td>
-														{localized(
-															`financeStatus_${transaction.status}` as keyof typeof copy,
-															transaction.status
-														)}
-													</td>
-													<td>
-														<div className={styles['row-actions']}>
-															<button
-																className={styles.secondary}
-																disabled={
-																	busy ||
-																	transaction.status === 'reconciled' ||
-																	Boolean(transaction.transferId)
-																}
-																onClick={() => {
-																	setEditingTransaction(transaction);
-																}}
-																type='button'>
-																{copy.financeEdit}
-															</button>
-															<select
-																aria-label={`${copy.financeStatus} ${transaction.payee}`}
-																disabled={busy}
-																onChange={event => {
-																	const status = event.currentTarget.value;
-																	if (status) {
-																		void perform(async () => {
-																			await request(
-																				`/api/v1/books/${encodeURIComponent(bookId)}/transactions/${encodeURIComponent(transaction.id)}/status`,
-																				json('PUT', { status })
-																			);
-																			await loadTransactions(bookId, accountId);
-																			await loadBookData(bookId);
-																		});
-																	}
-																}}
-																value=''>
-																<option value=''>{copy.financeSetStatus}</option>
-																{(['uncleared', 'cleared', 'reconciled'] as const)
-																	.filter(status => status !== transaction.status)
-																	.map(status => (
-																		<option
-																			key={status}
-																			value={status}>
-																			{localized(
-																				`financeStatus_${status}` as keyof typeof copy,
-																				status
-																			)}
-																		</option>
-																	))}
-															</select>
-															<ConfirmAction
-																cancelLabel={copy.cancel}
-																className={styles.secondary}
-																disabled={busy}
-																label={copy.financeDelete}
-																onConfirm={() =>
-																	void perform(async () => {
-																		await request(
-																			`/api/v1/books/${encodeURIComponent(bookId)}/transactions/${encodeURIComponent(transaction.id)}`,
-																			{ method: 'DELETE' }
-																		);
-																		await loadTransactions(bookId, accountId);
-																		await loadBookData(bookId);
-																	})
-																}
-																prompt={copy.financeConfirmDelete}
-															/>
-														</div>
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
-								</div>
-							) : (
-								<p className={styles.empty}>{copy.financeNoTransactions}</p>
-							)}
-							<form
-								className={styles['stack-form']}
-								key={editingTransaction?.id ?? 'new'}
-								onSubmit={event => void submitTransaction(event)}>
-								<h4>{editingTransaction ? copy.financeEditTransaction : copy.financeNewTransaction}</h4>
-								<div className={styles['form-grid']}>
-									<label>
-										{copy.financeDate}
-										<input
-											defaultValue={editingTransaction?.transactionDate ?? ''}
-											name='transactionDate'
-											required
-											type='date'
-										/>
-									</label>
-									<label>
-										{copy.financePayee}
-										<input
-											autoComplete='off'
-											defaultValue={editingTransaction?.payee ?? ''}
-											maxLength={120}
-											name='payee'
-										/>
-									</label>
-									<label>
-										{copy.financeAmount}
-										<input
-											defaultValue={
-												editingTransaction
-													? minorUnitsToInput(
-															editingTransaction.amountMinor,
-															activeBook.currencyCode
-														)
-													: ''
-											}
-											inputMode='decimal'
-											name='amount'
-											required
-											step='any'
-											type='number'
-										/>
-									</label>
-									<label>
-										{copy.financeCategory}
-										<select
-											defaultValue={editingTransaction?.parts[0]?.categoryId ?? ''}
-											name='categoryId'>
-											<option value=''>{copy.financeNoCategory}</option>
-											{categories
-												.filter(item => !item.archivedAt)
-												.map(item => (
-													<option
-														key={item.id}
-														value={item.id}>
-														{item.name}
-													</option>
-												))}
-										</select>
-									</label>
-									<label>
-										{copy.financeClass}
-										<select
-											defaultValue={editingTransaction?.parts[0]?.classId ?? ''}
-											name='classId'>
-											<option value=''>{copy.financeNoClass}</option>
-											{classes
-												.filter(item => !item.archivedAt)
-												.map(item => (
-													<option
-														key={item.id}
-														value={item.id}>
-														{item.name}
-													</option>
-												))}
-										</select>
-									</label>
-									<label>
-										{copy.financeMemo}
-										<input
-											defaultValue={editingTransaction?.memo ?? ''}
-											maxLength={500}
-											name='memo'
-										/>
-									</label>
-								</div>
-								<div className={styles['row-actions']}>
-									<button
-										disabled={busy || !accountId}
-										type='submit'>
-										{editingTransaction ? copy.financeSave : copy.financeCreateTransaction}
-									</button>
-									{editingTransaction && (
-										<button
-											className={styles.secondary}
-											onClick={() => setEditingTransaction(undefined)}
-											type='button'>
-											{copy.cancel}
-										</button>
-									)}
-								</div>
-							</form>
-							<form
-								className={styles['stack-form']}
-								onSubmit={event => void submitTransfer(event)}>
-								<h4>{copy.financeNewTransfer}</h4>
-								<div className={styles['form-grid']}>
-									<label>
-										{copy.financeFromAccount}
-										<select name='fromAccountId'>
-											{accounts
-												.filter(item => !item.closedAt)
-												.map(item => (
-													<option
-														key={item.id}
-														value={item.id}>
-														{item.name}
-													</option>
-												))}
-										</select>
-									</label>
-									<label>
-										{copy.financeToAccount}
-										<select name='toAccountId'>
-											{accounts
-												.filter(item => !item.closedAt)
-												.map(item => (
-													<option
-														key={item.id}
-														value={item.id}>
-														{item.name}
-													</option>
-												))}
-										</select>
-									</label>
-									<label>
-										{copy.financeAmount}
-										<input
-											inputMode='decimal'
-											name='amount'
-											required
-											step='any'
-											type='number'
-										/>
-									</label>
-									<label>
-										{copy.financeDate}
-										<input
-											name='transactionDate'
-											required
-											type='date'
-										/>
-									</label>
-									<label>
-										{copy.financeMemo}
-										<input
-											maxLength={500}
-											name='memo'
-										/>
-									</label>
-								</div>
-								<button
-									disabled={busy || accounts.filter(item => !item.closedAt).length < 2}
-									type='submit'>
-									{copy.financeCreateTransfer}
-								</button>
-							</form>
-						</section>
+						<TransactionsPanel
+							accountId={accountId}
+							accounts={accounts}
+							busy={busy}
+							categories={categories}
+							classes={classes}
+							ConfirmAction={ConfirmAction}
+							copy={copy}
+							editingTransaction={editingTransaction}
+							formatDate={formatDate}
+							formatMoney={formatMoney}
+							language={language}
+							loadingTransactions={loadingTransactions}
+							localized={localized}
+							minorUnitsToInput={minorUnitsToInput}
+							onAccountChange={setAccountId}
+							onCancelEdit={() => setEditingTransaction(undefined)}
+							onDeleteTransaction={transaction =>
+								void perform(async () => {
+									await request(
+										`/api/v1/books/${encodeURIComponent(bookId)}/transactions/${encodeURIComponent(transaction.id)}`,
+										{ method: 'DELETE' }
+									);
+									await loadTransactions(bookId, accountId);
+									await loadBookData(bookId);
+								})
+							}
+							onEditTransaction={setEditingTransaction}
+							onSetStatus={(transaction, status) =>
+								void perform(async () => {
+									await request(
+										`/api/v1/books/${encodeURIComponent(bookId)}/transactions/${encodeURIComponent(transaction.id)}/status`,
+										json('PUT', { status })
+									);
+									await loadTransactions(bookId, accountId);
+									await loadBookData(bookId);
+								})
+							}
+							onSubmitTransaction={event => void submitTransaction(event)}
+							onSubmitTransfer={event => void submitTransfer(event)}
+							selectedBookCurrency={activeBook.currencyCode}
+							styles={styles}
+							transactions={transactions}
+						/>
 					)}
 					{section === SECTION.IMPORT && (
-						<section className={styles.card}>
-							<h3>{copy.financeImport}</h3>
-							<p>{copy.financeImportHelp}</p>
-							<div className={styles['form-grid']}>
-								<label>
-									{copy.financeAccount}
-									<select
-										onChange={event => {
-											setAccountId(event.currentTarget.value);
-											setPreview(undefined);
-										}}
-										value={accountId}>
-										{accounts
-											.filter(item => !item.closedAt)
-											.map(item => (
-												<option
-													key={item.id}
-													value={item.id}>
-													{item.name}
-												</option>
-											))}
-									</select>
-								</label>
-								<label>
-									{copy.financeImportFormat}
-									<select
-										name='importFormat'
-										onChange={event => {
-											setImportFormat(event.currentTarget.value as ImportPreview['format']);
-											setPreview(undefined);
-										}}
-										value={importFormat}>
-										<option value='qif'>{copy.financeFormatQif}</option>
-										<option value='statement_csv'>{copy.financeFormatStatementCsv}</option>
-										<option value='payee_csv'>{copy.financeFormatPayeeCsv}</option>
-									</select>
-								</label>
-								<label>
-									{copy.financeImportFile}
-									<input
-										accept='.qif,.csv,text/csv,text/plain'
-										onChange={event => {
-											setImportFile(event.currentTarget.files?.[0]);
-											setPreview(undefined);
-										}}
-										type='file'
-									/>
-								</label>
-								<label>
-									{copy.financePayeeDirectory}
-									<input
-										accept='.csv,text/csv'
-										onChange={event => {
-											setPayeeFile(event.currentTarget.files?.[0]);
-											setPreview(undefined);
-										}}
-										type='file'
-									/>
-								</label>
-							</div>
-							<p className={styles.hint}>{copy.financeStatementCsvHint}</p>
-							<div className={styles['row-actions']}>
-								<button
-									disabled={busy || !importFile || !accountId}
-									onClick={() => void runImport('preview')}
-									type='button'>
-									{copy.financePreviewImport}
-								</button>
-								<button
-									className={styles.secondary}
-									disabled={busy || !preview?.canCommit}
-									onClick={() => void runImport('commit')}
-									type='button'>
-									{copy.financeCommitImport}
-								</button>
-							</div>
-							{preview && (
-								<div
-									aria-live='polite'
-									className={styles.preview}
-									role='status'>
-									<h4>{copy.financePreview}</h4>
-									<p>
-										{copy.financeImportRows}: {String(preview.summary.rowCount)} ·{' '}
-										{copy.financeImportTotal}:{' '}
-										{formatMinorUnits(preview.summary.totalMinor, preview.currencyCode, language)}
-									</p>
-									{preview.summary.firstDate && preview.summary.lastDate && (
-										<p>
-											{copy.financeImportDateRange}:{' '}
-											{formatDate(preview.summary.firstDate, language)} –{' '}
-											{formatDate(preview.summary.lastDate, language)}
-										</p>
-									)}
-									{preview.errorCount > 0 && (
-										<span className={styles.badge}>
-											{copy.financeImportErrors}: {String(preview.errorCount)}
-										</span>
-									)}
-									{preview.warningCount > 0 && (
-										<span className={styles.badge}>
-											{copy.financeImportWarnings}: {String(preview.warningCount)}
-										</span>
-									)}
-									{preview.payeesNormalized > 0 && (
-										<span className={styles.badge}>
-											{copy.financeImportNormalizedPayees}: {String(preview.payeesNormalized)}
-										</span>
-									)}
-									{preview.rows.length > 0 && (
-										<div className={styles['table-wrap']}>
-											<table>
-												<thead>
-													<tr>
-														<th>{copy.financeDate}</th>
-														<th>{copy.financePayee}</th>
-														<th>{copy.financeAmount}</th>
-														<th>{copy.financeMemo}</th>
-													</tr>
-												</thead>
-												<tbody>
-													{preview.rows.map(row => (
-														<tr key={String(row.line)}>
-															<td>{formatDate(row.transactionDate, language)}</td>
-															<td>
-																{row.payee || '—'}
-																{row.possibleDuplicate && (
-																	<span className={styles.badge}>
-																		{copy.financeImportDuplicates}
-																	</span>
-																)}
-															</td>
-															<td>{formatMoney(row.amountMinor)}</td>
-															<td>{row.memo || '—'}</td>
-														</tr>
-													))}
-												</tbody>
-											</table>
-										</div>
-									)}
-									{preview.payeeDirectory.length > 0 && (
-										<ul>
-											{preview.payeeDirectory.map(entry => (
-												<li key={`${entry.code}-${String(entry.line)}`}>
-													{entry.code} — {entry.name}
-												</li>
-											))}
-										</ul>
-									)}
-									{preview.issues.length > 0 && (
-										<ul>
-											{preview.issues.map(issue => (
-												<li key={`${String(issue.line)}-${issue.code}`}>
-													{copy.financeRow} {String(issue.line)}: {issue.message}
-												</li>
-											))}
-										</ul>
-									)}
-								</div>
-							)}
-						</section>
+						<ImportsPanel
+							accountId={accountId}
+							accounts={accounts}
+							busy={busy}
+							copy={copy}
+							formatDate={formatDate}
+							formatMinorUnits={formatMinorUnits}
+							formatMoney={formatMoney}
+							importFile={importFile}
+							importFormat={importFormat}
+							language={language}
+							onAccountChange={id => {
+								setAccountId(id);
+								setPreview(undefined);
+							}}
+							onCommit={() => void runImport('commit')}
+							onFormatChange={format => {
+								setImportFormat(format);
+								setPreview(undefined);
+							}}
+							onImportFileChange={file => {
+								setImportFile(file);
+								setPreview(undefined);
+							}}
+							onPayeeFileChange={file => {
+								setPayeeFile(file);
+								setPreview(undefined);
+							}}
+							onPreview={() => void runImport('preview')}
+							preview={preview}
+							styles={styles}
+						/>
 					)}
 				</>
 			)}
@@ -1392,4 +752,4 @@ function FinanceManagement(): ReactElement {
 	);
 }
 
-export { FinanceManagement };
+export { FinanceManagement, type FinanceManagementProps };

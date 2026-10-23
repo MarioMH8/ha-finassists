@@ -1,0 +1,176 @@
+.dashboard {
+  display: grid;
+  gap: 32px;
+  color: var(--primary-text-color, #202124);
+}
+
+.heading,
+.section-heading,
+.account-row,
+.transaction-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.heading {
+  align-items: flex-start;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.heading h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 2.5vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.heading p {
+  margin: 6px 0 0;
+  color: var(--secondary-text-color, var(--muted));
+}
+
+.primary-action {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--primary-text-color, #102027);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+}
+
+.primary-action:hover {
+  filter: brightness(0.96);
+}
+
+.primary-action:focus-visible,
+.book-picker select:focus-visible,
+.account-picker select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.book-picker,
+.account-picker {
+  display: grid;
+  gap: 6px;
+  color: var(--secondary-text-color, var(--muted));
+  font-size: 0.875rem;
+}
+
+.book-picker {
+  width: min(100%, 340px);
+}
+
+.book-picker select,
+.account-picker select {
+  min-height: 42px;
+  padding: 8px 36px 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--primary-text-color, #202124);
+  font: inherit;
+}
+
+.section {
+  display: grid;
+  gap: 14px;
+}
+
+.section h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.account-list,
+.transaction-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-row,
+.transaction-row {
+  min-height: 58px;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-row:first-child,
+.transaction-row:first-child {
+  border-top: 1px solid var(--line);
+}
+
+.account-row strong,
+.transaction-row > strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.transaction-row > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.transaction-row > div strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transaction-row time,
+.empty {
+  color: var(--secondary-text-color, var(--muted));
+  font-size: 0.9rem;
+}
+
+.expense {
+  color: var(--error-color, #b3261e);
+}
+
+.income {
+  color: var(--success-color, #188038);
+}
+
+.error {
+  margin: 0;
+  color: var(--error-color, #b3261e);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@media (max-width: 560px) {
+  .heading,
+  .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .primary-action {
+    width: 100%;
+  }
+
+  .section-heading .account-picker {
+    width: 100%;
+  }
+
+  .transaction-row {
+    gap: 12px;
+  }
+}

@@ -251,7 +251,7 @@ describe('createServer', () => {
 		expect(response.status).toBe(200);
 		expect(response.headers.get('vary')).toContain('Accept-Language');
 		expect(html).toContain('<html lang="es">');
-		expect(html).toContain('Tus finanzas, a la vista');
+		expect(html).toContain('<h2>Resumen</h2>');
 		expect(html).toContain('data-language="es"');
 		expect(html).toContain('id="root"');
 		expect(html).toContain('src="./client.js"');

@@ -1,0 +1,29 @@
+.workspace {
+	display: grid;
+	gap: 18px;
+}
+
+.workspace-book {
+	display: grid;
+	width: min(100%, 340px);
+	gap: 6px;
+	color: var(--primary-text-color, #202124);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.workspace-book select {
+	min-height: 44px;
+	padding: 9px 12px;
+	border: 1px solid var(--input-fill-color, var(--divider-color, #c7ccce));
+	border-radius: 8px;
+	background: var(--input-fill-color, var(--card-background-color, #fff));
+	color: var(--primary-text-color, #202124);
+	font: inherit;
+	font-weight: 400;
+}
+
+.workspace-book select:focus-visible {
+	outline: 3px solid var(--primary-color, #03a9f4);
+	outline-offset: 2px;
+}

@@ -1,7 +1,11 @@
 import { TokenManagement } from '@app/features/api-tokens';
 import { FinanceManagement } from '@app/features/finance/finance-management';
+import { SummaryDashboard } from '@app/features/summary';
 import type { Language } from '@app/i18n/language';
 import { LocaleProvider } from '@app/i18n/locale-context';
+import { BudgetPlanning } from '@modules/budgets/presentation';
+import { SchedulePlanning } from '@modules/schedules/presentation';
+import { SharedExpensesWorkspace } from '@modules/shared-expenses/presentation';
 import type { ShellConfig } from '@modules/shell/domain';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
@@ -13,8 +17,38 @@ interface AppProps {
 	settings: ShellConfig;
 }
 
+const SECTION = {
+	FINANCE: 'finance',
+	PLANNING: 'planning',
+	SHARED_EXPENSES: 'shared-expenses',
+	SUMMARY: 'summary',
+	TOKENS: 'tokens',
+} as const;
+
+type Section = (typeof SECTION)[keyof typeof SECTION];
+
 function App({ language, settings }: AppProps): ReactElement {
-	const [showTokens, setShowTokens] = useState(false);
+	const [section, setSection] = useState<Section>(SECTION.SUMMARY);
+	const [financeStartSection, setFinanceStartSection] = useState<'accounts' | 'transactions'>('accounts');
+	const labels: Record<Section, string> =
+		language === 'es'
+			? {
+					[SECTION.FINANCE]: 'Finanzas',
+					[SECTION.PLANNING]: 'Planificación',
+					[SECTION.SHARED_EXPENSES]: 'Gastos compartidos',
+					[SECTION.SUMMARY]: 'Resumen',
+					[SECTION.TOKENS]: 'Tokens API',
+				}
+			: {
+					[SECTION.FINANCE]: 'Finance',
+					[SECTION.PLANNING]: 'Planning',
+					[SECTION.SHARED_EXPENSES]: 'Shared expenses',
+					[SECTION.SUMMARY]: 'Summary',
+					[SECTION.TOKENS]: 'Tokens / API',
+				};
+	const sections: Section[] = settings.showNavigation
+		? [SECTION.SUMMARY, SECTION.FINANCE, SECTION.PLANNING, SECTION.SHARED_EXPENSES, SECTION.TOKENS]
+		: [SECTION.SUMMARY];
 
 	return (
 		<LocaleProvider language={language}>
@@ -50,27 +84,43 @@ function App({ language, settings }: AppProps): ReactElement {
 					)}
 					<h1>{settings.applicationName}</h1>
 				</header>
-				{settings.showNavigation && (
-					<nav aria-label={language === 'es' ? 'Navegación de la aplicación' : 'Application navigation'}>
-						<button
-							aria-current={showTokens ? undefined : 'page'}
-							onClick={() => setShowTokens(false)}
-							type='button'>
-							{language === 'es' ? 'Finanzas' : 'Finance'}
-						</button>
-						<button
-							aria-current={showTokens ? 'page' : undefined}
-							onClick={() => setShowTokens(true)}
-							type='button'>
-							{language === 'es' ? 'Tokens API' : 'API tokens'}
-						</button>
+				{sections.length > 1 && (
+					<nav
+						aria-label={language === 'es' ? 'Navegación de la aplicación' : 'Application navigation'}
+						className={styles.navigation}>
+						{sections.map(item => (
+							<button
+								aria-current={section === item ? 'page' : undefined}
+								key={item}
+								onClick={() => setSection(item)}
+								type='button'>
+								{labels[item]}
+							</button>
+						))}
 					</nav>
 				)}
 				<main
 					className={styles['main-content']}
 					id='main-content'
 					tabIndex={-1}>
-					{showTokens ? <TokenManagement /> : <FinanceManagement />}
+					{section === SECTION.SUMMARY && (
+						<SummaryDashboard
+							language={language}
+							onAddExpense={() => {
+								setFinanceStartSection('transactions');
+								setSection(SECTION.FINANCE);
+							}}
+						/>
+					)}
+					{section === SECTION.FINANCE && <FinanceManagement initialSection={financeStartSection} />}
+					{section === SECTION.PLANNING && (
+						<div className={styles['planning-content']}>
+							<BudgetPlanning />
+							<SchedulePlanning />
+						</div>
+					)}
+					{section === SECTION.SHARED_EXPENSES && <SharedExpensesWorkspace />}
+					{section === SECTION.TOKENS && <TokenManagement />}
 				</main>
 			</div>
 		</LocaleProvider>
