@@ -13,7 +13,9 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --production --ignore-scripts
 COPY --from=build /app/dist ./dist
-RUN mkdir -p /data && chown bun:bun /data
+COPY backup-pre.sh ./
+COPY --from=build /app/src/modules/storage/infrastructure/backup/backup-pre.ts ./backup-pre.ts
+RUN chmod +x ./backup-pre.sh && mkdir -p /data && chown bun:bun /data
 USER bun
 
 ENV NODE_ENV=production
