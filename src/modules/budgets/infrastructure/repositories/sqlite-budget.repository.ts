@@ -1,7 +1,7 @@
-import type { Database } from 'bun:sqlite';
+import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
-import type { BudgetRepository } from '../../domain';
-import { Budget, BudgetAmountOutOfRangeError, BudgetPeriodOverlapError } from '../../domain';
+import type { BudgetCriteria, BudgetDeleteCriteria, BudgetRepository } from '../../domain';
+import { Budget, BudgetIdentityConflictError, BudgetPeriodOverlapError } from '../../domain';
 
 interface BudgetRow {
 	account_id: string;
@@ -14,10 +14,6 @@ interface BudgetRow {
 	period_end: string;
 	period_start: string;
 	planned_minor: number;
-}
-
-interface ActualRow {
-	amount_minor: string;
 }
 
 function toBudget(row: BudgetRow): Budget {
@@ -35,76 +31,67 @@ function toBudget(row: BudgetRow): Budget {
 	});
 }
 
+function where(criteria: BudgetCriteria): { parameters: SQLQueryBindings[]; sql: string } {
+	const clauses: string[] = [];
+	const parameters: SQLQueryBindings[] = [];
+
+	function add(column: string, value: null | number | string | undefined): void {
+		if (value === undefined) {
+			return;
+		}
+		if (value === null) {
+			clauses.push(`${column} IS NULL`);
+
+			return;
+		}
+
+		clauses.push(`${column} = ?`);
+		parameters.push(value);
+	}
+
+	add('account_id', criteria.accountId);
+	add('book_id', criteria.bookId);
+	add('category_id', criteria.categoryId);
+	add('class_id', criteria.classId);
+	add('currency_code', criteria.currencyCode);
+	add('id', criteria.id);
+	add('name', criteria.name);
+	add('period_end', criteria.periodEnd);
+	add('period_start', criteria.periodStart);
+	add('planned_minor', criteria.plannedMinor);
+
+	return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
+}
+
 class SqliteBudgetRepository implements BudgetRepository {
 	constructor(private readonly database: Database) {}
 
-	actualMinor(budget: Budget): number {
-		const rows = this.database
-			.query(
-				`WITH RECURSIVE category_scope(id) AS (
-					SELECT id FROM categories WHERE book_id = ? AND id = ?
-					UNION
-					SELECT child.id FROM categories child
-					JOIN category_scope parent ON child.book_id = ? AND child.parent_id = parent.id
-				), class_scope(id) AS (
-					SELECT id FROM classes WHERE book_id = ? AND id = ?
-					UNION
-					SELECT child.id FROM classes child
-					JOIN class_scope parent ON child.book_id = ? AND child.parent_id = parent.id
-				)
-				SELECT CAST(COALESCE(part.amount_minor, tx.amount_minor) AS TEXT) AS amount_minor
-				FROM transactions tx
-				LEFT JOIN transaction_parts part
-					ON part.book_id = tx.book_id AND part.transaction_id = tx.id
-				WHERE tx.book_id = ? AND tx.account_id = ?
-					AND tx.transfer_id IS NULL
-					AND tx.transaction_date >= ? AND tx.transaction_date <= ?
-					AND tx.status IN ('cleared', 'reconciled')
-					AND (? IS NULL OR part.category_id IN (SELECT id FROM category_scope))
-					AND (? IS NULL OR part.class_id IN (SELECT id FROM class_scope))
-				ORDER BY tx.transaction_date, tx.id, part.position, part.id`
-			)
-			.all(
-				budget.bookId,
-				budget.categoryId,
-				budget.bookId,
-				budget.bookId,
-				budget.classId,
-				budget.bookId,
-				budget.bookId,
-				budget.accountId,
-				budget.periodStart,
-				budget.periodEnd,
-				budget.categoryId,
-				budget.classId
-			) as ActualRow[];
-
-		let total = 0n;
-		for (const row of rows) {
-			const amountMinor = BigInt(row.amount_minor);
-			if (amountMinor < 0n) {
-				total -= amountMinor;
-			}
-		}
-
-		const result = Number(total);
-		if (!Number.isSafeInteger(result)) {
-			throw new BudgetAmountOutOfRangeError('actual');
-		}
-
-		return result;
+	delete({ bookId, id }: BudgetDeleteCriteria): boolean {
+		return this.database.query('DELETE FROM budgets WHERE book_id = ? AND id = ?').run(bookId, id).changes > 0;
 	}
 
-	create(budget: Budget): Budget {
-		const create = this.database.transaction(() => {
+	find(criteria: BudgetCriteria): Budget | undefined {
+		return this.search(criteria)[0];
+	}
+
+	save(budget: Budget): void {
+		const save = this.database.transaction(() => {
+			const existing = this.database
+				.query<{ book_id: string }, [string]>('SELECT book_id FROM budgets WHERE id = ?')
+				.get(budget.id);
+			if (existing && existing.book_id !== budget.bookId) {
+				throw new BudgetIdentityConflictError();
+			}
+
 			const overlap = this.database
 				.query(
 					`SELECT 1 FROM budgets
-					WHERE book_id = ? AND account_id = ?
-					AND category_id IS ? AND class_id IS ?
-					AND period_start <= ? AND period_end >= ? LIMIT 1`
+				WHERE id != ? AND book_id = ? AND account_id = ?
+				AND category_id IS ? AND class_id IS ?
+				AND period_start <= ? AND period_end >= ? LIMIT 1`
 				)
 				.get(
+					budget.id,
 					budget.bookId,
 					budget.accountId,
 					budget.categoryId,
@@ -114,6 +101,30 @@ class SqliteBudgetRepository implements BudgetRepository {
 				);
 			if (overlap) {
 				throw new BudgetPeriodOverlapError();
+			}
+
+			if (existing) {
+				this.database
+					.query(
+						`UPDATE budgets SET
+							account_id = ?, category_id = ?, class_id = ?, name = ?, period_start = ?, period_end = ?,
+							planned_minor = ?, currency_code = ?
+						WHERE book_id = ? AND id = ?`
+					)
+					.run(
+						budget.accountId,
+						budget.categoryId,
+						budget.classId,
+						budget.name,
+						budget.periodStart,
+						budget.periodEnd,
+						budget.plannedMinor,
+						budget.currencyCode,
+						budget.bookId,
+						budget.id
+					);
+
+				return;
 			}
 
 			this.database
@@ -134,12 +145,10 @@ class SqliteBudgetRepository implements BudgetRepository {
 					budget.plannedMinor,
 					budget.currencyCode
 				);
-
-			return budget;
 		});
 
 		try {
-			return create();
+			save();
 		} catch (error) {
 			if (error instanceof Error && error.message.includes('budget_period_overlap')) {
 				throw new BudgetPeriodOverlapError();
@@ -148,27 +157,13 @@ class SqliteBudgetRepository implements BudgetRepository {
 		}
 	}
 
-	find(bookId: string, id: string): Budget | undefined {
-		const row = this.database
-			.query('SELECT * FROM budgets WHERE book_id = ? AND id = ?')
-			.get(bookId, id) as BudgetRow | null;
-
-		return row ? toBudget(row) : undefined;
-	}
-
-	list(bookId: string, accountId?: string): Budget[] {
-		const rows =
-			accountId === undefined
-				? (this.database
-						.query(
-							'SELECT * FROM budgets WHERE book_id = ? ORDER BY period_start, period_end, name COLLATE NOCASE, id'
-						)
-						.all(bookId) as BudgetRow[])
-				: (this.database
-						.query(
-							'SELECT * FROM budgets WHERE book_id = ? AND account_id = ? ORDER BY period_start, period_end, name COLLATE NOCASE, id'
-						)
-						.all(bookId, accountId) as BudgetRow[]);
+	search(criteria: BudgetCriteria = {}): Budget[] {
+		const filter = where(criteria);
+		const rows = this.database
+			.query<BudgetRow, SQLQueryBindings[]>(
+				`SELECT * FROM budgets${filter.sql} ORDER BY period_start, period_end, name COLLATE NOCASE, id`
+			)
+			.all(...filter.parameters);
 
 		return rows.map(row => toBudget(row));
 	}

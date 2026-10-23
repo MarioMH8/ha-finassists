@@ -11,7 +11,11 @@ import { SqliteAccountRepository } from '@modules/accounts/infrastructure';
 import { ArchiveBook, CreateBook, DeleteBook, EnsureDefaultBook, ListBooks } from '@modules/books/application';
 import { SqliteBookRepository } from '@modules/books/infrastructure';
 import { CreateBudget, GetBudgetReport, ListBudgets } from '@modules/budgets/application';
-import { initializeBudgetSchema, SqliteBudgetRepository } from '@modules/budgets/infrastructure';
+import {
+	initializeBudgetSchema,
+	SqliteBudgetActualsQuery,
+	SqliteBudgetRepository,
+} from '@modules/budgets/infrastructure';
 import {
 	ArchiveClassification,
 	CreateClassification,
@@ -109,6 +113,7 @@ function setup(): { database: Database; useCases: FinanceUseCases } {
 	const ledger = new SqliteLedgerRepository(database);
 	const imports = new SqliteStatementImportRepository(database);
 	const budgets = new SqliteBudgetRepository(database);
+	const budgetActuals = new SqliteBudgetActualsQuery(database);
 	const schedules = new SqliteScheduleRepository(database);
 	const occurrences = new SqliteScheduleOccurrenceRepository(database);
 	const sharedExpenses = new SqliteSharedExpenseRepository(database);
@@ -128,7 +133,7 @@ function setup(): { database: Database; useCases: FinanceUseCases } {
 		},
 		budgets: {
 			create: new CreateBudget(budgets, books, accounts, categories, classes),
-			getReport: new GetBudgetReport(budgets),
+			getReport: new GetBudgetReport(budgets, budgetActuals),
 			list: new ListBudgets(budgets),
 		},
 		classifications: {

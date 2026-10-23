@@ -69,13 +69,14 @@ class CreateBudget {
 			}
 		}
 
-		return this.budgets.create(
-			Budget.create({
-				...input,
-				currencyCode: book.currencyCode,
-				id: randomUUID(),
-			})
-		);
+		const budget = Budget.create({
+			...input,
+			currencyCode: book.currencyCode,
+			id: randomUUID(),
+		});
+		this.budgets.save(budget);
+
+		return budget;
 	}
 }
 

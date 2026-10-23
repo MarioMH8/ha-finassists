@@ -9,8 +9,9 @@ import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
 import { CreateBudget, GetBudgetReport, ListBudgets } from '../../application';
-import { BudgetPeriodOverlapError } from '../../domain';
+import { Budget, BudgetIdentityConflictError, BudgetPeriodOverlapError } from '../../domain';
 import { initializeBudgetSchema } from '../initialize-budget-schema';
+import { SqliteBudgetActualsQuery } from '../queries';
 import { SqliteBudgetRepository } from './sqlite-budget.repository';
 
 function setup() {
@@ -24,6 +25,7 @@ function setup() {
 	const categories = new SqliteCategoryRepository(database);
 	const classes = new SqliteClassRepository(database);
 	const budgetRepository = new SqliteBudgetRepository(database);
+	const budgetActuals = new SqliteBudgetActualsQuery(database);
 	const book = new CreateBook(books).execute({ currencyCode: 'USD', name: 'Household' });
 	const account = new CreateAccount(accounts, books).execute({
 		bookId: book.id,
@@ -39,7 +41,7 @@ function setup() {
 	const householdClass = classCreator.execute({ bookId: book.id, name: 'Household' });
 	const familyClass = classCreator.execute({ bookId: book.id, name: 'Family', parentId: householdClass.id });
 	const create = new CreateBudget(budgetRepository, books, accounts, categories, classes);
-	const report = new GetBudgetReport(budgetRepository);
+	const report = new GetBudgetReport(budgetRepository, budgetActuals);
 	const list = new ListBudgets(budgetRepository);
 	let sequence = 0;
 
@@ -111,6 +113,57 @@ function setup() {
 const dates = { periodEnd: '2026-03-31', periodStart: '2026-03-01' };
 
 describe('budget module', () => {
+	it('finds, searches, saves and deletes budgets with generic repository criteria', () => {
+		const context = setup();
+		const created = context.create.execute({
+			accountId: context.account.id,
+			bookId: context.book.id,
+			name: 'March',
+			...dates,
+			plannedMinor: 1000,
+		});
+		const criteria = { bookId: context.book.id, id: created.id };
+
+		expect(context.budgetRepository.find(criteria)).toEqual(created);
+		expect(context.budgetRepository.search({ accountId: context.account.id, bookId: context.book.id })).toEqual([
+			created,
+		]);
+		expect(context.budgetRepository.search({ bookId: context.book.id, categoryId: null })).toEqual([created]);
+		expect(context.list.execute({ accountId: '', bookId: context.book.id })).toEqual([]);
+
+		const updated = Budget.create({
+			accountId: created.accountId,
+			bookId: created.bookId,
+			categoryId: created.categoryId,
+			classId: created.classId,
+			currencyCode: created.currencyCode,
+			id: created.id,
+			name: 'March adjusted',
+			periodEnd: created.periodEnd,
+			periodStart: created.periodStart,
+			plannedMinor: 1500,
+		});
+		context.budgetRepository.save(updated);
+
+		expect(context.budgetRepository.find(criteria)).toEqual(updated);
+		const conflictingIdentity = Budget.create({
+			accountId: 'another-account',
+			bookId: 'another-book',
+			categoryId: updated.categoryId,
+			classId: updated.classId,
+			currencyCode: updated.currencyCode,
+			id: updated.id,
+			name: updated.name,
+			periodEnd: updated.periodEnd,
+			periodStart: updated.periodStart,
+			plannedMinor: updated.plannedMinor,
+		});
+		expect(() => context.budgetRepository.save(conflictingIdentity)).toThrow(BudgetIdentityConflictError);
+		expect(context.budgetRepository.delete(criteria)).toBe(true);
+		expect(context.budgetRepository.find(criteria)).toBeUndefined();
+		context.database.close();
+	});
+
 	it('creates, lists and reports budgets within strict book/account/category/class boundaries', () => {
 		const context = setup();
 		const budget = context.create.execute({

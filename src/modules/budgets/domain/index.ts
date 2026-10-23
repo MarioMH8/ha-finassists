@@ -11,10 +11,11 @@ export {
 	BudgetClassNotFoundError,
 	BudgetDateInvalidError,
 	BudgetIdentifierInvalidError,
+	BudgetIdentityConflictError,
 	BudgetNameInvalidError,
 	BudgetNotFoundError,
 	BudgetPeriodInvalidError,
 	BudgetPeriodOverlapError,
 	BudgetPlannedAmountInvalidError,
 } from './budget.error';
-export type { BudgetRepository } from './budget.repository';
+export type { BudgetActualsQuery, BudgetCriteria, BudgetDeleteCriteria, BudgetRepository } from './budget.repository';

@@ -9,7 +9,10 @@ class ListBudgets {
 	constructor(private readonly budgets: BudgetRepository) {}
 
 	execute(input: ListBudgetsInput): Budget[] {
-		return this.budgets.list(input.bookId, input.accountId);
+		return this.budgets.search({
+			bookId: input.bookId,
+			...(input.accountId !== undefined && { accountId: input.accountId }),
+		});
 	}
 }
 

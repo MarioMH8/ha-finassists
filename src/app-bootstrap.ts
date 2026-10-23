@@ -19,7 +19,11 @@ import {
 	SqliteBookRepository,
 } from '@modules/books';
 import { CreateBudget, GetBudgetReport, ListBudgets } from '@modules/budgets/application';
-import { initializeBudgetSchema, SqliteBudgetRepository } from '@modules/budgets/infrastructure';
+import {
+	initializeBudgetSchema,
+	SqliteBudgetActualsQuery,
+	SqliteBudgetRepository,
+} from '@modules/budgets/infrastructure';
 import {
 	ArchiveClassification,
 	CreateClassification,
@@ -102,6 +106,7 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 	const ledgerRepository = new SqliteLedgerRepository(database);
 	const importRepository = new SqliteStatementImportRepository(database);
 	const budgetRepository = new SqliteBudgetRepository(database);
+	const budgetActuals = new SqliteBudgetActualsQuery(database);
 	const scheduleRepository = new SqliteScheduleRepository(database);
 	const scheduleOccurrenceRepository = new SqliteScheduleOccurrenceRepository(database);
 	const sharedExpenseRepository = new SqliteSharedExpenseRepository(database);
@@ -151,7 +156,7 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 				categoryRepository,
 				classRepository
 			),
-			getReport: new GetBudgetReport(budgetRepository),
+			getReport: new GetBudgetReport(budgetRepository, budgetActuals),
 			list: new ListBudgets(budgetRepository),
 		},
 		classifications: {

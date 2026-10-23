@@ -75,6 +75,13 @@ class BudgetIdentifierInvalidError extends Error {
 	}
 }
 
+class BudgetIdentityConflictError extends Error {
+	constructor() {
+		super('A budget with this id already exists in another book');
+		this.name = 'BudgetIdentityConflictError';
+	}
+}
+
 class BudgetNameInvalidError extends Error {
 	constructor() {
 		super('Budget name must contain between 1 and 80 characters');
@@ -122,6 +129,7 @@ export {
 	BudgetClassNotFoundError,
 	BudgetDateInvalidError,
 	BudgetIdentifierInvalidError,
+	BudgetIdentityConflictError,
 	BudgetNameInvalidError,
 	BudgetNotFoundError,
 	BudgetPeriodInvalidError,

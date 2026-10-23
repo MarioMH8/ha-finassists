@@ -1,16 +1,32 @@
 import type { Budget } from './budget';
 
-interface BudgetRepository {
-	/**
-	 * Returns positive spending in minor units from cleared and reconciled ledger entries.
-	 */
-	actualMinor(budget: Budget): number;
-	/**
-	 * Creates a budget or throws BudgetPeriodOverlapError for an inclusive period collision.
-	 */
-	create(budget: Budget): Budget;
-	find(bookId: string, id: string): Budget | undefined;
-	list(bookId: string, accountId?: string): Budget[];
+interface BudgetCriteria {
+	accountId?: string;
+	bookId?: string;
+	categoryId?: null | string;
+	classId?: null | string;
+	currencyCode?: string;
+	id?: string;
+	name?: string;
+	periodEnd?: string;
+	periodStart?: string;
+	plannedMinor?: number;
 }
 
-export type { BudgetRepository };
+interface BudgetDeleteCriteria {
+	bookId: string;
+	id: string;
+}
+
+interface BudgetRepository {
+	delete(criteria: BudgetDeleteCriteria): boolean;
+	find(criteria: BudgetCriteria): Budget | undefined;
+	save(budget: Budget): void;
+	search(criteria?: BudgetCriteria): Budget[];
+}
+
+interface BudgetActualsQuery {
+	actualMinor(budget: Budget): bigint;
+}
+
+export type { BudgetActualsQuery, BudgetCriteria, BudgetDeleteCriteria, BudgetRepository };
