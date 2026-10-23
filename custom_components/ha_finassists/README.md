@@ -15,7 +15,7 @@ At startup, the add-on generates a random, one-use bootstrap capability, stores 
 ## Entities and services
 
 - One monetary sensor per open account, with total balance as the value and posted/reconciled values plus account metadata as attributes. Integer minor units are converted using the currency's actual fraction-digit precision.
-- One sensor per book counting active or paused finite schedules ending in the next 30 days. When schedule refresh fails, previously available schedule values are retained.
+- One sensor per book counting active or paused finite schedules ending in the next 30 days. When schedule refresh fails, previously available schedule values are retained and the card warns that they may be out of date; unavailable sensors are omitted from the card.
 - `ha_finassists.refresh` requests a refresh. `ha_finassists.set_schedule_status` supports `active`, `paused`, and `canceled` for a schedule.
 - Polling interval is five minutes. The integration does not create transactions or provide an alternative finance-management UI.
 
@@ -41,7 +41,7 @@ type: custom:fin-assist-card
 entry_id: YOUR_CONFIG_ENTRY_ID
 ```
 
-The card exposes refresh and schedule status actions through the integration services. It uses Home Assistant theme variables and reports action failures in the card.
+The card exposes refresh and schedule status actions through the integration services. It uses Home Assistant theme variables and reports action failures in the card. Without `entry_id`, it can display entities from multiple integration entries, routes schedule actions to the entry that owns each schedule, and refreshes all configured entries.
 
 ## Validation status
 

@@ -146,9 +146,12 @@ class FinAssistUpcomingSchedulesSensor(CoordinatorEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         return {
             "integration_entry_id": self._entry_id,
+            "schedule_refresh_failed": self.coordinator.data.get(
+                "schedule_refresh_failed", False
+            ),
             "schedules": [
                 schedule
                 for schedule in self.coordinator.data.get("upcoming_schedules", [])
                 if schedule.get("bookId") == self._book_id
-            ]
+            ],
         }

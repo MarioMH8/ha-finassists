@@ -68,9 +68,21 @@ def _install_home_assistant_stubs() -> None:
     hassio.HassioServiceInfo = type("HassioServiceInfo", (), {})
     update_coordinator = types.ModuleType("homeassistant.helpers.update_coordinator")
     update_coordinator.DataUpdateCoordinator = type("DataUpdateCoordinator", (), {})
+    update_coordinator.CoordinatorEntity = type(
+        "CoordinatorEntity",
+        (),
+        {"__init__": lambda self, coordinator: setattr(self, "coordinator", coordinator)},
+    )
     update_coordinator.UpdateFailed = type("UpdateFailed", (Exception,), {})
+    entity = types.ModuleType("homeassistant.helpers.entity")
+    entity.DeviceInfo = lambda **kwargs: kwargs
     device_registry = types.ModuleType("homeassistant.helpers.device_registry")
     components = types.ModuleType("homeassistant.components")
+    sensor = types.ModuleType("homeassistant.components.sensor")
+    sensor.SensorDeviceClass = SimpleNamespace(MONETARY="monetary")
+    sensor.SensorEntity = type("SensorEntity", (), {})
+    sensor.SensorStateClass = SimpleNamespace(MEASUREMENT="measurement")
+    components.sensor = sensor
     http = types.ModuleType("homeassistant.components.http")
     http.StaticPathConfig = type("StaticPathConfig", (), {})
     exceptions = types.ModuleType("homeassistant.exceptions")
@@ -94,12 +106,20 @@ def _install_home_assistant_stubs() -> None:
         "homeassistant.helpers.service_info": service_info,
         "homeassistant.helpers.service_info.hassio": hassio,
         "homeassistant.helpers.update_coordinator": update_coordinator,
+        "homeassistant.helpers.entity": entity,
         "homeassistant.helpers.device_registry": device_registry,
         "homeassistant.components": components,
+        "homeassistant.components.sensor": sensor,
         "homeassistant.components.http": http,
         "homeassistant.exceptions": exceptions,
     }
     sys.modules.update(modules)
+
+    babel = types.ModuleType("babel")
+    babel_numbers = types.ModuleType("babel.numbers")
+    babel_numbers.get_currency_precision = lambda currency: 2
+    babel.numbers = babel_numbers
+    sys.modules.update({"babel": babel, "babel.numbers": babel_numbers})
 
     voluptuous = types.ModuleType("voluptuous")
     voluptuous.Schema = _Schema
@@ -117,6 +137,7 @@ _install_home_assistant_stubs()
 
 from custom_components.ha_finassists import config_flow  # noqa: E402
 from custom_components.ha_finassists.api import FinAssistApi, FinAssistApiError  # noqa: E402
+from custom_components.ha_finassists.sensor import FinAssistUpcomingSchedulesSensor  # noqa: E402
 
 
 class _FlowApi:
@@ -267,6 +288,19 @@ class ConfigFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["type"], "create_entry")
         self.assertEqual(entry.data["system_token"], "rotated-secret")
         self.assertIn(("rotate", None), _FlowApi.instances[0].calls)
+
+
+class SensorAttributeTests(unittest.TestCase):
+    def test_schedule_sensor_reports_stale_schedule_refresh(self) -> None:
+        coordinator = SimpleNamespace(
+            data={"schedule_refresh_failed": True, "upcoming_schedules": []}
+        )
+        entry = SimpleNamespace(entry_id="entry-1")
+        sensor = FinAssistUpcomingSchedulesSensor(
+            coordinator, entry, {"id": "book-1", "name": "Household"}
+        )
+
+        self.assertTrue(sensor.extra_state_attributes["schedule_refresh_failed"])
 
 
 class _Response:
