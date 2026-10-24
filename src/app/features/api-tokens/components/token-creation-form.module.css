@@ -1,0 +1,25 @@
+.form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.field {
+  flex: 1;
+}
+
+.feedback:not(:empty) {
+  margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+  .form {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form > button {
+    align-self: flex-start;
+  }
+}

@@ -1,0 +1,39 @@
+.totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0 0;
+}
+
+.total {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.value {
+  margin: 0;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.income {
+  color: var(--success);
+}
+
+.expense {
+  color: var(--danger);
+}
+
+@media (max-width: 600px) {
+  .totals {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

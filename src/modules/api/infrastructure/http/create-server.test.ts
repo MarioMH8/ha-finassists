@@ -194,10 +194,10 @@ describe('createServer', () => {
 		expect(rotated.id).toBe('home-assistant-integration');
 		expect(rotated.credential).not.toBe(exchanged.credential);
 
-		const oldCredentialResponse = await fetch(new URL('/api/v1/books', server.url), {
+		const oldCredentialResponse = await fetch(new URL('/api/v1/transactions', server.url), {
 			headers: { Authorization: `Bearer ${exchanged.credential}` },
 		});
-		const activeCredentialResponse = await fetch(new URL('/api/v1/books', server.url), {
+		const activeCredentialResponse = await fetch(new URL('/api/v1/transactions', server.url), {
 			headers: { Authorization: `Bearer ${rotated.credential}` },
 		});
 		expect(oldCredentialResponse.status).toBe(401);
@@ -208,7 +208,7 @@ describe('createServer', () => {
 			method: 'DELETE',
 		});
 		expect(revokeResponse.status).toBe(204);
-		const revokedCredentialResponse = await fetch(new URL('/api/v1/books', server.url), {
+		const revokedCredentialResponse = await fetch(new URL('/api/v1/transactions', server.url), {
 			headers: { Authorization: `Bearer ${rotated.credential}` },
 		});
 		expect(revokedCredentialResponse.status).toBe(401);
@@ -274,7 +274,7 @@ describe('createServer', () => {
 		expect(response.status).toBe(200);
 		expect(response.headers.get('vary')).toContain('Accept-Language');
 		expect(html).toContain('<html lang="es">');
-		expect(html).toContain('<h2>Resumen</h2>');
+		expect(html).toMatch(/<h2[^>]*>Nueva transacción<\/h2>/);
 		expect(html).toContain('data-language="es"');
 		expect(html).toContain('id="root"');
 		expect(html).toContain('src="./client.js"');
@@ -323,13 +323,13 @@ describe('createServer', () => {
 			trustedIngressIp: '192.0.2.1',
 		});
 
-		const missingTokenResponse = await fetch(new URL('/api/v1/accounts', server.url), {
+		const missingTokenResponse = await fetch(new URL('/api/v1/transactions', server.url), {
 			headers: { 'X-Remote-User-Id': 'spoofed-user' },
 		});
-		const invalidTokenResponse = await fetch(new URL('/api/v1/accounts', server.url), {
+		const invalidTokenResponse = await fetch(new URL('/api/v1/transactions', server.url), {
 			headers: { Authorization: 'Bearer invalid-token' },
 		});
-		const validTokenResponse = await fetch(new URL('/api/v1/accounts', server.url), {
+		const validTokenResponse = await fetch(new URL('/api/v1/transactions', server.url), {
 			headers: { Authorization: `Bearer ${issued.secret}` },
 		});
 
@@ -338,7 +338,7 @@ describe('createServer', () => {
 		expect(validTokenResponse.status).toBe(404);
 
 		await tokenUseCases.revoke.execute({ id: issued.token.id, ownerId: 'token-owner' });
-		const revokedTokenResponse = await fetch(new URL('/api/v1/accounts', server.url), {
+		const revokedTokenResponse = await fetch(new URL('/api/v1/transactions', server.url), {
 			headers: { Authorization: `Bearer ${issued.secret}` },
 		});
 

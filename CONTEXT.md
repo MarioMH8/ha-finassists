@@ -1,59 +1,33 @@
 # Fin Assist
 
-This context describes the financial concepts managed by a Home Assistant household installation.
+This context describes the concepts managed by a Home Assistant household installation. The product is deliberately minimal: it records expenses and incomes only.
 
-## Books and people
-
-**Financial book**:
-An isolated collection of a household's financial records, including its accounts, transactions, categories, budgets, schedules, and shared expenses. An installation has one book by default and may contain more.
-_Avoid_: Ledger, household (when referring to the collection itself)
+## People
 
 **Home Assistant user**:
-A person with an identity in the Home Assistant installation. A user's identity may be recorded as the actor of an action or linked to a shared-expense participant; it does not determine financial permissions.
-_Avoid_: App user, account owner (unless specifically referring to a financial account owner)
+A person with an identity in the Home Assistant installation. A user's identity may be recorded as the actor of an action; it does not determine financial permissions.
+_Avoid_: App user
 
 **Personal API token**:
 A revocable credential owned by one Home Assistant user and used to authenticate that user's external REST or MCP requests. The token owner is the actor for those requests; users manage only their own tokens.
 _Avoid_: API key (unless referring to a different credential type), session token
 
 **Actor**:
-The person or system identity recorded as responsible for a financial action; it may be unknown.
+The person or system identity recorded as responsible for a transaction; it may be unknown.
 _Avoid_: Operator (when the action came from an automation or reusable credential)
-
-**Shared-expense participant**:
-A Home Assistant user who is included in the allocation or settlement of a shared expense. The participant is distinct from the actor who records or changes that expense.
-_Avoid_: Payer (unless specifically identifying who paid)
 
 ## Financial records
 
-**Account**:
-A financial account within one book, with its own balance and associated transactions.
-_Avoid_: Book
-
 **Transaction**:
-A dated financial record affecting an account, with a status and one or more categorized parts where applicable.
-_Avoid_: Operation
+A dated record of money spent or received, with a kind, a positive amount, and an optional description. Transactions are append-only: they cannot be edited or deleted.
+_Avoid_: Operation, entry
 
-**Transfer**:
-A movement of value between two accounts in the same book, represented as a linked financial event rather than unrelated income and expense.
-_Avoid_: Payment (unless referring to a scheduled payment)
+**Kind**:
+Whether a transaction is an **expense** (money out) or an **income** (money in).
+_Avoid_: Type, direction
 
-**Category**:
-A hierarchical label used to classify financial activity.
-_Avoid_: Class
+**Amount**:
+A positive integer in the minor units of the installation currency (for example cents). The sign is carried by the kind, never by the amount.
 
-**Class**:
-A separate hierarchical dimension for classifying financial activity, distinct from a category.
-_Avoid_: Category
-
-**Scheduled payment**:
-A planned future or recurring payment record that can be used to anticipate financial activity.
-_Avoid_: Transaction (until it is recorded as one)
-
-**Budget**:
-A planned limit or allocation for spending over a defined period, associated with a book's categories or other supported classification.
-_Avoid_: Scheduled payment
-
-**Shared expense**:
-A financial expense whose amount or settlement is allocated among multiple participants.
-_Avoid_: Transfer (unless funds actually move between accounts)
+**Currency**:
+The single ISO 4217 currency of the installation, configured through the app's `currency` option. Every transaction is stored with the currency in force when it was created; there is no conversion.

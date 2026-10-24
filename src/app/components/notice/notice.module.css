@@ -1,0 +1,26 @@
+.notice {
+  --notice-color: var(--accent-text);
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--notice-color) 40%, var(--line));
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--notice-color) 12%, var(--surface));
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.info {
+  --notice-color: var(--accent-text);
+}
+
+.success {
+  --notice-color: var(--success);
+}
+
+.warning {
+  --notice-color: var(--warning);
+}
+
+.error {
+  --notice-color: var(--danger);
+}

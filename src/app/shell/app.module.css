@@ -1,107 +1,24 @@
 .app-shell {
-  min-height: 100vh;
-  background: var(--primary-background-color, #fafafa);
-  color: var(--primary-text-color, #202124);
-}
-
-.app-header {
-  display: flex;
-  min-height: 64px;
-  align-items: center;
-  gap: 14px;
-  padding: 0 max(24px, calc((100vw - 1120px) / 2));
-  border-bottom: 1px solid var(--line);
-  background: var(--card-background-color, var(--surface));
-}
-
-.brand-mark {
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  padding: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--primary-text-color, #102027);
-}
-
-.app-header h1 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
-
-.navigation {
-  display: flex;
-  gap: 4px;
-  padding: 8px max(24px, calc((100vw - 1120px) / 2)) 0;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--line);
-  background: var(--card-background-color, var(--surface));
-  scrollbar-color: var(--muted) transparent;
-}
-
-.navigation button {
-  flex: 0 0 auto;
-  min-height: 44px;
-  padding: 8px 14px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  font: inherit;
-}
-
-.navigation button[aria-current='page'] {
-  border-bottom-color: var(--accent);
-  color: var(--primary-text-color, #202124);
-  font-weight: 650;
-}
-
-.navigation button:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: -3px;
+  min-height: 100dvh;
+  background: var(--page);
+  color: var(--text);
 }
 
 .main-content {
   display: grid;
   width: min(100% - 48px, 1120px);
-  gap: 28px;
-  margin: 36px auto 48px;
+  gap: 24px;
+  margin: 32px auto 48px;
 }
 
 .main-content:focus-visible {
-  outline: 3px solid var(--accent);
   outline-offset: 4px;
 }
 
-.planning-content {
-  display: grid;
-  gap: 36px;
-}
-
-.main-content footer {
-  color: var(--muted);
-  font-size: 12px;
-  text-align: center;
-}
-
 @media (max-width: 600px) {
-  .app-header {
-    padding-right: 16px;
-    padding-left: 16px;
-  }
-
-  .navigation {
-    padding-right: 12px;
-    padding-left: 12px;
-  }
-
   .main-content {
-    width: min(100% - 28px, 1120px);
-    gap: 24px;
-    margin: 24px auto 36px;
+    width: min(100% - 24px, 1120px);
+    gap: 16px;
+    margin: 16px auto 32px;
   }
 }

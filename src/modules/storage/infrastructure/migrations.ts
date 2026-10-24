@@ -5,6 +5,25 @@ interface Migration {
 	up(database: Database): void;
 }
 
+// Dropped children first so foreign keys never block a drop.
+const LEGACY_FINANCIAL_TABLES = [
+	'shared_expense_allocations',
+	'shared_expense_settlements',
+	'shared_expense_participants',
+	'shared_expenses',
+	'scheduled_payment_occurrences',
+	'scheduled_payments',
+	'budgets',
+	'transaction_parts',
+	'transactions',
+	'transfers',
+	'statement_imports',
+	'accounts',
+	'categories',
+	'classes',
+	'books',
+];
+
 const MIGRATIONS: Migration[] = [
 	{
 		up(database) {
@@ -23,138 +42,15 @@ const MIGRATIONS: Migration[] = [
 		version: 1,
 	},
 	{
-		up(database) {
-			database.run(`
-				CREATE TABLE books (
-					id TEXT PRIMARY KEY,
-					name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 80),
-					currency_code TEXT NOT NULL CHECK (length(currency_code) = 3),
-					is_default INTEGER NOT NULL DEFAULT 0 CHECK (is_default IN (0, 1)),
-					archived_at TEXT,
-					created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					UNIQUE (id, currency_code)
-				)
-			`);
-			database.run('CREATE UNIQUE INDEX books_single_default_index ON books(is_default) WHERE is_default = 1');
-			database.run(`
-				CREATE TABLE accounts (
-					id TEXT PRIMARY KEY,
-					book_id TEXT NOT NULL,
-					name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 80),
-					kind TEXT NOT NULL CHECK (kind IN ('checking', 'savings', 'credit', 'asset', 'liability')),
-					opening_balance_minor INTEGER NOT NULL,
-					closed_at TEXT,
-					created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					UNIQUE (book_id, id),
-					FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE RESTRICT
-				)
-			`);
-			database.run('CREATE INDEX accounts_book_index ON accounts(book_id, name, id)');
-			database.run(`
-				CREATE TABLE categories (
-					id TEXT PRIMARY KEY,
-					book_id TEXT NOT NULL,
-					parent_id TEXT,
-					name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 80),
-					archived_at TEXT,
-					UNIQUE (book_id, id),
-					FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE RESTRICT,
-					FOREIGN KEY (book_id, parent_id) REFERENCES categories(book_id, id) ON DELETE RESTRICT
-				)
-			`);
-			database.run('CREATE INDEX categories_book_index ON categories(book_id, name, id)');
-			database.run(`
-				CREATE TABLE classes (
-					id TEXT PRIMARY KEY,
-					book_id TEXT NOT NULL,
-					parent_id TEXT,
-					name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 80),
-					archived_at TEXT,
-					UNIQUE (book_id, id),
-					FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE RESTRICT,
-					FOREIGN KEY (book_id, parent_id) REFERENCES classes(book_id, id) ON DELETE RESTRICT
-				)
-			`);
-			database.run('CREATE INDEX classes_book_index ON classes(book_id, name, id)');
-			database.run(`
-				CREATE TABLE transfers (
-					id TEXT PRIMARY KEY,
-					book_id TEXT NOT NULL,
-					from_account_id TEXT NOT NULL,
-					to_account_id TEXT NOT NULL,
-					amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
-					transaction_date TEXT NOT NULL,
-					created_by TEXT,
-					created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					CHECK (from_account_id <> to_account_id),
-					UNIQUE (book_id, id),
-					FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE RESTRICT,
-					FOREIGN KEY (book_id, from_account_id) REFERENCES accounts(book_id, id) ON DELETE RESTRICT,
-					FOREIGN KEY (book_id, to_account_id) REFERENCES accounts(book_id, id) ON DELETE RESTRICT
-				)
-			`);
-			database.run(`
-				CREATE TABLE transactions (
-					id TEXT PRIMARY KEY,
-					book_id TEXT NOT NULL,
-					account_id TEXT NOT NULL,
-					transfer_id TEXT,
-					transaction_date TEXT NOT NULL,
-					payee TEXT NOT NULL DEFAULT '',
-					memo TEXT NOT NULL DEFAULT '',
-					amount_minor INTEGER NOT NULL,
-					status TEXT NOT NULL DEFAULT 'uncleared' CHECK (status IN ('uncleared', 'cleared', 'reconciled')),
-					actor_id TEXT,
-					created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					UNIQUE (book_id, id),
-					FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE RESTRICT,
-					FOREIGN KEY (book_id, account_id) REFERENCES accounts(book_id, id) ON DELETE RESTRICT,
-					FOREIGN KEY (book_id, transfer_id) REFERENCES transfers(book_id, id) ON DELETE RESTRICT
-				)
-			`);
-			database.run(
-				'CREATE INDEX transactions_account_date_index ON transactions(book_id, account_id, transaction_date, id)'
-			);
-			database.run(`
-				CREATE TABLE transaction_parts (
-					id TEXT PRIMARY KEY,
-					book_id TEXT NOT NULL,
-					transaction_id TEXT NOT NULL,
-					category_id TEXT,
-					class_id TEXT,
-					amount_minor INTEGER NOT NULL,
-					memo TEXT NOT NULL DEFAULT '',
-					FOREIGN KEY (book_id, transaction_id) REFERENCES transactions(book_id, id) ON DELETE CASCADE,
-					FOREIGN KEY (book_id, category_id) REFERENCES categories(book_id, id) ON DELETE RESTRICT,
-					FOREIGN KEY (book_id, class_id) REFERENCES classes(book_id, id) ON DELETE RESTRICT
-				)
-			`);
-			database.run(
-				'CREATE INDEX transaction_parts_transaction_index ON transaction_parts(book_id, transaction_id)'
-			);
-			database.run(`
-				CREATE TABLE statement_imports (
-					id TEXT PRIMARY KEY,
-					book_id TEXT NOT NULL,
-					account_id TEXT NOT NULL,
-					format TEXT NOT NULL CHECK (format IN ('qif', 'payee_csv', 'statement_csv')),
-					content_hash TEXT NOT NULL,
-					imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-					UNIQUE (book_id, account_id, content_hash),
-					FOREIGN KEY (book_id, account_id) REFERENCES accounts(book_id, id) ON DELETE RESTRICT
-				)
-			`);
+		// Legacy financial schema (books, accounts, categories, ...). Removed in version 5.
+		up() {
+			// Intentionally empty: replaced by version 5.
 		},
 		version: 2,
 	},
 	{
-		up(database) {
-			database.run(
-				'ALTER TABLE transaction_parts ADD COLUMN position INTEGER NOT NULL DEFAULT 0 CHECK (position >= 0)'
-			);
-			database.run(
-				'CREATE INDEX transaction_parts_order_index ON transaction_parts(book_id, transaction_id, position, id)'
-			);
+		up() {
+			// Intentionally empty: replaced by version 5.
 		},
 		version: 3,
 	},
@@ -178,6 +74,29 @@ const MIGRATIONS: Migration[] = [
 			`);
 		},
 		version: 4,
+	},
+	{
+		up(database) {
+			for (const table of LEGACY_FINANCIAL_TABLES) {
+				database.run(`DROP TABLE IF EXISTS ${table}`);
+			}
+			database.run(`
+				CREATE TABLE transactions (
+					id TEXT PRIMARY KEY,
+					kind TEXT NOT NULL CHECK (kind IN ('expense', 'income')),
+					amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+					currency_code TEXT NOT NULL CHECK (length(currency_code) = 3),
+					description TEXT NOT NULL DEFAULT '' CHECK (length(description) <= 200),
+					transaction_date TEXT NOT NULL,
+					actor_id TEXT,
+					created_at TEXT NOT NULL
+				)
+			`);
+			database.run(
+				'CREATE INDEX transactions_date_index ON transactions(transaction_date DESC, created_at DESC, id DESC)'
+			);
+		},
+		version: 5,
 	},
 ];
 

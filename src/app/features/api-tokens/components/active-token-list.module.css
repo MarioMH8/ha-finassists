@@ -1,0 +1,38 @@
+.heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.heading h3 {
+  margin: 0;
+}
+
+.heading p,
+.state {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.state {
+  margin-top: 8px;
+}
+
+.details {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.details strong {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+.details span {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}

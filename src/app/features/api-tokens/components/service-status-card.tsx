@@ -1,28 +1,31 @@
-import styles from '@app/features/api-tokens/token-management.module.css';
+import type { BadgeTone } from '@app/components/badge';
+import { Badge, BADGE_TONE } from '@app/components/badge';
+import { Card } from '@app/components/card';
 import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
 import type { ReactElement } from 'react';
 
+import styles from './service-status-card.module.css';
+
 type ServiceStatusCardProps = Pick<ApiTokenManagementState, 'copy' | 'serviceMessage' | 'serviceState'>;
+
+const SERVICE_TONE: Record<string, BadgeTone> = {
+	error: BADGE_TONE.DANGER,
+	ready: BADGE_TONE.SUCCESS,
+};
 
 function ServiceStatusCard({ copy, serviceMessage, serviceState }: ServiceStatusCardProps): ReactElement {
 	return (
-		<section
+		<Card
 			aria-labelledby='welcome-title'
-			className={styles['welcome-card']}>
+			className={styles.card}>
 			<h2 id='welcome-title'>{copy.welcome}</h2>
-			<p>{copy.description}</p>
+			<p className={styles.description}>{copy.description}</p>
 			<div
 				aria-live='polite'
-				className={styles['service-status']}
-				data-state={serviceState === 'checking' ? undefined : serviceState}
 				role='status'>
-				<span
-					aria-hidden='true'
-					className={styles['status-indicator']}
-				/>
-				<span>{serviceMessage}</span>
+				<Badge tone={SERVICE_TONE[serviceState] ?? BADGE_TONE.NEUTRAL}>{serviceMessage}</Badge>
 			</div>
-		</section>
+		</Card>
 	);
 }
 

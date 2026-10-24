@@ -21,10 +21,12 @@ ports:
 options:
   supervisor_ip: "172.30.32.2"
   application_name: Fin Assist
+  currency: EUR
   show_navigation: true
   show_logo: true
 schema:
   supervisor_ip: str
   application_name: str
+  currency: str
   show_navigation: bool
   show_logo: bool

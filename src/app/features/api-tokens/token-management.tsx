@@ -1,4 +1,6 @@
 import { Button } from '@app/components/button';
+import { Card } from '@app/components/card';
+import { SectionHeading } from '@app/components/section-heading';
 import type { ReactElement } from 'react';
 
 import { ActiveTokenList, IssuedTokenPanel, ServiceStatusCard, TokenCreationForm } from './components';
@@ -9,6 +11,14 @@ function TokenManagement(): ReactElement {
 	const state = useApiTokens();
 	const { copy } = state;
 
+	const refreshAction = (
+		<Button
+			onClick={() => void state.loadTokens()}
+			type='button'>
+			{copy.refresh}
+		</Button>
+	);
+
 	return (
 		<>
 			<ServiceStatusCard
@@ -16,20 +26,15 @@ function TokenManagement(): ReactElement {
 				serviceMessage={state.serviceMessage}
 				serviceState={state.serviceState}
 			/>
-			<section
+			<Card
 				aria-labelledby='tokens-title'
 				className={styles['token-section']}>
-				<div className={styles['section-heading']}>
-					<div>
-						<h2 id='tokens-title'>{copy.tokensTitle}</h2>
-						<p>{copy.tokensDescription}</p>
-					</div>
-					<Button
-						onClick={() => void state.loadTokens()}
-						type='button'>
-						{copy.refresh}
-					</Button>
-				</div>
+				<SectionHeading
+					actions={refreshAction}
+					description={copy.tokensDescription}
+					title={copy.tokensTitle}
+					titleId='tokens-title'
+				/>
 				<TokenCreationForm
 					copy={copy}
 					createToken={state.createToken}
@@ -56,8 +61,8 @@ function TokenManagement(): ReactElement {
 					tokenListStatusMessage={state.tokenListStatusMessage}
 					tokens={state.tokens}
 				/>
-			</section>
-			<footer>{copy.footer}</footer>
+			</Card>
+			<footer className={styles.footer}>{copy.footer}</footer>
 		</>
 	);
 }

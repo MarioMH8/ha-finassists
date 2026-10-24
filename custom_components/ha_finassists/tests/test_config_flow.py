@@ -8,6 +8,8 @@ import json
 import sys
 import types
 import unittest
+from datetime import date
+from decimal import Decimal
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, Mock, patch
@@ -82,7 +84,7 @@ def _install_home_assistant_stubs() -> None:
     sensor = types.ModuleType("homeassistant.components.sensor")
     sensor.SensorDeviceClass = SimpleNamespace(MONETARY="monetary")
     sensor.SensorEntity = type("SensorEntity", (), {})
-    sensor.SensorStateClass = SimpleNamespace(MEASUREMENT="measurement")
+    sensor.SensorStateClass = SimpleNamespace(TOTAL="total")
     components.sensor = sensor
     http = types.ModuleType("homeassistant.components.http")
     http.StaticPathConfig = type("StaticPathConfig", (), {})
@@ -125,6 +127,9 @@ def _install_home_assistant_stubs() -> None:
     voluptuous = types.ModuleType("voluptuous")
     voluptuous.Schema = _Schema
     voluptuous.Invalid = _Invalid
+    voluptuous.Required = voluptuous.Optional = lambda key: key
+    voluptuous.All = voluptuous.Any = lambda *validators: validators
+    voluptuous.Coerce = lambda kind: kind
     sys.modules["voluptuous"] = voluptuous
 
     aiohttp = types.ModuleType("aiohttp")
@@ -139,7 +144,7 @@ _install_home_assistant_stubs()
 import custom_components.ha_finassists as integration  # noqa: E402
 from custom_components.ha_finassists import config_flow  # noqa: E402
 from custom_components.ha_finassists.api import FinAssistApi, FinAssistApiError  # noqa: E402
-from custom_components.ha_finassists.sensor import FinAssistUpcomingSchedulesSensor  # noqa: E402
+from custom_components.ha_finassists.sensor import FinAssistMonthlyTotalSensor  # noqa: E402
 
 
 class _FlowApi:
@@ -208,7 +213,7 @@ class ConfigFlowTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["data"]["system_token"], "long-lived-secret")
         self.assertNotIn("bootstrapCapability", result["data"])
         self.assertEqual(_FlowApi.instances[0].calls, [("exchange", "once")])
-        self.assertEqual(_FlowApi.instances[1].calls, [("page", "books")])
+        self.assertEqual(_FlowApi.instances[1].calls, [("page", "transactions")])
 
     async def test_exchange_error_is_shown_without_creating_entry(self) -> None:
         _FlowApi.exchange_error = FinAssistApiError("rejected", 401)
@@ -228,7 +233,7 @@ class ConfigFlowTests(unittest.IsolatedAsyncioTestCase):
         )
         result = await flow.async_step_confirm({})
         self.assertEqual(result["errors"], {"base": "cannot_connect"})
-        self.assertEqual(_FlowApi.instances[1].calls, [("page", "books"), ("revoke", None)])
+        self.assertEqual(_FlowApi.instances[1].calls, [("page", "transactions"), ("revoke", None)])
 
     async def test_discovery_uses_validated_slug_for_internal_api_host(self) -> None:
         flow = self._flow()
@@ -301,13 +306,14 @@ class _SetupApi:
         self.token = token
         self.__class__.instances.append(self)
 
-    async def async_fetch_dashboard(self, previous_schedules: list[Any]) -> dict[str, Any]:
+    async def async_fetch_summary(self) -> dict[str, Any]:
         if self.error:
             raise self.error
         return {
-            "books": [],
-            "upcoming_schedules": previous_schedules,
-            "schedule_refresh_failed": False,
+            "currencyCode": "EUR",
+            "income_minor": 0,
+            "expense_minor": 0,
+            "month": "2026-10",
         }
 
 
@@ -405,17 +411,23 @@ class IntegrationSetupTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(hass.data, {})
 
 
-class SensorAttributeTests(unittest.TestCase):
-    def test_schedule_sensor_reports_stale_schedule_refresh(self) -> None:
+class SensorTests(unittest.TestCase):
+    def _sensor(self, data_key: str, **data: Any) -> Any:
         coordinator = SimpleNamespace(
-            data={"schedule_refresh_failed": True, "upcoming_schedules": []}
+            data={"currencyCode": "EUR", "month": "2026-10", "income_minor": 0, "expense_minor": 0, **data}
         )
-        entry = SimpleNamespace(entry_id="entry-1")
-        sensor = FinAssistUpcomingSchedulesSensor(
-            coordinator, entry, {"id": "book-1", "name": "Household"}
+        return FinAssistMonthlyTotalSensor(
+            coordinator, SimpleNamespace(entry_id="entry-1"), "income", "Income this month", data_key, "mdi:cash"
         )
 
-        self.assertTrue(sensor.extra_state_attributes["schedule_refresh_failed"])
+    def test_sensor_converts_minor_units_and_uses_api_currency(self) -> None:
+        sensor = self._sensor("income_minor", income_minor=123456)
+
+        self.assertEqual(sensor.native_value, Decimal("1234.56"))
+        self.assertEqual(sensor.native_unit_of_measurement, "EUR")
+        self.assertEqual(sensor.extra_state_attributes["integration_entry_id"], "entry-1")
+        self.assertEqual(sensor.extra_state_attributes["month"], "2026-10")
+        self.assertEqual(sensor.extra_state_attributes["kind"], "income")
 
 
 class _Response:
@@ -464,7 +476,7 @@ class CredentialLifecycleTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(FinAssistApiError, "malformed JSON"):
             await FinAssistApi("http://fin-assist/api/v1", "", session).async_request(
-                "GET", "books"
+                "GET", "transactions"
             )
 
     async def test_exchange_has_no_auth_and_rotation_and_revoke_use_bearer(self) -> None:
@@ -502,6 +514,110 @@ class CredentialLifecycleTests(unittest.IsolatedAsyncioTestCase):
         await integration.async_remove_entry(hass, entry)
         self.assertEqual(session.calls[-1]["method"], "DELETE")
         self.assertNotIn("entry-1", hass.data["ha_finassists"])
+
+
+class _PagedSession:
+    def __init__(self, pages: list[dict[str, Any]]) -> None:
+        self.pages = pages
+        self.calls: list[dict[str, Any]] = []
+
+    def request(self, method: str, url: str, **kwargs: Any) -> _RequestContext:
+        self.calls.append({"method": method, "url": url, **kwargs})
+        if method == "POST":
+            return _RequestContext(_Response(201, {"id": "transaction-1"}))
+        return _RequestContext(_Response(200, self.pages[len(self.calls) - 1]))
+
+
+class TransactionApiTests(unittest.IsolatedAsyncioTestCase):
+    async def test_summary_pages_current_month_and_totals_by_kind(self) -> None:
+        def item(kind: str, amount: int) -> dict[str, Any]:
+            return {"kind": kind, "amountMinor": amount, "currencyCode": "USD"}
+
+        session = _PagedSession(
+            [
+                {"items": [item("income", 1000), item("expense", 250)], "total": 3},
+                {"items": [item("expense", 50)], "total": 3},
+            ]
+        )
+        with patch.object(importlib.import_module("custom_components.ha_finassists.api"), "date") as fake_date:
+            fake_date.today.return_value = date(2026, 2, 10)
+            summary = await FinAssistApi("http://fin-assist/api/v1", "token", session).async_fetch_summary()
+
+        self.assertEqual(
+            summary,
+            {"currencyCode": "USD", "income_minor": 1000, "expense_minor": 300, "month": "2026-02"},
+        )
+        first, second = session.calls
+        self.assertEqual(first["params"]["fromDate"], "2026-02-01")
+        self.assertEqual(first["params"]["toDate"], "2026-02-28")
+        self.assertEqual(first["params"]["offset"], 0)
+        self.assertEqual(second["params"]["offset"], 2)
+
+    async def test_summary_falls_back_to_default_currency_without_transactions(self) -> None:
+        session = _PagedSession([{"items": [], "total": 0}])
+        summary = await FinAssistApi("http://fin-assist/api/v1", "token", session).async_fetch_summary()
+
+        self.assertEqual(summary["currencyCode"], "EUR")
+        self.assertEqual((summary["income_minor"], summary["expense_minor"]), (0, 0))
+
+    async def test_create_transaction_posts_contract_body(self) -> None:
+        session = _PagedSession([])
+        api = FinAssistApi("http://fin-assist/api/v1", "token", session)
+        await api.async_create_transaction("expense", 1250, date(2026, 10, 24), "Lunch")
+        await api.async_create_transaction("income", 500, date(2026, 10, 24), None)
+
+        self.assertEqual(session.calls[0]["method"], "POST")
+        self.assertTrue(session.calls[0]["url"].endswith("/transactions"))
+        self.assertEqual(
+            session.calls[0]["json"],
+            {"kind": "expense", "amountMinor": 1250, "transactionDate": "2026-10-24", "description": "Lunch"},
+        )
+        self.assertNotIn("description", session.calls[1]["json"])
+
+
+class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
+    def _register(self) -> tuple[dict[str, Any], Any, Any]:
+        handlers: dict[str, Any] = {}
+        hass = SimpleNamespace(
+            data={},
+            services=SimpleNamespace(
+                has_service=lambda domain, service: False,
+                async_register=lambda domain, service, handler, schema: handlers.__setitem__(service, handler),
+            ),
+        )
+        api = SimpleNamespace(async_create_transaction=AsyncMock())
+        coordinator = SimpleNamespace(
+            data={"currencyCode": "EUR"}, async_request_refresh=AsyncMock()
+        )
+        hass.data["ha_finassists"] = {"entry-1": {"api": api, "coordinator": coordinator}}
+        integration._async_register_services(hass)
+        return handlers, api, coordinator
+
+    async def test_add_expense_converts_amount_and_refreshes(self) -> None:
+        handlers, api, coordinator = self._register()
+        call = SimpleNamespace(
+            data={"entry_id": "entry-1", "amount": "12.5", "date": date(2026, 10, 1), "description": "Lunch"}
+        )
+        await handlers["add_expense"](call)
+
+        api.async_create_transaction.assert_awaited_once_with(
+            "expense", 1250, date(2026, 10, 1), "Lunch"
+        )
+        coordinator.async_request_refresh.assert_awaited_once()
+
+    async def test_add_income_defaults_to_today(self) -> None:
+        handlers, api, _ = self._register()
+        await handlers["add_income"](SimpleNamespace(data={"entry_id": "entry-1", "amount": "100"}))
+
+        api.async_create_transaction.assert_awaited_once_with("income", 10000, date.today(), None)
+
+    async def test_excess_precision_and_unknown_entry_are_rejected(self) -> None:
+        handlers, api, _ = self._register()
+        with self.assertRaises(ValueError):
+            await handlers["add_expense"](SimpleNamespace(data={"entry_id": "entry-1", "amount": "1.005"}))
+        with self.assertRaises(ValueError):
+            await handlers["add_expense"](SimpleNamespace(data={"entry_id": "missing", "amount": "1"}))
+        api.async_create_transaction.assert_not_awaited()
 
 
 if __name__ == "__main__":

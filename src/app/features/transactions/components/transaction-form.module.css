@@ -1,0 +1,90 @@
+.form {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.kind {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.options {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-secondary);
+}
+
+.option {
+  position: relative;
+  display: inline-flex;
+}
+
+.radio {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.optionLabel {
+  min-width: 96px;
+  padding: 8px 16px;
+  border-radius: calc(var(--radius-control) - 3px);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+}
+
+.radio:checked + .optionLabel {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.radio:focus-visible + .optionLabel {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.description {
+  grid-column: 1 / -1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.feedback:empty {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

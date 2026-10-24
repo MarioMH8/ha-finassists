@@ -1,37 +1,76 @@
 refresh:
   name: Refresh
-  description: Request an immediate account and schedule refresh.
+  description: Request an immediate refresh of this month's income and expense totals.
   fields:
     entry_id:
       name: Config entry
       description: Optional Fin Assist integration entry to refresh.
       selector:
-        text:
-set_schedule_status:
-  name: Set scheduled payment status
-  description: Pause, resume, or cancel a scheduled payment.
+        config_entry:
+          integration: ha_finassists
+add_expense:
+  name: Add expense
+  description: Record an expense in Fin Assist.
   fields:
     entry_id:
       name: Config entry
+      description: Fin Assist integration entry that receives the expense.
       required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    amount:
+      name: Amount
+      description: Amount in major currency units, for example 12.50.
+      required: true
+      example: 12.50
+      selector:
+        number:
+          min: 0.01
+          step: any
+          mode: box
+    date:
+      name: Date
+      description: Transaction date. Defaults to today.
+      required: false
+      selector:
+        date:
+    description:
+      name: Description
+      description: Optional note describing the expense.
+      required: false
       selector:
         text:
-    book_id:
-      name: Book ID
+add_income:
+  name: Add income
+  description: Record an income in Fin Assist.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that receives the income.
       required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    amount:
+      name: Amount
+      description: Amount in major currency units, for example 1200.00.
+      required: true
+      example: 1200.00
+      selector:
+        number:
+          min: 0.01
+          step: any
+          mode: box
+    date:
+      name: Date
+      description: Transaction date. Defaults to today.
+      required: false
+      selector:
+        date:
+    description:
+      name: Description
+      description: Optional note describing the income.
+      required: false
       selector:
         text:
-    schedule_id:
-      name: Schedule ID
-      required: true
-      selector:
-        text:
-    status:
-      name: Status
-      required: true
-      selector:
-        select:
-          options:
-            - active
-            - paused
-            - canceled

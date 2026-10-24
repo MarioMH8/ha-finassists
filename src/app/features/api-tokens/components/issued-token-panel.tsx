@@ -1,7 +1,9 @@
 import { Button } from '@app/components/button';
-import styles from '@app/features/api-tokens/token-management.module.css';
+import { Card, CARD_TONE } from '@app/components/card';
 import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
 import type { ReactElement } from 'react';
+
+import styles from './issued-token-panel.module.css';
 
 type IssuedTokenPanelProps = Pick<
 	ApiTokenManagementState,
@@ -15,15 +17,16 @@ function IssuedTokenPanel({
 	issuedTokenReference,
 }: IssuedTokenPanelProps): ReactElement {
 	return (
-		<section
+		<Card
 			aria-labelledby='issued-token-title'
-			className={styles['issued-token']}
+			className={styles.panel}
 			hidden={!issuedSecret}
 			ref={issuedTokenReference}
-			tabIndex={-1}>
+			tabIndex={-1}
+			tone={CARD_TONE.SUBTLE}>
 			<h3 id='issued-token-title'>{copy.issuedTokenTitle}</h3>
-			<p>{copy.issuedTokenWarning}</p>
-			<div className={styles['secret-field']}>
+			<p className={styles.warning}>{copy.issuedTokenWarning}</p>
+			<div className={styles.secret}>
 				<code>{issuedSecret}</code>
 				<Button
 					onClick={() => void copyToken()}
@@ -31,7 +34,7 @@ function IssuedTokenPanel({
 					{copy.copyToken}
 				</Button>
 			</div>
-		</section>
+		</Card>
 	);
 }
 

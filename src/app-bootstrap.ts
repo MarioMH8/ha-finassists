@@ -2,10 +2,6 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { createServer, prepareWebAssets } from '@modules/api';
-import { EnsureDefaultBook } from '@modules/books';
-import { initializeBudgetSchema } from '@modules/budgets/infrastructure';
-import { initializeScheduleSchema } from '@modules/schedules/infrastructure';
-import { initializeSharedExpenseSchema } from '@modules/shared-expenses/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { createBootstrapCapability, publishSupervisorDiscovery } from '@modules/system-credentials/infrastructure';
 import { Database } from 'bun:sqlite';
@@ -20,11 +16,7 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 	const database = new Database(config.databasePath);
 	database.run('PRAGMA journal_mode = WAL');
 	migrateDatabase(database);
-	initializeBudgetSchema(database);
-	initializeScheduleSchema(database);
-	initializeSharedExpenseSchema(database);
-	const container = createAppContainer(database);
-	new EnsureDefaultBook(container.get('bookRepository')).execute();
+	const container = createAppContainer(database, { currencyCode: config.shellConfig.currencyCode });
 	const bootstrapCapability =
 		config.supervisorToken === undefined ? config.bootstrapCapability : createBootstrapCapability();
 	const isBootstrapCapabilityConfigured =

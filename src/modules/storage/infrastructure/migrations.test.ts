@@ -14,6 +14,7 @@ describe('migrateDatabase', () => {
 			{ version: 2 },
 			{ version: 3 },
 			{ version: 4 },
+			{ version: 5 },
 		]);
 		expect(
 			database.query(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'api_tokens'`).get()
@@ -38,6 +39,50 @@ describe('migrateDatabase', () => {
 			owner_id: 'owner',
 			secret_hash: 'hash',
 		});
+		database.close();
+	});
+
+	it('creates the minimal transactions schema', () => {
+		const database = new Database(':memory:');
+		migrateDatabase(database);
+
+		expect(
+			database
+				.query<{ name: string }, []>(`SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name`)
+				.all()
+				.map(row => row.name)
+		).toEqual([
+			'api_tokens',
+			'schema_migrations',
+			'system_credential_bootstrap',
+			'system_credentials',
+			'transactions',
+		]);
+		database.close();
+	});
+
+	it('discards legacy financial tables and keeps credentials', () => {
+		const database = new Database(':memory:');
+		database.run('PRAGMA foreign_keys = ON');
+		database.run('CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT)');
+		for (const version of [1, 2, 3, 4]) {
+			database.query('INSERT INTO schema_migrations VALUES (?, ?)').run(version, 'now');
+		}
+		database.run(`CREATE TABLE api_tokens (
+			id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, name TEXT NOT NULL,
+			token_prefix TEXT NOT NULL, secret_hash TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL
+		)`);
+		database.run('CREATE TABLE books (id TEXT PRIMARY KEY)');
+		database.run('CREATE TABLE transactions (id TEXT PRIMARY KEY, book_id TEXT REFERENCES books(id))');
+		database.run('INSERT INTO api_tokens VALUES (?, ?, ?, ?, ?, ?)', ['id', 'owner', 'name', 'fa_', 'hash', 'now']);
+		database.run('INSERT INTO books VALUES (?)', ['book']);
+		database.run('INSERT INTO transactions VALUES (?, ?)', ['t', 'book']);
+
+		migrateDatabase(database);
+
+		expect(database.query('SELECT COUNT(*) AS count FROM api_tokens').get()).toEqual({ count: 1 });
+		expect(database.query('SELECT COUNT(*) AS count FROM transactions').get()).toEqual({ count: 0 });
+		expect(database.query(`SELECT name FROM sqlite_master WHERE name = 'books'`).get()).toBeNull();
 		database.close();
 	});
 

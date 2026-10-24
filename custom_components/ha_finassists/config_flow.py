@@ -161,7 +161,7 @@ async def _async_validate_system_identity(
     """Verify new credentials and revoke them if initial validation fails."""
     api = FinAssistApi(base_url, identity[CONF_SYSTEM_TOKEN], async_get_clientsession(hass))
     try:
-        await api.async_page("books")
+        await api.async_page("transactions")
     except FinAssistApiError:
         try:
             await api.async_revoke_system_credential()

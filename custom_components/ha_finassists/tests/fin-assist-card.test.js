@@ -8,13 +8,7 @@ const cardSource = readFileSync(
 );
 
 class FakeButton {
-	constructor(attributes = {}) {
-		this.dataset = {
-			status: attributes['data-status'],
-			entry: attributes['data-entry'],
-			book: attributes['data-book'],
-			schedule: attributes['data-schedule'],
-		};
+	constructor() {
 		this.listeners = {};
 	}
 
@@ -30,23 +24,12 @@ class FakeButton {
 class FakeShadowRoot {
 	set innerHTML(html) {
 		this.html = html;
-		this.buttons = [...html.matchAll(/<button\b([^>]*)>/g)].map(([, rawAttributes]) => {
-			const attributes = Object.fromEntries(
-				[...rawAttributes.matchAll(/([\w-]+)="([^"]*)"/g)].map(([, key, value]) => [key, value])
-			);
-			return new FakeButton(attributes);
-		});
-	}
-
-	querySelectorAll(selector) {
-		return selector === 'button[data-status]'
-			? this.buttons.filter(button => button.dataset.status)
-			: [];
+		this.refreshButton = new FakeButton();
 	}
 
 	querySelector(selector) {
 		if (selector === '.refresh') {
-			return this.buttons.find(button => !button.dataset.status);
+			return this.refreshButton;
 		}
 		return selector === '.feedback' ? { focus() {} } : undefined;
 	}
@@ -73,72 +56,49 @@ function loadCard() {
 	return new (elements.get('fin-assist-card'))();
 }
 
-function scheduleSensor(entryId, schedule, state = '1', extra = {}) {
+function totalSensor(entryId, kind, state = '10.00') {
 	return {
-		entity_id: `sensor.${entryId}_schedules`,
+		entity_id: `sensor.${entryId}_${kind}`,
 		state,
 		attributes: {
 			integration_entry_id: entryId,
-			schedules: [schedule],
-			...extra,
-		},
-	};
-}
-
-function balanceSensor(entryId, state = '100.00') {
-	return {
-		entity_id: `sensor.${entryId}_balance`,
-		state,
-		attributes: {
-			account_id: `${entryId}-account`,
-			account_name: `${entryId} account`,
-			account_kind: 'checking',
-			integration_entry_id: entryId,
-			total_minor: 10000,
-			unit_of_measurement: 'USD',
+			kind,
+			month: '2026-10',
+			unit_of_measurement: 'EUR',
 		},
 	};
 }
 
 describe('Fin Assist Lovelace card', () => {
-	it('routes schedule actions to the entry that owns each schedule', () => {
+	it('shows income and expenses for the current month', () => {
+		const card = loadCard();
+		card.setConfig({});
+		card.hass = {
+			states: {
+				income: totalSensor('entry-one', 'income', '1200.00'),
+				expenses: totalSensor('entry-one', 'expense', '345.50'),
+			},
+			callService() {},
+		};
+
+		expect(card.shadowRoot.html).toContain('Income this month');
+		expect(card.shadowRoot.html).toContain('1200.00 EUR');
+		expect(card.shadowRoot.html).toContain('Expenses this month');
+		expect(card.shadowRoot.html).toContain('345.50 EUR');
+	});
+
+	it('refreshes the only entry in scope', () => {
 		const card = loadCard();
 		const calls = [];
 		card.setConfig({});
 		card.hass = {
-			states: {
-				first_balance: balanceSensor('entry-one'),
-				second_balance: balanceSensor('entry-two'),
-				first_schedules: scheduleSensor('entry-one', {
-					bookId: 'book-one',
-					id: 'schedule-one',
-					payee: 'First payee',
-					status: 'active',
-				}),
-				second_schedules: scheduleSensor('entry-two', {
-					bookId: 'book-two',
-					id: 'schedule-two',
-					payee: 'Second payee',
-					status: 'active',
-				}),
-			},
+			states: { income: totalSensor('entry-one', 'income') },
 			callService: (...args) => calls.push(args),
 		};
 
-		const scheduleActions = card.shadowRoot.querySelectorAll('button[data-status]');
-		expect(scheduleActions).toHaveLength(4);
-		scheduleActions[2].click();
+		card.shadowRoot.querySelector('.refresh').click();
 
-		expect(calls[0]).toEqual([
-			'ha_finassists',
-			'set_schedule_status',
-			{
-				book_id: 'book-two',
-				entry_id: 'entry-two',
-				schedule_id: 'schedule-two',
-				status: 'paused',
-			},
-		]);
+		expect(calls).toEqual([['ha_finassists', 'refresh', { entry_id: 'entry-one' }]]);
 	});
 
 	it('refreshes a configured entry even when its entities are not loaded yet', () => {
@@ -157,30 +117,18 @@ describe('Fin Assist Lovelace card', () => {
 		]);
 	});
 
-	it('hides unavailable entity attributes and warns when retained schedules may be stale', () => {
+	it('only displays the configured entry and flags unavailable totals', () => {
 		const card = loadCard();
-		card.setConfig({});
+		card.setConfig({ entry_id: 'entry-two' });
 		card.hass = {
 			states: {
-				unavailable_balance: balanceSensor('entry-one', 'unavailable'),
-				unavailable_schedules: scheduleSensor(
-					'entry-one',
-					{ bookId: 'book-one', id: 'stale', payee: 'Stale payee', status: 'active' },
-					'unavailable',
-					{ schedule_refresh_failed: true }
-				),
-				current_schedules: scheduleSensor(
-					'entry-two',
-					{ bookId: 'book-two', id: 'current', payee: 'Current payee', status: 'active' },
-					'1',
-					{ schedule_refresh_failed: true }
-				),
+				first: totalSensor('entry-one', 'income', '999.00'),
+				second: totalSensor('entry-two', 'expense', 'unavailable'),
 			},
 			callService() {},
 		};
 
-		expect(card.shadowRoot.html).not.toContain('Stale payee');
-		expect(card.shadowRoot.html).toContain('Current payee');
-		expect(card.shadowRoot.html).toContain('Schedule data may be out of date.');
+		expect(card.shadowRoot.html).not.toContain('999.00');
+		expect(card.shadowRoot.html).toContain('Unavailable');
 	});
 });

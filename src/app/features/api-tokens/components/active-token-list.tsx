@@ -1,10 +1,12 @@
 import { Button, BUTTON_VARIANT } from '@app/components/button';
-import styles from '@app/features/api-tokens/token-management.module.css';
+import { List, ListItem } from '@app/components/list';
 import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
 import { formatTokenDate } from '@app/features/api-tokens/use-api-tokens.hook';
 import { formatTokenCount } from '@app/i18n';
 import { useLocale } from '@app/i18n/locale-context';
 import type { ReactElement } from 'react';
+
+import styles from './active-token-list.module.css';
 
 type ActiveTokenListProps = Pick<
 	ApiTokenManagementState,
@@ -38,7 +40,7 @@ function ActiveTokenList({
 
 	return (
 		<>
-			<div className={styles['token-list-heading']}>
+			<div className={styles.heading}>
 				<h3
 					ref={tokenHeadingReference}
 					tabIndex={-1}>
@@ -47,26 +49,17 @@ function ActiveTokenList({
 				<p>{formatTokenCount(tokenCount, language)}</p>
 			</div>
 			<p
-				className={styles['token-list-state']}
+				className={styles.state}
 				hidden={!tokenListStatusMessage}>
 				{tokenListStatusMessage}
 			</p>
-			<ul
+			<List
 				aria-label={copy.activeTokens}
-				className={styles['token-list']}
 				ref={tokenListReference}>
 				{tokens.map(token => (
-					<li
-						className={styles['token-item']}
-						key={token.id}>
-						<div className={styles['token-details']}>
-							<strong>{token.name}</strong>
-							<span>
-								{token.prefix} · {formatTokenDate(token.createdAt, language)}
-							</span>
-						</div>
-						<div className={styles['token-actions']}>
-							{confirmingTokenId === token.id ? (
+					<ListItem
+						actions={
+							confirmingTokenId === token.id ? (
 								<>
 									<Button
 										aria-label={`${copy.confirmRevoke}: ${token.name}`}
@@ -90,11 +83,18 @@ function ActiveTokenList({
 									variant={BUTTON_VARIANT.DANGER}>
 									{copy.revoke}
 								</Button>
-							)}
+							)
+						}
+						key={token.id}>
+						<div className={styles.details}>
+							<strong>{token.name}</strong>
+							<span>
+								{token.prefix} · {formatTokenDate(token.createdAt, language)}
+							</span>
 						</div>
-					</li>
+					</ListItem>
 				))}
-			</ul>
+			</List>
 		</>
 	);
 }

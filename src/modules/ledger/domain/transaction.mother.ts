@@ -1,25 +1,18 @@
-import type { FinancialTransactionProperties } from './transaction';
-import { FinancialTransaction, TRANSACTION_STATUS } from './transaction';
+import type { TransactionProperties } from './transaction';
+import { Transaction } from './transaction';
 
-const JSON_NULL = JSON.parse('null') as null;
-
-class FinancialTransactionMother {
-	static create(overrides: Partial<FinancialTransactionProperties> = {}): FinancialTransaction {
-		return FinancialTransaction.create({
-			accountId: 'account-1',
-			actorId: JSON_NULL,
-			amountMinor: -1250,
-			bookId: 'book-1',
+export class TransactionMother {
+	static create(overrides: Partial<TransactionProperties> = {}): Transaction {
+		return Transaction.create({
+			actorId: 'user-1',
+			amountMinor: 1250,
+			createdAt: '2026-05-15T10:00:00.000Z',
+			currencyCode: 'EUR',
+			description: 'Groceries',
 			id: 'transaction-1',
-			memo: '',
-			parts: [],
-			payee: '',
-			status: TRANSACTION_STATUS.UNCLEARED,
-			transactionDate: '2026-03-01',
-			transferId: JSON_NULL,
+			kind: 'expense',
+			transactionDate: '2026-05-15',
 			...overrides,
 		});
 	}
 }
-
-export { FinancialTransactionMother };

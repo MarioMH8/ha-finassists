@@ -1,125 +1,32 @@
-import type {
-	CreateTransactionInput,
-	CreateTransferInput,
-	FinancialTransaction,
-	LedgerRepository,
-	TransactionStatus,
-	UpdateTransactionInput,
-} from '@modules/ledger/domain';
 import { expect, mock } from 'bun:test';
 
-type Transfer = ReturnType<LedgerRepository['createTransfer']>;
+import type { Transaction, TransactionCriteria, TransactionPage, TransactionRepository } from '../../domain';
 
-export class MockLedgerRepository implements LedgerRepository {
-	private readonly createMock = mock<LedgerRepository['create']>();
-	private readonly createTransferMock = mock<LedgerRepository['createTransfer']>();
-	private readonly findMock = mock<LedgerRepository['find']>();
-	private readonly listMock = mock<LedgerRepository['list']>(() => []);
-	private readonly removeMock = mock<LedgerRepository['remove']>(() => false);
-	private readonly setStatusMock = mock<LedgerRepository['setStatus']>(() => false);
-	private readonly updateMock = mock<LedgerRepository['update']>();
+export class MockLedgerRepository implements TransactionRepository {
+	private readonly saveMock = mock<TransactionRepository['save']>(() => Promise.resolve());
+	private readonly searchMock = mock<TransactionRepository['search']>(() => Promise.resolve({ items: [], total: 0 }));
 
-	assertCreateHasBeenCalledWith(input: CreateTransactionInput): void {
-		expect(this.createMock).toHaveBeenCalledWith(input);
+	get saved(): Transaction[] {
+		return this.saveMock.mock.calls.map(([transaction]) => transaction);
 	}
 
-	assertCreateHasNotBeenCalled(): void {
-		expect(this.createMock).not.toHaveBeenCalled();
+	assertSaveHasBeenCalledWith(transaction: Transaction): void {
+		expect(this.saveMock).toHaveBeenCalledWith(transaction);
 	}
 
-	assertCreateTransferHasBeenCalledWith(input: CreateTransferInput): void {
-		expect(this.createTransferMock).toHaveBeenCalledWith(input);
+	assertSearchHasBeenCalledWith(criteria: TransactionCriteria): void {
+		expect(this.searchMock).toHaveBeenCalledWith(criteria);
 	}
 
-	assertCreateTransferHasNotBeenCalled(): void {
-		expect(this.createTransferMock).not.toHaveBeenCalled();
+	async save(transaction: Transaction): Promise<void> {
+		return this.saveMock(transaction);
 	}
 
-	assertFindHasBeenCalledWith(bookId: string, id: string): void {
-		expect(this.findMock).toHaveBeenCalledWith(bookId, id);
+	async search(criteria: TransactionCriteria = {}): Promise<TransactionPage> {
+		return this.searchMock(criteria);
 	}
 
-	assertListHasBeenCalledWith(bookId: string, accountId: string): void {
-		expect(this.listMock).toHaveBeenCalledWith(bookId, accountId);
-	}
-
-	assertRemoveHasBeenCalledWith(bookId: string, id: string): void {
-		expect(this.removeMock).toHaveBeenCalledWith(bookId, id);
-	}
-
-	assertRemoveHasNotBeenCalled(): void {
-		expect(this.removeMock).not.toHaveBeenCalled();
-	}
-
-	assertSetStatusHasBeenCalledWith(bookId: string, id: string, status: TransactionStatus): void {
-		expect(this.setStatusMock).toHaveBeenCalledWith(bookId, id, status);
-	}
-
-	assertSetStatusHasNotBeenCalled(): void {
-		expect(this.setStatusMock).not.toHaveBeenCalled();
-	}
-
-	assertUpdateHasBeenCalledWith(bookId: string, id: string, input: UpdateTransactionInput): void {
-		expect(this.updateMock).toHaveBeenCalledWith(bookId, id, input);
-	}
-
-	assertUpdateHasNotBeenCalled(): void {
-		expect(this.updateMock).not.toHaveBeenCalled();
-	}
-
-	create(input: CreateTransactionInput): FinancialTransaction {
-		return this.createMock(input);
-	}
-
-	createTransfer(input: CreateTransferInput): Transfer {
-		return this.createTransferMock(input);
-	}
-
-	find(bookId: string, id: string): FinancialTransaction | undefined {
-		return this.findMock(bookId, id);
-	}
-
-	list(bookId: string, accountId: string): FinancialTransaction[] {
-		return this.listMock(bookId, accountId);
-	}
-
-	remove(bookId: string, id: string): boolean {
-		return this.removeMock(bookId, id);
-	}
-
-	setStatus(bookId: string, id: string, status: TransactionStatus): boolean {
-		return this.setStatusMock(bookId, id, status);
-	}
-
-	shouldCreate(transaction: FinancialTransaction): void {
-		this.createMock.mockReturnValue(transaction);
-	}
-
-	shouldCreateTransfer(transfer: Transfer): void {
-		this.createTransferMock.mockReturnValue(transfer);
-	}
-
-	shouldFind(transaction: FinancialTransaction | undefined): void {
-		this.findMock.mockReturnValue(transaction);
-	}
-
-	shouldList(transactions: FinancialTransaction[]): void {
-		this.listMock.mockReturnValue(transactions);
-	}
-
-	shouldRemove(isRemoved: boolean): void {
-		this.removeMock.mockReturnValue(isRemoved);
-	}
-
-	shouldSetStatus(isUpdated: boolean): void {
-		this.setStatusMock.mockReturnValue(isUpdated);
-	}
-
-	shouldUpdate(transaction: FinancialTransaction | undefined): void {
-		this.updateMock.mockReturnValue(transaction);
-	}
-
-	update(bookId: string, id: string, input: UpdateTransactionInput): FinancialTransaction | undefined {
-		return this.updateMock(bookId, id, input);
+	shouldSearch(page: TransactionPage): void {
+		this.searchMock.mockResolvedValueOnce(page);
 	}
 }

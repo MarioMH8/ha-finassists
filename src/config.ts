@@ -38,6 +38,7 @@ interface LoadServerConfigOptions {
 const homeAssistantOptionsSchema = z
 	.object({
 		application_name: z.string().optional().catch(undefined),
+		currency: z.string().optional().catch(undefined),
 		show_logo: z.boolean().optional().catch(undefined),
 		show_navigation: z.boolean().optional().catch(undefined),
 		supervisor_ip: z.string().optional().catch(undefined),
@@ -62,6 +63,18 @@ function hasControlCharacters(value: string): boolean {
 	}
 
 	return false;
+}
+
+function normalizeCurrencyCode(value: string | undefined): string {
+	const code = value?.trim().toUpperCase() ?? '';
+	if (!/^[A-Z]{3}$/.test(code)) {
+		return DEFAULT_SHELL_CONFIG.currencyCode;
+	}
+	try {
+		return new Intl.NumberFormat('en', { currency: code, style: 'currency' }).resolvedOptions().currency ?? code;
+	} catch {
+		return DEFAULT_SHELL_CONFIG.currencyCode;
+	}
 }
 
 function readOptionalEnvironmentValue(value: string | undefined): string | undefined {
@@ -118,6 +131,7 @@ async function loadServerConfig({
 			normalizedName.length > 0 && normalizedName.length <= 80 && !hasControlCharacters(normalizedName)
 				? normalizedName
 				: DEFAULT_SHELL_CONFIG.applicationName,
+		currencyCode: normalizeCurrencyCode(options.currency),
 		showLogo: options.show_logo ?? DEFAULT_SHELL_CONFIG.showLogo,
 		showNavigation: options.show_navigation ?? DEFAULT_SHELL_CONFIG.showNavigation,
 	};

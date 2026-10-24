@@ -68,6 +68,7 @@ function WebPage({ developmentMode = false, language, settings = DEFAULT_SHELL_C
 			settings={settings}>
 			<div
 				data-application-name={settings.applicationName}
+				data-currency-code={settings.currencyCode}
 				data-language={language}
 				data-show-logo={String(settings.showLogo)}
 				data-show-navigation={String(settings.showNavigation)}

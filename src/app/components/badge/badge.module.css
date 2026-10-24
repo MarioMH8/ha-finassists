@@ -1,0 +1,29 @@
+.badge {
+  --badge-color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--badge-color) 14%, var(--surface));
+  color: var(--badge-color);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.neutral {
+  --badge-color: var(--muted);
+}
+
+.success {
+  --badge-color: var(--success);
+}
+
+.warning {
+  --badge-color: var(--warning);
+}
+
+.danger {
+  --badge-color: var(--danger);
+}

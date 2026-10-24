@@ -21,4 +21,12 @@ function formatTokenCount(count: number, language: Language): string {
 	return template.replace('{count}', () => String(count));
 }
 
-export { type Copy, formatTokenCount, getCopy };
+function interpolate(template: string, values: Partial<Record<string, number | string>>): string {
+	return template.replaceAll(/\{(?<name>\w+)\}/gu, (match, name: string) => {
+		const value = values[name];
+
+		return value === undefined ? match : String(value);
+	});
+}
+
+export { type Copy, formatTokenCount, getCopy, interpolate };

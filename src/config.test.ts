@@ -20,7 +20,7 @@ describe('loadServerConfig', () => {
 			developmentActor: undefined,
 			developmentMode: false,
 			port: 8099,
-			shellConfig: { applicationName: 'Fin Assist', showLogo: true, showNavigation: true },
+			shellConfig: { applicationName: 'Fin Assist', currencyCode: 'EUR', showLogo: true, showNavigation: true },
 			supervisorToken: undefined,
 			trustedIngressIp: DEFAULT_TRUSTED_INGRESS_IP,
 		});
@@ -35,6 +35,7 @@ describe('loadServerConfig', () => {
 				optionsPath,
 				JSON.stringify({
 					application_name: 'Invalid\u{0}name',
+					currency: 'euro',
 					show_logo: 'yes',
 					show_navigation: false,
 					supervisor_ip: ['127.0.0.1'],
@@ -47,6 +48,7 @@ describe('loadServerConfig', () => {
 
 			expect(config.shellConfig).toEqual({
 				applicationName: 'Fin Assist',
+				currencyCode: 'EUR',
 				showLogo: true,
 				showNavigation: false,
 			});

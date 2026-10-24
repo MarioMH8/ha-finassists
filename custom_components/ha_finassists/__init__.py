@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+from babel.numbers import get_currency_precision
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.components.http import StaticPathConfig
@@ -18,7 +21,8 @@ from .api import FinAssistApi, FinAssistApiError
 from .const import CONF_BASE_URL, CONF_SYSTEM_TOKEN, DOMAIN, PLATFORMS, UPDATE_INTERVAL
 
 SERVICE_REFRESH = "refresh"
-SERVICE_SET_SCHEDULE_STATUS = "set_schedule_status"
+SERVICE_ADD_EXPENSE = "add_expense"
+SERVICE_ADD_INCOME = "add_income"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,11 +49,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def async_update_data() -> dict[str, Any]:
         try:
-            previous = coordinator.data.get("upcoming_schedules", []) if coordinator.data else []
-            data = await api.async_fetch_dashboard(previous)
-            if data["schedule_refresh_failed"]:
-                _LOGGER.warning("Fin Assist schedule refresh failed; retaining the prior schedule data")
-            return data
+            return await api.async_fetch_summary()
         except FinAssistApiError as err:
             if err.status == 401:
                 raise ConfigEntryAuthFailed("Fin Assist system credential is no longer valid") from err
@@ -105,8 +105,22 @@ async def _async_register_card(hass: HomeAssistant) -> None:
     )
 
 
+def _to_minor_units(amount: Any, currency_code: str) -> int:
+    """Convert a major-unit amount to minor units, rejecting excess precision."""
+    try:
+        value = Decimal(str(amount))
+    except InvalidOperation as err:
+        raise ValueError("Amount must be a number") from err
+    if not value.is_finite() or value <= 0:
+        raise ValueError("Amount must be greater than zero")
+    minor = value * (Decimal(10) ** get_currency_precision(currency_code))
+    if minor != minor.to_integral_value():
+        raise ValueError(f"Amount has more decimal places than {currency_code} allows")
+    return int(minor)
+
+
 def _async_register_services(hass: HomeAssistant) -> None:
-    """Register documented refresh and schedule-status services once."""
+    """Register the refresh, add-expense, and add-income services once."""
     import voluptuous as vol
 
     if not hass.services.has_service(DOMAIN, SERVICE_REFRESH):
@@ -119,30 +133,37 @@ def _async_register_services(hass: HomeAssistant) -> None:
             DOMAIN, SERVICE_REFRESH, async_refresh,
             schema=vol.Schema({vol.Optional("entry_id"): str}),
         )
-    if not hass.services.has_service(DOMAIN, SERVICE_SET_SCHEDULE_STATUS):
-        async def async_set_schedule_status(call: ServiceCall) -> None:
-            entry_id = call.data.get("entry_id")
-            runtime = hass.data.get(DOMAIN, {}).get(entry_id)
+
+    def make_handler(kind: str):
+        async def async_add_transaction(call: ServiceCall) -> None:
+            runtime = hass.data.get(DOMAIN, {}).get(call.data["entry_id"])
             if runtime is None:
                 raise ValueError("Unknown Fin Assist config entry")
+            coordinator = runtime["coordinator"]
+            amount_minor = _to_minor_units(call.data["amount"], coordinator.data["currencyCode"])
             try:
-                await runtime["api"].async_set_schedule_status(
-                    call.data["book_id"], call.data["schedule_id"], call.data["status"]
+                await runtime["api"].async_create_transaction(
+                    kind,
+                    amount_minor,
+                    call.data.get("date") or date.today(),
+                    call.data.get("description"),
                 )
-                await runtime["coordinator"].async_request_refresh()
             except FinAssistApiError as err:
                 raise ValueError(str(err)) from err
+            await coordinator.async_request_refresh()
 
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_SET_SCHEDULE_STATUS,
-            async_set_schedule_status,
-            schema=vol.Schema(
-                {
-                    vol.Required("entry_id"): str,
-                    vol.Required("book_id"): str,
-                    vol.Required("schedule_id"): str,
-                    vol.Required("status"): vol.In(("active", "paused", "canceled")),
-                }
-            ),
-        )
+        return async_add_transaction
+
+    transaction_schema = vol.Schema(
+        {
+            vol.Required("entry_id"): str,
+            vol.Required("amount"): vol.All(vol.Any(int, float, str), vol.Coerce(str)),
+            vol.Optional("date"): vol.Coerce(date.fromisoformat),
+            vol.Optional("description"): str,
+        }
+    )
+    for service, kind in ((SERVICE_ADD_EXPENSE, "expense"), (SERVICE_ADD_INCOME, "income")):
+        if not hass.services.has_service(DOMAIN, service):
+            hass.services.async_register(
+                DOMAIN, service, make_handler(kind), schema=transaction_schema
+            )

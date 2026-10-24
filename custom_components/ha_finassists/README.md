@@ -1,6 +1,6 @@
 # Fin Assist Home Assistant integration
 
-This custom integration provides account-balance sensors, finite-schedule summary sensors, refresh and schedule-status services, and a bundled Lovelace card. The implementation is provided for Phase 4, but this repository has not been validated against a live Home Assistant/Supervisor installation; treat the topology and lifecycle acceptance checks below as pending.
+This custom integration records expenses and incomes in Fin Assist. It provides two monthly total sensors, `refresh`, `add_expense` and `add_income` services, and a bundled Lovelace card. The implementation is provided for Phase 4, but this repository has not been validated against a live Home Assistant/Supervisor installation; treat the topology and lifecycle acceptance checks below as pending.
 
 ## Installation and setup
 
@@ -14,10 +14,18 @@ At startup, the add-on generates a random, one-use bootstrap capability, stores 
 
 ## Entities and services
 
-- One monetary sensor per open account, with total balance as the value and posted/reconciled values plus account metadata as attributes. Integer minor units are converted using the currency's actual fraction-digit precision.
-- One sensor per book counting active or paused finite schedules ending in the next 30 days. When schedule refresh fails, previously available schedule values are retained and the card warns that they may be out of date; unavailable sensors are omitted from the card.
-- `ha_finassists.refresh` requests a refresh. `ha_finassists.set_schedule_status` supports `active`, `paused`, and `canceled` for a schedule.
-- Polling interval is five minutes. The integration does not create transactions or provide an alternative finance-management UI.
+- **Income this month** and **Expenses this month**: monetary sensors (state class `total`) grouped under one Fin Assist device per config entry. They sum the transactions dated in the current calendar month, read from `GET /api/v1/transactions`. Integer minor units are converted using the currency's actual fraction-digit precision, and the unit is the currency code reported by the API. When the month has no transactions yet, the currency is unknown, so the sensors assume `EUR` until the first transaction arrives. Both sensors expose `kind`, `month` and `integration_entry_id` attributes.
+- `ha_finassists.refresh` requests an immediate refresh (optional `entry_id`).
+- `ha_finassists.add_expense` and `ha_finassists.add_income` record a transaction through `POST /api/v1/transactions` and then refresh the sensors. Fields: `entry_id` (required), `amount` (required, greater than zero, in major units such as `12.50`; more decimal places than the currency allows are rejected), `date` (optional, defaults to today) and `description` (optional).
+- Polling interval is five minutes. The integration does not manage accounts, books, categories, budgets, schedules or imports.
+
+```yaml
+service: ha_finassists.add_expense
+data:
+  entry_id: YOUR_CONFIG_ENTRY_ID
+  amount: 12.50
+  description: Groceries
+```
 
 ## Lovelace card
 
@@ -41,7 +49,7 @@ type: custom:fin-assist-card
 entry_id: YOUR_CONFIG_ENTRY_ID
 ```
 
-The card exposes refresh and schedule status actions through the integration services. It uses Home Assistant theme variables and reports action failures in the card. Without `entry_id`, it can display entities from multiple integration entries, routes schedule actions to the entry that owns each schedule, and refreshes all configured entries.
+The card shows this month's income and expenses and offers a refresh action backed by the `refresh` service. It uses Home Assistant theme variables and reports action failures in the card. Without `entry_id`, it displays the totals of every integration entry and refreshes the entry when only one exists.
 
 ## Validation status
 
