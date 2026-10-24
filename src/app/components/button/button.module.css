@@ -2,74 +2,185 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-control);
+  gap: var(--ha-space-1);
+  border: var(--ha-border-width-sm) solid transparent;
+  border-radius: var(--ha-button-border-radius);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.2;
+  font-family: var(--ha-font-family-body);
+  font-size: var(--ha-font-size-m);
+  font-weight: var(--ha-font-weight-action);
+  line-height: var(--ha-line-height-condensed);
   white-space: nowrap;
-  transition: background-color var(--transition), border-color var(--transition), color var(--transition),
-    transform var(--transition), opacity var(--transition);
+  transition:
+    background-color var(--ha-animation-duration-fast) ease-out,
+    border-color var(--ha-animation-duration-fast) ease-out,
+    color var(--ha-animation-duration-fast) ease-out,
+    opacity var(--ha-animation-duration-fast) ease-out;
 }
 
-.compact {
+/* Sizes: 24 / 32 / 40 / 48px tall. */
+.xs {
+  min-height: 24px;
+  padding: 0 var(--ha-space-2);
+  font-size: var(--ha-font-size-s);
+}
+
+.s {
   min-height: 32px;
-  padding: 0 12px;
-  font-size: 13px;
+  padding: 0 var(--ha-space-3);
 }
 
-.button:active:not(:disabled) {
-  transform: translateY(1px);
+.m {
+  min-height: 40px;
+  padding: 0 var(--ha-space-4);
+}
+
+.l {
+  min-height: 48px;
+  padding: 0 var(--ha-space-4);
+  font-size: var(--ha-font-size-l);
+}
+
+/* Icons sit closer to the edge than the label does. */
+.button:has(> svg:first-child) {
+  padding-inline-start: var(--ha-space-2);
+}
+
+.button:has(> svg:last-child) {
+  padding-inline-end: var(--ha-space-2);
 }
 
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.58;
+  opacity: 0.5;
 }
 
-.primary {
-  background: var(--accent);
-  color: var(--on-accent);
+/* Appearance: how much of the variant color is used. */
+.accent {
+  background: var(--button-fill-loud-resting);
+  color: var(--button-on-loud);
 }
 
-.primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 86%, var(--text));
+.accent:hover:not(:disabled) {
+  background: var(--button-fill-loud-hover);
 }
 
-.secondary {
-  border-color: var(--line);
-  background: var(--surface);
-  color: var(--accent-text);
+.accent:active:not(:disabled) {
+  background: var(--button-fill-loud-active);
 }
 
-.secondary:hover:not(:disabled) {
-  background: var(--surface-secondary);
+.filled {
+  background: var(--button-fill-normal-resting);
+  color: var(--button-on-normal);
 }
 
-.ghost {
+.filled:hover:not(:disabled) {
+  background: var(--button-fill-normal-hover);
+}
+
+.filled:active:not(:disabled) {
+  background: var(--button-fill-normal-active);
+}
+
+.outlined {
+  border-color: var(--button-border-loud);
   background: transparent;
-  color: var(--accent-text);
+  color: var(--button-on-quiet);
 }
 
-.ghost:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+.outlined:hover:not(:disabled) {
+  background: var(--button-fill-quiet-hover);
+}
+
+.outlined:active:not(:disabled) {
+  background: var(--button-fill-quiet-active);
+}
+
+.plain {
+  background: transparent;
+  color: var(--button-on-normal);
+}
+
+.plain:hover:not(:disabled) {
+  background: var(--button-fill-quiet-hover);
+}
+
+.plain:active:not(:disabled) {
+  background: var(--button-fill-quiet-active);
+}
+
+/* Variant: the color family the appearance draws from. */
+.brand {
+  --button-border-loud: var(--ha-color-border-primary-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-primary-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-primary-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-primary-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-primary-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-primary-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-primary-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-primary-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-primary-quiet-active);
+  --button-on-loud: var(--ha-color-on-primary-loud);
+  --button-on-normal: var(--ha-color-on-primary-normal);
+  --button-on-quiet: var(--ha-color-on-primary-quiet);
+}
+
+.neutral {
+  --button-border-loud: var(--ha-color-border-neutral-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-neutral-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-neutral-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-neutral-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-neutral-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-neutral-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-neutral-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-neutral-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-neutral-quiet-active);
+  --button-on-loud: var(--ha-color-on-neutral-loud);
+  --button-on-normal: var(--ha-color-on-neutral-normal);
+  --button-on-quiet: var(--ha-color-on-neutral-quiet);
+}
+
+.success {
+  --button-border-loud: var(--ha-color-border-success-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-success-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-success-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-success-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-success-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-success-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-success-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-success-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-success-quiet-active);
+  --button-on-loud: var(--ha-color-on-success-loud);
+  --button-on-normal: var(--ha-color-on-success-normal);
+  --button-on-quiet: var(--ha-color-on-success-quiet);
+}
+
+.warning {
+  --button-border-loud: var(--ha-color-border-warning-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-warning-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-warning-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-warning-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-warning-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-warning-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-warning-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-warning-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-warning-quiet-active);
+  --button-on-loud: var(--ha-color-on-warning-loud);
+  --button-on-normal: var(--ha-color-on-warning-normal);
+  --button-on-quiet: var(--ha-color-on-warning-quiet);
 }
 
 .danger {
-  background: transparent;
-  color: var(--danger);
-}
-
-.danger:hover:not(:disabled),
-.dangerConfirm {
-  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
-}
-
-.dangerConfirm {
-  border-color: var(--danger);
-  color: var(--danger);
+  --button-border-loud: var(--ha-color-border-danger-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-danger-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-danger-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-danger-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-danger-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-danger-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-danger-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-danger-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-danger-quiet-active);
+  --button-on-loud: var(--ha-color-on-danger-loud);
+  --button-on-normal: var(--ha-color-on-danger-normal);
+  --button-on-quiet: var(--ha-color-on-danger-quiet);
 }

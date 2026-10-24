@@ -1,4 +1,4 @@
-import { Button, BUTTON_VARIANT } from '@app/components/button';
+import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/button';
 import { List, ListItem } from '@app/components/list';
 import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
 import { formatTokenDate } from '@app/features/api-tokens/use-api-tokens.hook';
@@ -62,11 +62,12 @@ function ActiveTokenList({
 							confirmingTokenId === token.id ? (
 								<>
 									<Button
+										appearance={BUTTON_APPEARANCE.FILLED}
 										aria-label={`${copy.confirmRevoke}: ${token.name}`}
 										onClick={() => void revokeToken(token)}
 										ref={confirmationReference}
 										type='button'
-										variant={BUTTON_VARIANT.DANGER_CONFIRM}>
+										variant={BUTTON_VARIANT.DANGER}>
 										{copy.confirmRevoke}
 									</Button>
 									<Button
@@ -77,6 +78,7 @@ function ActiveTokenList({
 								</>
 							) : (
 								<Button
+									appearance={BUTTON_APPEARANCE.PLAIN}
 									data-token-id={token.id}
 									onClick={() => setConfirmingTokenId(token.id)}
 									type='button'

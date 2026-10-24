@@ -1,33 +1,36 @@
 .tabs {
   display: flex;
-  gap: 4px;
+  gap: var(--ha-space-1);
   overflow-x: auto;
-  border-bottom: 1px solid var(--line);
+  border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
   scrollbar-width: thin;
 }
 
 .tab {
   flex: none;
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 var(--ha-space-4);
   border: 0;
-  border-bottom: 2px solid transparent;
+  border-bottom: var(--ha-border-width-md) solid transparent;
   background: transparent;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 500;
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-m);
+  font-weight: var(--ha-font-weight-action);
   cursor: pointer;
-  transition: color var(--transition), border-color var(--transition), background-color var(--transition);
+  transition:
+    color var(--ha-animation-duration-fast) ease-out,
+    border-color var(--ha-animation-duration-fast) ease-out,
+    background-color var(--ha-animation-duration-fast) ease-out;
 }
 
 .tab:hover {
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-  color: var(--text);
+  background: var(--ha-color-fill-primary-quiet-hover);
+  color: var(--ha-color-text-primary);
 }
 
 .tab[aria-current='page'] {
-  border-bottom-color: var(--accent-text);
-  color: var(--accent-text);
+  border-bottom-color: var(--ha-color-border-primary-loud);
+  color: var(--ha-color-on-primary-normal);
 }
 
 .tab:focus-visible {

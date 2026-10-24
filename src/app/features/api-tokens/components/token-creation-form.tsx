@@ -1,4 +1,4 @@
-import { Button, BUTTON_VARIANT } from '@app/components/button';
+import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/button';
 import { Field, fieldDescriptionIds } from '@app/components/field';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { TextInput } from '@app/components/text-input';
@@ -40,10 +40,11 @@ function TokenCreationForm({
 					/>
 				</Field>
 				<Button
+					appearance={BUTTON_APPEARANCE.ACCENT}
 					aria-busy={isCreating}
 					disabled={isCreating}
 					type='submit'
-					variant={BUTTON_VARIANT.PRIMARY}>
+					variant={BUTTON_VARIANT.BRAND}>
 					{isCreating ? copy.creatingToken : copy.createToken}
 				</Button>
 			</form>

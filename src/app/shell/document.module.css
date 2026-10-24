@@ -1,17 +1,17 @@
 .skip-link {
   position: absolute;
   z-index: 1;
-  padding: 10px 14px;
+  padding: var(--ha-space-2) var(--ha-space-3);
   transform: translateY(-150%);
-  border-radius: var(--radius-control);
-  background: var(--surface);
-  color: var(--text);
+  border-radius: var(--ha-border-radius-md);
+  background: var(--ha-color-surface-default);
+  color: var(--ha-color-text-primary);
 }
 
 .skip-link:focus-visible {
   top: 12px;
   left: 12px;
   transform: translateY(0);
-  outline: var(--focus-ring);
+  outline: var(--ha-border-width-md) solid var(--ha-color-focus);
   outline-offset: 2px;
 }

@@ -1,29 +1,36 @@
 .badge {
-  --badge-color: var(--muted);
+  --badge-color: var(--ha-color-text-secondary);
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
-  padding: 0 10px;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--badge-color) 14%, var(--surface));
+  justify-content: center;
+  gap: var(--ha-space-2);
+  box-sizing: border-box;
+  min-width: var(--ha-badge-size);
+  height: var(--ha-badge-size);
+  padding: 0 var(--ha-space-3);
+  border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  border-radius: calc(var(--ha-badge-size) / 2);
+  background: var(--ha-color-surface-default);
   color: var(--badge-color);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--ha-font-size-s);
+  font-weight: var(--ha-font-weight-medium);
+  letter-spacing: 0.1px;
+  line-height: var(--ha-line-height-condensed);
   white-space: nowrap;
 }
 
 .neutral {
-  --badge-color: var(--muted);
+  --badge-color: var(--ha-color-text-secondary);
 }
 
 .success {
-  --badge-color: var(--success);
+  --badge-color: var(--ha-color-on-success-normal);
 }
 
 .warning {
-  --badge-color: var(--warning);
+  --badge-color: var(--ha-color-on-warning-normal);
 }
 
 .danger {
-  --badge-color: var(--danger);
+  --badge-color: var(--ha-color-on-danger-normal);
 }

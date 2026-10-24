@@ -1,32 +1,32 @@
 .select {
   width: 100%;
   min-width: 0;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 14px;
+  min-height: 56px;
+  padding: 0 var(--ha-space-4);
+  border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  border-radius: var(--ha-border-radius-md);
+  background: var(--ha-color-surface-default);
+  color: var(--ha-color-text-primary);
+  font-size: var(--ha-font-size-l);
   cursor: pointer;
-  transition: border-color var(--transition);
+  transition: border-color var(--ha-animation-duration-fast) ease-out;
 }
 
 .select:hover:not(:disabled) {
-  border-color: var(--muted);
+  border-color: var(--ha-color-border-neutral-normal);
 }
 
 .select:focus-visible {
-  border-color: var(--accent-text);
+  border-color: var(--ha-color-border-primary-loud);
   outline-offset: 0;
 }
 
 .select[aria-invalid='true'] {
-  border-color: var(--danger);
+  border-color: var(--ha-color-border-danger-normal);
 }
 
 .select:disabled {
-  background: var(--surface-secondary);
-  color: var(--muted);
+  background: var(--ha-color-form-background-disabled);
+  color: var(--ha-color-text-disabled);
   cursor: not-allowed;
 }

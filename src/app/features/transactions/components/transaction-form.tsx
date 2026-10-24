@@ -1,4 +1,4 @@
-import { Button, BUTTON_VARIANT } from '@app/components/button';
+import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/button';
 import { Card } from '@app/components/card';
 import { Field, fieldDescriptionIds } from '@app/components/field';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
@@ -185,10 +185,11 @@ function TransactionForm({
 				</div>
 				<div className={styles.actions}>
 					<Button
+						appearance={BUTTON_APPEARANCE.ACCENT}
 						aria-busy={isSubmitting}
 						disabled={isSubmitting}
 						type='submit'
-						variant={BUTTON_VARIANT.PRIMARY}>
+						variant={BUTTON_VARIANT.BRAND}>
 						{isSubmitting ? copy.transactionSubmitting : copy.transactionSubmit}
 					</Button>
 					<div

@@ -1,7 +1,7 @@
 .form {
   display: grid;
-  gap: 12px;
-  margin-top: 12px;
+  gap: var(--ha-space-3);
+  margin-top: var(--ha-space-3);
 }
 
 .kind {
@@ -13,18 +13,18 @@
 
 .legend {
   padding: 0;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 500;
+  margin-bottom: var(--ha-space-2);
+  font-size: var(--ha-font-size-m);
+  font-weight: var(--ha-font-weight-medium);
 }
 
 .options {
   display: flex;
   min-height: 40px;
   padding: 2px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface-secondary);
+  border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  border-radius: var(--ha-border-radius-md);
+  background: var(--ha-color-form-background);
 }
 
 .option {
@@ -47,24 +47,24 @@
   justify-content: center;
   width: 100%;
   min-width: 72px;
-  padding: 0 12px;
-  border-radius: calc(var(--radius-control) - 2px);
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 500;
+  padding: 0 var(--ha-space-3);
+  border-radius: calc(var(--ha-border-radius-md) - 2px);
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-m);
+  font-weight: var(--ha-font-weight-medium);
   text-align: center;
   transition:
-    background-color var(--transition),
-    color var(--transition);
+    background-color var(--ha-animation-duration-fast) ease-out,
+    color var(--ha-animation-duration-fast) ease-out;
 }
 
 .radio:checked + .optionLabel {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ha-color-fill-primary-loud-resting);
+  color: var(--ha-color-on-primary-loud);
 }
 
 .radio:focus-visible + .optionLabel {
-  outline: var(--focus-ring);
+  outline: var(--ha-border-width-md) solid var(--ha-color-focus);
   outline-offset: 2px;
 }
 
@@ -72,7 +72,7 @@
   display: grid;
   grid-template-columns: auto repeat(2, minmax(0, 1fr));
   align-items: start;
-  gap: 12px;
+  gap: var(--ha-space-3);
 }
 
 .description {
@@ -83,7 +83,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: var(--ha-space-3);
 }
 
 .feedback:empty {

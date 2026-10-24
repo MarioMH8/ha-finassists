@@ -1,9 +1,9 @@
 .token-section {
   display: grid;
-  gap: 20px;
+  gap: var(--ha-space-5);
 }
 
 .footer {
-  color: var(--muted);
-  font-size: 12px;
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
 }

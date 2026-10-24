@@ -1,5 +1,5 @@
 import { Badge, BADGE_TONE } from '@app/components/badge';
-import { Button, BUTTON_SIZE, BUTTON_VARIANT } from '@app/components/button';
+import { Button, BUTTON_APPEARANCE, BUTTON_SIZE, BUTTON_VARIANT } from '@app/components/button';
 import { Card } from '@app/components/card';
 import { classNames } from '@app/components/class-names';
 import { DataCell, DataRowActions, DataTable } from '@app/components/data-table';
@@ -129,29 +129,31 @@ function TransactionList({
 													{confirmingTransactionId === transaction.id ? (
 														<>
 															<Button
+																appearance={BUTTON_APPEARANCE.FILLED}
 																aria-label={`${copy.transactionConfirmDelete}: ${transaction.description || copy.transactionNoDescription}`}
 																disabled={deletingTransactionId === transaction.id}
 																onClick={() => void deleteTransaction(transaction)}
 																ref={confirmationReference}
-																size={BUTTON_SIZE.COMPACT}
+																size={BUTTON_SIZE.SMALL}
 																type='button'
-																variant={BUTTON_VARIANT.DANGER_CONFIRM}>
+																variant={BUTTON_VARIANT.DANGER}>
 																{copy.transactionConfirmDelete}
 															</Button>
 															<Button
 																onClick={() => cancelDelete(transaction.id)}
-																size={BUTTON_SIZE.COMPACT}
+																size={BUTTON_SIZE.SMALL}
 																type='button'>
 																{copy.cancel}
 															</Button>
 														</>
 													) : (
 														<Button
+															appearance={BUTTON_APPEARANCE.PLAIN}
 															aria-label={`${copy.transactionDelete}: ${transaction.description || copy.transactionNoDescription}`}
 															data-transaction-id={transaction.id}
 															disabled={deletingTransactionId === transaction.id}
 															onClick={() => setConfirmingTransactionId(transaction.id)}
-															size={BUTTON_SIZE.COMPACT}
+															size={BUTTON_SIZE.SMALL}
 															type='button'
 															variant={BUTTON_VARIANT.DANGER}>
 															{copy.transactionDelete}

@@ -1,6 +1,6 @@
 .panel {
   display: grid;
-  gap: 8px;
+  gap: var(--ha-space-2);
 }
 
 .panel[hidden] {
@@ -13,23 +13,23 @@
 
 .warning {
   margin: 0;
-  color: var(--muted);
+  color: var(--ha-color-text-secondary);
 }
 
 .secret {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-top: 4px;
+  gap: var(--ha-space-4);
+  margin-top: var(--ha-space-1);
 }
 
 .secret code {
   min-width: 0;
   overflow-wrap: anywhere;
-  color: var(--text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px;
+  color: var(--ha-color-text-primary);
+  font-family: var(--ha-font-family-code);
+  font-size: var(--ha-font-size-s);
 }
 
 @media (max-width: 600px) {

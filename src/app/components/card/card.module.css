@@ -1,14 +1,14 @@
 .card {
   min-width: 0;
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  padding: var(--ha-space-5);
+  border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  border-radius: var(--ha-border-radius-lg);
+  background: var(--ha-color-surface-default);
+  box-shadow: var(--ha-box-shadow-s);
 }
 
 .subtle {
-  background: var(--surface-secondary);
+  background: var(--ha-color-surface-lower);
   box-shadow: none;
 }
 
@@ -19,6 +19,6 @@
 
 @media (max-width: 600px) {
   .card:not(.bleed) {
-    padding: 16px;
+    padding: var(--ha-space-4);
   }
 }

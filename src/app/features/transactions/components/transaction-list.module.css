@@ -1,7 +1,7 @@
 .content {
   display: grid;
-  gap: 16px;
-  margin-top: 16px;
+  gap: var(--ha-space-4);
+  margin-top: var(--ha-space-4);
 }
 
 .date {
@@ -9,7 +9,7 @@
 }
 
 .muted {
-  color: var(--muted);
+  color: var(--ha-color-text-secondary);
 }
 
 .amountHeading {
@@ -26,13 +26,13 @@
 }
 
 .income {
-  color: var(--success);
-  font-weight: 600;
+  color: var(--ha-color-on-success-normal);
+  font-weight: var(--ha-font-weight-medium);
 }
 
 .expense {
-  color: var(--danger);
-  font-weight: 600;
+  color: var(--ha-color-on-danger-normal);
+  font-weight: var(--ha-font-weight-medium);
 }
 
 .footer {
@@ -40,11 +40,11 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--ha-space-3);
 }
 
 .count {
   margin: 0;
-  color: var(--muted);
-  font-size: 13px;
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
 }

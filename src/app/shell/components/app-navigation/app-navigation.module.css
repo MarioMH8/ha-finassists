@@ -1,6 +1,6 @@
 .band {
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  background: var(--ha-color-surface-default);
 }
 
 .band > nav {

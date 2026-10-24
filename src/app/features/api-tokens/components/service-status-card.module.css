@@ -1,28 +1,28 @@
 .card {
   display: grid;
-  gap: 12px;
-  padding: 24px 28px;
+  gap: var(--ha-space-3);
+  padding: var(--ha-space-6) var(--ha-space-7);
 }
 
 .card h2 {
   max-width: 540px;
   margin: 0;
-  font-size: 24px;
-  line-height: 1.25;
+  font-size: var(--ha-font-size-2xl);
+  line-height: var(--ha-line-height-condensed);
 }
 
 .description {
   max-width: 60ch;
   margin: 0;
-  color: var(--muted);
+  color: var(--ha-color-text-secondary);
 }
 
 @media (max-width: 600px) {
   .card {
-    padding: 20px 16px;
+    padding: var(--ha-space-5) var(--ha-space-4);
   }
 
   .card h2 {
-    font-size: 20px;
+    font-size: var(--ha-font-size-xl);
   }
 }

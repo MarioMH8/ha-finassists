@@ -306,7 +306,7 @@ describe('createServer', () => {
 		expect(scriptResponse.headers.get('content-type')).toContain('text/javascript');
 		expect(stylesheetResponse.status).toBe(200);
 		expect(stylesheetResponse.headers.get('content-type')).toContain('text/css');
-		expect(stylesheet).toContain('--page');
+		expect(stylesheet).toContain('--ha-color-surface-low');
 		if (moduleClass === undefined) {
 			throw new Error('Expected a CSS Module class in the server-rendered page');
 		}
