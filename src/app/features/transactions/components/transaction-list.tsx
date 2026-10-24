@@ -4,6 +4,7 @@ import { Card } from '@app/components/card';
 import { classNames } from '@app/components/class-names';
 import { DataCell, DataRowActions, DataTable } from '@app/components/data-table';
 import { EmptyState } from '@app/components/empty-state';
+import { Icon, ICON_NAME } from '@app/components/icon';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
 import { interpolate } from '@app/i18n';
@@ -135,15 +136,18 @@ function TransactionList({
 																onClick={() => void deleteTransaction(transaction)}
 																ref={confirmationReference}
 																size={BUTTON_SIZE.SMALL}
+																title={copy.transactionConfirmDelete}
 																type='button'
 																variant={BUTTON_VARIANT.DANGER}>
-																{copy.transactionConfirmDelete}
+																<Icon name={ICON_NAME.CHECK} />
 															</Button>
 															<Button
+																aria-label={copy.cancel}
 																onClick={() => cancelDelete(transaction.id)}
 																size={BUTTON_SIZE.SMALL}
+																title={copy.cancel}
 																type='button'>
-																{copy.cancel}
+																<Icon name={ICON_NAME.CLOSE} />
 															</Button>
 														</>
 													) : (

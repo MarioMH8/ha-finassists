@@ -1,0 +1,6 @@
+.icon {
+  display: block;
+  flex: none;
+  width: var(--ha-icon-size);
+  height: var(--ha-icon-size);
+}

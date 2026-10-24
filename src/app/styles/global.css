@@ -284,6 +284,11 @@
 
   /* --- Component defaults ------------------------------------------- */
   --ha-button-border-radius: var(--ha-border-radius-pill);
+  --ha-button-size-xs: 24px;
+  --ha-button-size-s: 32px;
+  --ha-button-size-m: 40px;
+  --ha-button-size-l: 48px;
+  --ha-icon-size: 24px;
   --ha-badge-size: 36px;
   --ha-badge-icon-size: 18px;
   --ha-alert-padding: var(--ha-space-2);

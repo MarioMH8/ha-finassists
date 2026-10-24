@@ -1,4 +1,5 @@
 import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/button';
+import { Icon, ICON_NAME } from '@app/components/icon';
 import { List, ListItem } from '@app/components/list';
 import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
 import { formatTokenDate } from '@app/features/api-tokens/use-api-tokens.hook';
@@ -66,14 +67,17 @@ function ActiveTokenList({
 										aria-label={`${copy.confirmRevoke}: ${token.name}`}
 										onClick={() => void revokeToken(token)}
 										ref={confirmationReference}
+										title={copy.confirmRevoke}
 										type='button'
 										variant={BUTTON_VARIANT.DANGER}>
-										{copy.confirmRevoke}
+										<Icon name={ICON_NAME.CHECK} />
 									</Button>
 									<Button
+										aria-label={copy.cancel}
 										onClick={() => cancelRevoke(token.id)}
+										title={copy.cancel}
 										type='button'>
-										{copy.cancel}
+										<Icon name={ICON_NAME.CLOSE} />
 									</Button>
 								</>
 							) : (

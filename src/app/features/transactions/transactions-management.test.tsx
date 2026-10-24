@@ -157,9 +157,11 @@ describe('TransactionList', () => {
 			/>
 		);
 
-		expect(markup).toContain('Confirmar eliminación');
-		expect(markup).toContain('Cancelar');
+		expect(markup).toContain('aria-label="Confirmar eliminación: Lunch"');
+		expect(markup).toContain('aria-label="Cancelar"');
 		expect(markup).not.toContain('>Eliminar<');
+		expect(markup).not.toContain('>Confirmar eliminación<');
+		expect(markup).not.toContain('>Cancelar<');
 	});
 
 	test('hides load more when every transaction is shown', () => {
