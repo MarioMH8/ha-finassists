@@ -22,6 +22,13 @@ interface TransactionRow {
 
 const DEFAULT_LIMIT = 100;
 
+function escapeLike(value: string): string {
+	return value
+		.replaceAll('\\', '\\\\')
+		.replaceAll('%', String.raw`\%`)
+		.replaceAll('_', String.raw`\_`);
+}
+
 function where(criteria: TransactionCriteria): { parameters: SQLQueryBindings[]; sql: string } {
 	const clauses: string[] = [];
 	const parameters: SQLQueryBindings[] = [];
@@ -37,6 +44,11 @@ function where(criteria: TransactionCriteria): { parameters: SQLQueryBindings[];
 	if (criteria.toDate !== undefined) {
 		clauses.push('transaction_date <= ?');
 		parameters.push(criteria.toDate);
+	}
+	const search = criteria.search?.trim();
+	if (search !== undefined && search !== '') {
+		clauses.push(String.raw`description COLLATE NOCASE LIKE ? ESCAPE '\'`);
+		parameters.push(`%${escapeLike(search)}%`);
 	}
 
 	return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
@@ -63,6 +75,18 @@ export class SqliteLedgerRepository implements TransactionRepository {
 		await Promise.resolve();
 
 		return result.changes > 0;
+	}
+
+	async findById(id: string): Promise<Transaction | undefined> {
+		const row = this.database
+			.query<TransactionRow, [string]>(
+				`SELECT id, kind, amount_minor, currency_code, description, transaction_date, actor_id, created_at
+				 FROM transactions WHERE id = ?`
+			)
+			.get(id);
+		await Promise.resolve();
+
+		return row === null ? undefined : toTransaction(row);
 	}
 
 	async save(transaction: Transaction): Promise<void> {
@@ -101,5 +125,27 @@ export class SqliteLedgerRepository implements TransactionRepository {
 		await Promise.resolve();
 
 		return { items: rows.map(row => toTransaction(row)), total };
+	}
+
+	async update(transaction: Transaction): Promise<boolean> {
+		const result = this.database
+			.query(
+				`UPDATE transactions
+				 SET kind = ?, amount_minor = ?, currency_code = ?, description = ?, transaction_date = ?, actor_id = ?, created_at = ?
+				 WHERE id = ?`
+			)
+			.run(
+				transaction.kind,
+				transaction.amountMinor,
+				transaction.currencyCode,
+				transaction.description,
+				transaction.transactionDate,
+				transaction.actorId,
+				transaction.createdAt,
+				transaction.id
+			);
+		await Promise.resolve();
+
+		return result.changes > 0;
 	}
 }

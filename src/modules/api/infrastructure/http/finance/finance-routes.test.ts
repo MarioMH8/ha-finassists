@@ -1,4 +1,4 @@
-import { CreateTransaction, DeleteTransaction, ListTransactions } from '@modules/ledger/application';
+import { CreateTransaction, DeleteTransaction, ListTransactions, UpdateTransaction } from '@modules/ledger/application';
 import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
@@ -56,6 +56,7 @@ function setup(): { useCases: FinanceUseCases } {
 				create: new CreateTransaction(repository, 'EUR'),
 				delete: new DeleteTransaction(repository),
 				list: new ListTransactions(repository),
+				update: new UpdateTransaction(repository),
 			},
 		},
 	};
@@ -165,6 +166,34 @@ describe('transactions REST routes', () => {
 		expect(page.items.map(item => item.transactionDate)).toEqual(['2026-05-01']);
 	});
 
+	it('searches transaction descriptions', async () => {
+		const { useCases } = setup();
+		await send(useCases, '/api/v1/transactions', 'POST', {
+			amountMinor: 100,
+			description: 'Supermercado Mercadona',
+			kind: 'expense',
+			transactionDate: '2026-05-10',
+		});
+		await send(useCases, '/api/v1/transactions', 'POST', {
+			amountMinor: 200,
+			description: 'Café con amigos',
+			kind: 'expense',
+			transactionDate: '2026-05-11',
+		});
+
+		const matching = await sendJson<PaginatedJson<TransactionJson>>(
+			useCases,
+			'/api/v1/transactions?search=mercadona'
+		);
+		const missing = await sendJson<PaginatedJson<TransactionJson>>(
+			useCases,
+			'/api/v1/transactions?search=gimnasio'
+		);
+
+		expect(matching.items.map(item => item.description)).toEqual(['Supermercado Mercadona']);
+		expect(missing.total).toBe(0);
+	});
+
 	it('rejects invalid input without leaking internals', async () => {
 		const { useCases } = setup();
 		const valid = { amountMinor: 100, kind: 'expense', transactionDate: '2026-05-10' };
@@ -204,8 +233,39 @@ describe('transactions REST routes', () => {
 		expect(deleted.status).toBe(405);
 		expect(deleted.headers.get('allow')).toBe('GET, POST');
 		const patched = await send(useCases, '/api/v1/transactions/transaction-1', 'PATCH');
-		expect(patched.status).toBe(405);
-		expect(patched.headers.get('allow')).toBe('DELETE');
+		expect(patched.status).toBe(400);
+		const put = await send(useCases, '/api/v1/transactions/transaction-1', 'PUT');
+		expect(put.status).toBe(405);
+		expect(put.headers.get('allow')).toBe('DELETE, PATCH');
+	});
+
+	it('updates a transaction and reports a missing one', async () => {
+		const { useCases } = setup();
+		const created = await sendJson<TransactionJson>(useCases, '/api/v1/transactions', 'POST', {
+			amountMinor: 1250,
+			description: 'Lunch',
+			kind: 'expense',
+			transactionDate: '2026-05-10',
+		});
+
+		const response = await send(useCases, `/api/v1/transactions/${created.id}`, 'PATCH', {
+			amountMinor: 2500,
+			description: 'Dinner',
+			kind: 'income',
+			transactionDate: '2026-05-11',
+		});
+		const updated = await readJson<TransactionJson>(response);
+		const missing = await send(useCases, '/api/v1/transactions/missing', 'PATCH', { amountMinor: 100 });
+
+		expect(response.status).toBe(200);
+		expect(updated).toMatchObject({
+			amountMinor: 2500,
+			description: 'Dinner',
+			id: created.id,
+			kind: 'income',
+			transactionDate: '2026-05-11',
+		});
+		expect(missing.status).toBe(404);
 	});
 
 	it('deletes a transaction and reports a missing one', async () => {

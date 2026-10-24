@@ -53,6 +53,18 @@ describe('SqliteLedgerRepository', () => {
 		expect(expenses.total).toBe(3);
 	});
 
+	it('searches descriptions case-insensitively without treating wildcards as patterns', async () => {
+		await repository.save(TransactionMother.create({ description: 'Supermercado Mercadona', id: 'a' }));
+		await repository.save(TransactionMother.create({ description: 'Café con amigos', id: 'b' }));
+		await repository.save(TransactionMother.create({ description: '100% pan', id: 'c' }));
+
+		const groceries = await repository.search({ search: 'MERCADONA' });
+		const wildcard = await repository.search({ search: '%' });
+
+		expect(groceries.items.map(item => item.id)).toEqual(['a']);
+		expect(wildcard.items.map(item => item.id)).toEqual(['c']);
+	});
+
 	it('paginates while reporting the total', async () => {
 		await Promise.all(
 			['01', '02', '03'].map(async day =>
@@ -76,6 +88,28 @@ describe('SqliteLedgerRepository', () => {
 		expect(isFirstDeletion).toBe(true);
 		expect(isSecondDeletion).toBe(false);
 		expect(page.total).toBe(0);
+	});
+
+	it('finds and updates an existing transaction', async () => {
+		const transaction = TransactionMother.create({ id: 'a' });
+		await repository.save(transaction);
+
+		const found = await repository.findById('a');
+		const updated = TransactionMother.create({
+			amountMinor: 999,
+			description: 'Dinner',
+			id: 'a',
+			kind: 'income',
+			transactionDate: '2026-05-20',
+		});
+		const isUpdated = await repository.update(updated);
+		const afterUpdate = await repository.findById('a');
+		const isMissing = await repository.update(TransactionMother.create({ id: 'missing' }));
+
+		expect(found).toEqual(transaction);
+		expect(isUpdated).toBe(true);
+		expect(afterUpdate).toEqual(updated);
+		expect(isMissing).toBe(false);
 	});
 
 	it('rejects a non-positive amount at the database level', () => {

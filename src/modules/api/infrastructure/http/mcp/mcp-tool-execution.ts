@@ -1,7 +1,7 @@
 import type { FinanceUseCases } from '../finance/finance-routes';
 import { handleFinanceRequest } from '../finance/finance-routes';
 
-const LIST_FILTERS = ['fromDate', 'kind', 'limit', 'offset', 'toDate'] as const;
+const LIST_FILTERS = ['fromDate', 'kind', 'limit', 'offset', 'search', 'toDate'] as const;
 
 function textResult(value: unknown): { content: { text: string; type: 'text' }[]; structuredContent: unknown } {
 	return { content: [{ text: JSON.stringify(value), type: 'text' }], structuredContent: value };

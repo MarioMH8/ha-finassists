@@ -44,6 +44,7 @@ const TOOLS: McpTool[] = [
 			kind: stringProperty('Optional filter by kind', { enum: KIND_VALUES }),
 			limit: integerProperty('Page size from 1 to 100', { maximum: 100, minimum: 1 }),
 			offset: integerProperty('Number of movements to skip', { minimum: 0 }),
+			search: stringProperty('Optional text to match in the description'),
 			toDate: stringProperty('Optional inclusive end date as YYYY-MM-DD'),
 		}),
 		name: 'list_transactions',

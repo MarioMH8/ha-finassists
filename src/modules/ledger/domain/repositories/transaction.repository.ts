@@ -5,6 +5,7 @@ interface TransactionCriteria {
 	kind?: TransactionKind;
 	limit?: number;
 	offset?: number;
+	search?: string;
 	toDate?: string;
 }
 
@@ -19,8 +20,10 @@ interface TransactionPage {
 
 interface TransactionRepository {
 	delete(criteria: TransactionDeleteCriteria): Promise<boolean>;
+	findById(id: string): Promise<Transaction | undefined>;
 	save(transaction: Transaction): Promise<void>;
 	search(criteria?: TransactionCriteria): Promise<TransactionPage>;
+	update(transaction: Transaction): Promise<boolean>;
 }
 
 export type { TransactionCriteria, TransactionDeleteCriteria, TransactionPage, TransactionRepository };
