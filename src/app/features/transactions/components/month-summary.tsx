@@ -5,8 +5,8 @@ import { SectionHeading } from '@app/components/section-heading';
 import type { ReactElement } from 'react';
 
 import { formatMinorUnits } from '../transaction-amount';
+import { LOAD_STATE } from '../transactions-constants';
 import type { TransactionsState } from '../use-transactions.hook';
-import { LOAD_STATE } from '../use-transactions.hook';
 import styles from './month-summary.module.css';
 
 type MonthSummaryProps = Pick<TransactionsState, 'copy' | 'currencyCode' | 'language' | 'summaryState' | 'totals'>;

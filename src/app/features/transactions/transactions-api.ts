@@ -28,6 +28,7 @@ interface TransactionQuery {
 	kind?: TransactionKind;
 	limit?: number;
 	offset?: number;
+	search?: string;
 	toDate?: string;
 }
 
@@ -153,6 +154,23 @@ async function deleteTransaction(id: string): Promise<void> {
 	}
 }
 
+async function updateTransaction(id: string, input: Partial<NewTransaction>): Promise<Transaction> {
+	const response = await fetch(`${TRANSACTIONS_URL}/${encodeURIComponent(id)}`, {
+		body: JSON.stringify(input),
+		headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+		method: 'PATCH',
+	});
+	if (!response.ok) {
+		throw new Error(`Transaction update failed with HTTP ${String(response.status)}`);
+	}
+	const transaction: unknown = await response.json();
+	if (!isTransaction(transaction)) {
+		throw new TypeError('Transaction response was invalid');
+	}
+
+	return transaction;
+}
+
 interface TransactionTotals {
 	expenseMinor: number;
 	incomeMinor: number;
@@ -191,4 +209,5 @@ export {
 	type TransactionPage,
 	type TransactionQuery,
 	type TransactionTotals,
+	updateTransaction,
 };

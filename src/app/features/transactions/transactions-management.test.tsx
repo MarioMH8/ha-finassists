@@ -8,8 +8,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { MonthSummary, TransactionForm, TransactionList } from './components';
 import type { Transaction } from './transactions-api';
+import { LOAD_STATE } from './transactions-constants';
 import type { TransactionsState } from './use-transactions.hook';
-import { LOAD_STATE } from './use-transactions.hook';
 
 const noop = (): void => undefined;
 const asyncNoop = (): Promise<void> => Promise.resolve();
@@ -32,8 +32,12 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 	return {
 		amount: '',
 		amountReference: createRef<HTMLInputElement>(),
+		applyFilters: noop,
 		cancelDelete: noop,
-		confirmationReference: createRef<HTMLButtonElement>(),
+		canGoNext: false,
+		canGoPrevious: false,
+		clearFilters: noop,
+		closeEditor: noop,
 		confirmingTransactionId: undefined,
 		copy: getCopy(language),
 		currencyCode: 'EUR',
@@ -41,21 +45,30 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 		deleteTransaction: asyncNoop,
 		deletingTransactionId: undefined,
 		description: '',
+		editingTransactionId: undefined,
 		errors: {},
 		feedback: undefined,
-		hasMore: false,
-		isLoadingMore: false,
+		filters: { fromDate: '', kind: 'all', search: '', toDate: '' },
+		goToNextPage: noop,
+		goToPreviousPage: noop,
+		hasFilters: false,
+		isEditorOpen: false,
 		isSubmitting: false,
 		kind: 'expense',
 		language,
 		listReference: createRef<HTMLTableSectionElement>(),
 		listState: LOAD_STATE.READY,
-		loadMore: asyncNoop,
+		openCreate: noop,
+		openEdit: noop,
+		pageCount: 1,
+		pageIndex: 0,
+		pageSize: 20,
 		setAmount: noop,
 		setConfirmingTransactionId: noop,
 		setDate: noop,
 		setDescription: noop,
 		setKind: noop,
+		setPageSize: noop,
 		submit: asyncNoop,
 		summaryState: LOAD_STATE.READY,
 		total: 0,
@@ -116,13 +129,17 @@ describe('TransactionList', () => {
 		);
 	});
 
-	test('renders signed amounts, kind labels and pagination', () => {
+	test('renders signed amounts, descriptions and pagination without a kind column', () => {
 		const markup = render(
 			'en',
 			<TransactionList
 				{...state('en', {
-					hasMore: true,
-					total: 3,
+					canGoNext: true,
+					filters: { fromDate: '2024-03-01', kind: 'all', search: '', toDate: '2024-03-31' },
+					hasFilters: true,
+					pageCount: 3,
+					pageSize: 10,
+					total: 25,
 					transactions: [
 						expense(),
 						expense({ amountMinor: 200_000, description: '', id: 'transaction-2', kind: 'income' }),
@@ -135,20 +152,25 @@ describe('TransactionList', () => {
 		expect(markup).toContain('+€2,000.00');
 		expect(markup).toContain('Lunch');
 		expect(markup).toContain('No description');
-		expect(markup).toContain('Showing 2 of 3');
-		expect(markup).toContain('Load more');
+		expect(markup).toContain('Showing 1–10 of 25');
+		expect(markup).toContain('Page 1 of 3');
+		expect(markup).toContain('Rows per page');
+		expect(markup).toContain('Filters');
+		expect(markup).toContain('Search description');
+		expect(markup).toContain('Apply filters');
+		expect(markup).toContain('Clear filters');
+		expect(markup).not.toContain('>Type</th>');
 	});
 
-	test('offers a delete action per row that asks for confirmation', () => {
+	test('offers a row options menu with edit and delete actions', () => {
 		const markup = render('en', <TransactionList {...state('en', { total: 1, transactions: [expense()] })} />);
 
-		expect(markup).toContain('Actions');
-		expect(markup).toContain('Delete');
-		expect(markup).toContain('aria-label="Delete: Lunch"');
-		expect(markup).not.toContain('Confirm delete');
+		expect(markup).toContain('aria-label="Options: Lunch"');
+		expect(markup).toContain('aria-haspopup="menu"');
+		expect(markup).toContain('New transaction');
 	});
 
-	test('replaces the delete action with an inline confirmation', () => {
+	test('asks for confirmation in a dialog before deleting', () => {
 		const markup = render(
 			'es',
 			<TransactionList
@@ -156,17 +178,26 @@ describe('TransactionList', () => {
 			/>
 		);
 
-		expect(markup).toContain('aria-label="Confirmar eliminación: Lunch"');
-		expect(markup).toContain('aria-label="Cancelar"');
-		expect(markup).not.toContain('>Eliminar<');
-		expect(markup).not.toContain('>Confirmar eliminación<');
-		expect(markup).not.toContain('>Cancelar<');
+		expect(markup).toContain('¿Eliminar transacción?');
+		expect(markup).toContain('Esto elimina permanentemente');
+		expect(markup).toContain('Lunch');
+		expect(markup).toContain('>Cancelar<');
+		expect(markup).toContain('>Eliminar<');
 	});
 
-	test('hides load more when every transaction is shown', () => {
-		const markup = render('en', <TransactionList {...state('en', { total: 1, transactions: [expense()] })} />);
+	test('shows a filtered empty state when no transaction matches', () => {
+		const markup = render(
+			'en',
+			<TransactionList
+				{...state('en', {
+					filters: { fromDate: '2024-03-01', kind: 'income', search: '', toDate: '' },
+					hasFilters: true,
+				})}
+			/>
+		);
 
-		expect(markup).not.toContain('Load more');
+		expect(markup).toContain('No matching transactions');
+		expect(markup).toContain('Clear filters');
 	});
 });
 

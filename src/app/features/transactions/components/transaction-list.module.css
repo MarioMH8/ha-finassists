@@ -1,7 +1,11 @@
+.section {
+  display: grid;
+  gap: var(--ha-space-4);
+}
+
 .content {
   display: grid;
   gap: var(--ha-space-4);
-  margin-top: var(--ha-space-4);
 }
 
 .date {
@@ -10,14 +14,6 @@
 
 .muted {
   color: var(--ha-color-text-secondary);
-}
-
-.amountHeading {
-  text-align: right;
-}
-
-.actionsHeading {
-  text-align: right;
 }
 
 .actions {
@@ -35,7 +31,7 @@
   font-weight: var(--ha-font-weight-medium);
 }
 
-.footer {
+.toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -43,8 +39,81 @@
   gap: var(--ha-space-3);
 }
 
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
+.filterDialog {
+  display: grid;
+  gap: var(--ha-space-4);
+}
+
+.clearDraftFilters {
+  justify-self: start;
+}
+
+.pageSize {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+  white-space: nowrap;
+}
+
+.pageSizeSelect {
+  width: auto;
+  min-width: 76px;
+}
+
+.footer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+
 .count {
+  position: absolute;
+  left: 0;
   margin: 0;
   color: var(--ha-color-text-secondary);
   font-size: var(--ha-font-size-s);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
+.pageIndicator {
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--ha-space-3);
+  }
+
+  .count {
+    position: static;
+  }
+
+  .pager {
+    align-self: center;
+  }
 }

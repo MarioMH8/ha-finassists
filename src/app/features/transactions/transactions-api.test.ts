@@ -7,6 +7,7 @@ import {
 	fetchAllTransactions,
 	fetchTransactionPage,
 	summarizeTransactions,
+	updateTransaction,
 } from './transactions-api';
 
 interface FetchCall {
@@ -71,10 +72,10 @@ describe('transactions api', () => {
 	test('lists a page using Ingress-relative URLs and query parameters', async () => {
 		mockFetch(() => jsonResponse({ items: [transaction()], limit: 20, offset: 40, total: 41 }));
 
-		const page = await fetchTransactionPage({ kind: 'income', limit: 20, offset: 40 });
+		const page = await fetchTransactionPage({ kind: 'income', limit: 20, offset: 40, search: 'café' });
 
 		expect(page.total).toBe(41);
-		expect(calls[0]?.url).toBe('./api/v1/transactions?kind=income&limit=20&offset=40');
+		expect(calls[0]?.url).toBe('./api/v1/transactions?kind=income&limit=20&offset=40&search=caf%C3%A9');
 	});
 
 	test('rejects failed and malformed list responses', async () => {
@@ -126,6 +127,23 @@ describe('transactions api', () => {
 		);
 
 		expect(result).toBe('rejected');
+	});
+
+	test('updates a transaction with a partial JSON body', async () => {
+		mockFetch(() => jsonResponse(transaction({ amountMinor: 2000, description: 'Dinner' })));
+
+		const updated = await updateTransaction('transaction/1', { amountMinor: 2000, description: 'Dinner' });
+
+		expect(updated.amountMinor).toBe(2000);
+		expect(calls[0]?.url).toBe('./api/v1/transactions/transaction%2F1');
+		expect(calls[0]?.method).toBe('PATCH');
+		expect(JSON.parse(calls[0]?.body ?? '{}')).toEqual({ amountMinor: 2000, description: 'Dinner' });
+	});
+
+	test('rejects when the update fails', async () => {
+		mockFetch(() => jsonResponse({ error: 'not found' }, 404));
+
+		expect(await outcome(updateTransaction('missing', { amountMinor: 100 }))).toBe('rejected');
 	});
 
 	test('deletes a transaction by its encoded identifier', async () => {

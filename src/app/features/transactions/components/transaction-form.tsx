@@ -1,8 +1,7 @@
 import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/button';
-import { Card } from '@app/components/card';
+import { Dialog, DIALOG_TYPE } from '@app/components/dialog';
 import { Field, fieldDescriptionIds } from '@app/components/field';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
-import { SectionHeading } from '@app/components/section-heading';
 import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
 import type { Copy } from '@app/i18n';
 import { interpolate } from '@app/i18n';
@@ -19,12 +18,15 @@ type TransactionFormProps = Pick<
 	TransactionsState,
 	| 'amount'
 	| 'amountReference'
+	| 'closeEditor'
 	| 'copy'
 	| 'currencyCode'
 	| 'date'
 	| 'description'
+	| 'editingTransactionId'
 	| 'errors'
 	| 'feedback'
+	| 'isEditorOpen'
 	| 'isSubmitting'
 	| 'kind'
 	| 'setAmount'
@@ -41,6 +43,8 @@ const KIND_OPTIONS: readonly {
 	{ label: 'transactionKindExpense', value: TRANSACTION_KIND.EXPENSE },
 	{ label: 'transactionKindIncome', value: TRANSACTION_KIND.INCOME },
 ];
+
+const FORM_ID = 'transaction-form';
 
 function amountErrorMessage(
 	copy: Copy,
@@ -72,12 +76,15 @@ function amountErrorMessage(
 function TransactionForm({
 	amount,
 	amountReference,
+	closeEditor,
 	copy,
 	currencyCode,
 	date,
 	description,
+	editingTransactionId,
 	errors,
 	feedback,
+	isEditorOpen,
 	isSubmitting,
 	kind,
 	setAmount,
@@ -86,6 +93,7 @@ function TransactionForm({
 	setKind,
 	submit,
 }: TransactionFormProps): ReactElement {
+	const isEditing = editingTransactionId !== undefined;
 	const amountHint = interpolate(copy.transactionAmountHint, {
 		currency: currencyCode,
 		digits: currencyFractionDigits(currencyCode),
@@ -93,16 +101,43 @@ function TransactionForm({
 	const amountError = errors.amount ? amountErrorMessage(copy, errors.amount, currencyCode) : undefined;
 	const dateError = errors.date ? copy.transactionDateRequired : undefined;
 	const descriptionError = errors.description ? copy.transactionDescriptionTooLong : undefined;
+	const submitLabel = isSubmitting
+		? copy.transactionSubmitting
+		: isEditing
+			? copy.transactionSave
+			: copy.transactionSubmit;
+	const dialogFooter = (
+		<>
+			<Button
+				onClick={closeEditor}
+				type='button'>
+				{copy.cancel}
+			</Button>
+			<Button
+				appearance={BUTTON_APPEARANCE.ACCENT}
+				aria-busy={isSubmitting}
+				disabled={isSubmitting}
+				form={FORM_ID}
+				type='submit'
+				variant={BUTTON_VARIANT.BRAND}>
+				{submitLabel}
+			</Button>
+		</>
+	);
 
 	return (
-		<Card aria-labelledby='transaction-form-title'>
-			<SectionHeading
-				description={copy.transactionFormDescription}
-				title={copy.transactionFormTitle}
-				titleId='transaction-form-title'
-			/>
+		<Dialog
+			closeLabel={copy.close}
+			description={isEditing ? copy.transactionEditDescription : copy.transactionFormDescription}
+			footer={dialogFooter}
+			id='transaction-form-dialog'
+			onClose={closeEditor}
+			open={isEditorOpen}
+			title={isEditing ? copy.transactionEditTitle : copy.transactionFormTitle}
+			type={DIALOG_TYPE.STANDARD}>
 			<form
 				className={styles.form}
+				id={FORM_ID}
 				noValidate
 				onSubmit={event => void submit(event)}>
 				<div className={styles.grid}>
@@ -139,6 +174,7 @@ function TransactionForm({
 								hint: amountHint,
 							})}
 							autoComplete='off'
+							data-autofocus
 							id='transaction-amount'
 							inputMode='decimal'
 							invalid={Boolean(amountError)}
@@ -186,28 +222,18 @@ function TransactionForm({
 						/>
 					</Field>
 				</div>
-				<div className={styles.actions}>
-					<div
-						aria-atomic='true'
-						aria-live='polite'
-						className={styles.feedback}>
-						{feedback ? (
-							<Notice tone={feedback.tone === 'error' ? NOTICE_TONE.ERROR : NOTICE_TONE.SUCCESS}>
-								{feedback.message}
-							</Notice>
-						) : undefined}
-					</div>
-					<Button
-						appearance={BUTTON_APPEARANCE.ACCENT}
-						aria-busy={isSubmitting}
-						disabled={isSubmitting}
-						type='submit'
-						variant={BUTTON_VARIANT.BRAND}>
-						{isSubmitting ? copy.transactionSubmitting : copy.transactionSubmit}
-					</Button>
+				<div
+					aria-atomic='true'
+					aria-live='polite'
+					className={styles.feedback}>
+					{feedback ? (
+						<Notice tone={feedback.tone === 'error' ? NOTICE_TONE.ERROR : NOTICE_TONE.SUCCESS}>
+							{feedback.message}
+						</Notice>
+					) : undefined}
 				</div>
 			</form>
-		</Card>
+		</Dialog>
 	);
 }
 
