@@ -69,10 +69,10 @@ import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modu
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
+import { handleMcpRequest, MCP_MAX_BODY_BYTES } from '../mcp/mcp-transport';
+import { handleRequest } from '../routes';
 import type { FinanceUseCases } from './finance-routes';
 import { handleFinanceRequest } from './finance-routes';
-import { handleMcpRequest, MCP_MAX_BODY_BYTES } from './mcp-transport';
-import { handleRequest } from './routes';
 
 const databases: Database[] = [];
 
@@ -425,6 +425,44 @@ describe('finance REST routes', () => {
 		expect(invalidPage.status).toBe(400);
 		expect(methodNotAllowed.status).toBe(405);
 		expect(methodNotAllowed.headers.get('allow')).toBe('GET, POST');
+	});
+
+	it('answers unknown routes with 404, reports the allowed methods per route, and tolerates trailing slashes', async () => {
+		const { useCases } = setup();
+		const unknown = await send(useCases, '/api/v1/books/default/unknown');
+		const wrongMethod = await send(useCases, '/api/v1/books/default/transactions/tx-1/status', 'POST');
+		const trailingSlash = await send(useCases, '/api/v1/books/');
+
+		expect(unknown.status).toBe(404);
+		expect(wrongMethod.status).toBe(405);
+		expect(wrongMethod.headers.get('allow')).toBe('PUT');
+		expect(trailingSlash.status).toBe(200);
+	});
+
+	it('rejects wrongly typed fields with a descriptive 400', async () => {
+		const { useCases } = setup();
+		const wrongName = await send(useCases, '/api/v1/books', 'POST', { currencyCode: 'USD', name: 42 });
+		const wrongBody = await send(useCases, '/api/v1/books', 'POST', ['USD']);
+		const wrongOptional = await send(useCases, '/api/v1/books/default/schedules', 'POST', {
+			accountId: 'account',
+			amountMinor: 100,
+			frequency: 'monthly',
+			memo: 5,
+			startDate: '2025-01-01',
+		});
+		const wrongFrequency = await send(useCases, '/api/v1/books/default/schedules', 'POST', {
+			accountId: 'account',
+			amountMinor: 100,
+			frequency: 'sometimes',
+			startDate: '2025-01-01',
+		});
+
+		expect(wrongName.status).toBe(400);
+		expect(await readJson<{ error: string }>(wrongName)).toEqual({ error: 'name must be a non-empty string' });
+		expect(wrongBody.status).toBe(400);
+		expect(wrongOptional.status).toBe(400);
+		expect(wrongFrequency.status).toBe(400);
+		expect(await readJson<{ error: string }>(wrongFrequency)).toEqual({ error: 'frequency is invalid' });
 	});
 
 	it('previews and commits statement imports through the authenticated actor', async () => {

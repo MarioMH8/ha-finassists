@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | Home Assistant app | `config.yaml`, `Dockerfile` | Add-on metadata, runtime image, Ingress entry point, and persistent data mapping. |
 | Bun application | `src/server.ts`, `src/application.ts`, `src/config.ts` | Runtime entry point, dependency composition, and validated environment/add-on configuration. |
-| HTTP API | `src/modules/api/infrastructure/http/` | Inbound HTTP adapter, routes, security headers, and web asset delivery; application behavior is delegated to the owning modules. |
+| HTTP API | `src/modules/api/infrastructure/http/` | Inbound HTTP adapter (declarative Hono routes with Zod request validation), security headers, and web asset delivery; application behavior is delegated to the owning modules. |
 | Home Assistant identity | `src/modules/home-assistant/` | Domain actor types plus the Ingress infrastructure adapter that resolves actors only from a trusted Supervisor peer. |
 | Web interface | `src/app/` | Modular React 19 UI with JSON translations and CSS Modules, rendered by a Bun SSR bundle and hydrated from a separately built client bundle. |
 | Native integration | `custom_components/ha_finassists/` | Home Assistant config flow, REST client, sensors/services, and the bundled Lovelace card served as a static module. The integration uses a distinct system credential, not a person's token. |
