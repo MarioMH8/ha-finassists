@@ -215,6 +215,7 @@ describe('App', () => {
 		expect(markup).toContain('Application navigation');
 		expect(markup).toContain('<main');
 		expect(markup.indexOf('<h1')).toBeGreaterThan(markup.indexOf('<main'));
-		expect(markup).not.toContain('<svg');
+		expect(markup).not.toContain('data-application-name="Fin Assist"');
+		expect(markup).toContain('aria-hidden="true"');
 	});
 });
