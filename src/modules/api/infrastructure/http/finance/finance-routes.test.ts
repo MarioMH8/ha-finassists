@@ -71,6 +71,7 @@ import { afterEach, describe, expect, it } from 'bun:test';
 
 import { handleMcpRequest, MCP_MAX_BODY_BYTES } from '../mcp/mcp-transport';
 import { handleRequest } from '../routes';
+import { createHttpContainer } from '../shared/http-container';
 import type { FinanceUseCases } from './finance-routes';
 import { handleFinanceRequest } from './finance-routes';
 
@@ -566,8 +567,7 @@ describe('finance REST routes', () => {
 				method: 'POST',
 			}),
 			httpContext,
-			tokenUseCases,
-			useCases
+			createHttpContainer({ financeUseCases: useCases, tokenUseCases })
 		);
 		expect(unauthorized.status).toBe(401);
 		const issued = await tokenUseCases.issue.execute({ name: 'MCP client', ownerId: 'mcp-owner' });
@@ -582,8 +582,7 @@ describe('finance REST routes', () => {
 				method: 'POST',
 			}),
 			httpContext,
-			tokenUseCases,
-			useCases
+			createHttpContainer({ financeUseCases: useCases, tokenUseCases })
 		);
 		expect(honoMcpResponse.status).toBe(200);
 		expect(honoMcpResponse.headers.get('content-security-policy')).toContain('default-src');
@@ -592,8 +591,7 @@ describe('finance REST routes', () => {
 				headers: { Authorization: `Bearer ${issued.secret}` },
 			}),
 			{ remoteAddress: '127.0.0.1', trustedIngressIp: '::1' },
-			tokenUseCases,
-			useCases
+			createHttpContainer({ financeUseCases: useCases, tokenUseCases })
 		);
 		expect(honoRestResponse.status).toBe(200);
 		const honoRestBody = await readJson<PaginatedJson<unknown>>(honoRestResponse);

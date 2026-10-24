@@ -2,18 +2,19 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 
 import { jsonResponse, methodNotAllowed, noContent } from '../shared/http-responses';
-import type { HttpEnvironment, SystemCredentialUseCases } from '../shared/request-context';
+import type { HttpEnvironment } from '../shared/request-context';
 import { authenticateSystemBearer, bearerSecret } from './authentication';
 
 const exchangeSchema = z.object({
 	bootstrapCapability: z.string().min(32).max(4096),
 });
 
-export function createSystemCredentialRoutes(useCases?: SystemCredentialUseCases): Hono<HttpEnvironment> {
+export function createSystemCredentialRoutes(): Hono<HttpEnvironment> {
 	const routes = new Hono<HttpEnvironment>();
 
 	routes
 		.post('/exchange', async context => {
+			const useCases = context.var.di.get('systemCredentialUseCases');
 			if (useCases === undefined) {
 				return jsonResponse({ error: 'System credential bootstrap is not configured' }, 503);
 			}
@@ -40,6 +41,7 @@ export function createSystemCredentialRoutes(useCases?: SystemCredentialUseCases
 
 	routes
 		.put('/current', async context => {
+			const useCases = context.var.di.get('systemCredentialUseCases');
 			if (useCases === undefined) {
 				return new Response(undefined, { status: 404 });
 			}
@@ -53,6 +55,7 @@ export function createSystemCredentialRoutes(useCases?: SystemCredentialUseCases
 			return rotated ? jsonResponse(rotated) : jsonResponse({ error: 'Authentication required' }, 401);
 		})
 		.delete('/current', async context => {
+			const useCases = context.var.di.get('systemCredentialUseCases');
 			if (useCases === undefined) {
 				return new Response(undefined, { status: 404 });
 			}

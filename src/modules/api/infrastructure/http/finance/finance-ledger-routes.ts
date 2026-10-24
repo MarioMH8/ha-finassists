@@ -11,7 +11,7 @@ import {
 	readJsonBody,
 	requiredText,
 } from '../shared/request-parsing';
-import type { FinanceEnvironment, FinanceUseCases } from './finance-route-support';
+import type { FinanceEnvironment } from './finance-route-support';
 import { paginated, readImportRequest } from './finance-route-support';
 
 const transactionStatusSchema = z.enum(['uncleared', 'cleared', 'reconciled'], { error: 'status is invalid' });
@@ -72,15 +72,14 @@ const newTransferSchema = z.object({
 	transactionDate: requiredText('transactionDate'),
 });
 
-function createLedgerRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment> {
+function createLedgerRoutes(): Hono<FinanceEnvironment> {
 	const routes = new Hono<FinanceEnvironment>();
-	const { imports, ledger } = useCases;
 
 	routes
 		.get('/books/:bookId/transactions', context => {
 			const query = context.req.query();
 			const { accountId, fromDate, status, toDate } = parseInput(listTransactionsQuerySchema, query);
-			const transactions = ledger.list
+			const transactions = context.var.useCases.ledger.list
 				.execute(context.req.param('bookId'), accountId)
 				.filter(
 					transaction =>
@@ -95,7 +94,7 @@ function createLedgerRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment>
 			const body = await readJsonBody(context.req.raw, newTransactionSchema);
 
 			return jsonResponse(
-				ledger.create.execute({
+				context.var.useCases.ledger.create.execute({
 					...body,
 					actorId: context.var.actor.id,
 					bookId: context.req.param('bookId'),
@@ -108,7 +107,7 @@ function createLedgerRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment>
 	routes
 		.patch('/books/:bookId/transactions/:transactionId', async context => {
 			const body = await readJsonBody(context.req.raw, updateTransactionSchema);
-			const updated = ledger.update.execute(
+			const updated = context.var.useCases.ledger.update.execute(
 				context.req.param('bookId'),
 				context.req.param('transactionId'),
 				compact(body)
@@ -117,7 +116,7 @@ function createLedgerRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment>
 			return updated ? jsonResponse(updated) : jsonResponse({ error: 'Transaction not found' }, 404);
 		})
 		.delete('/books/:bookId/transactions/:transactionId', context =>
-			ledger.delete.execute(context.req.param('bookId'), context.req.param('transactionId'))
+			context.var.useCases.ledger.delete.execute(context.req.param('bookId'), context.req.param('transactionId'))
 				? noContent()
 				: jsonResponse({ error: 'Transaction not found or reconciled' }, 409)
 		)
@@ -127,7 +126,11 @@ function createLedgerRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment>
 		.put('/books/:bookId/transactions/:transactionId/status', async context => {
 			const { status } = await readJsonBody(context.req.raw, transactionStatusBodySchema);
 
-			return ledger.setStatus.execute(context.req.param('bookId'), context.req.param('transactionId'), status)
+			return context.var.useCases.ledger.setStatus.execute(
+				context.req.param('bookId'),
+				context.req.param('transactionId'),
+				status
+			)
 				? noContent()
 				: jsonResponse({ error: 'Transaction not found or status transition is not allowed' }, 409);
 		})
@@ -138,7 +141,7 @@ function createLedgerRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment>
 			const body = await readJsonBody(context.req.raw, newTransferSchema);
 
 			return jsonResponse(
-				ledger.createTransfer.execute({
+				context.var.useCases.ledger.createTransfer.execute({
 					...body,
 					actorId: context.var.actor.id,
 					bookId: context.req.param('bookId'),
@@ -152,7 +155,7 @@ function createLedgerRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment>
 		.post('/books/:bookId/imports/preview', async context => {
 			const input = await readImportRequest(context.req.raw, context.req.param('bookId'), context.var.actor.id);
 
-			return jsonResponse(imports.preview.execute(input));
+			return jsonResponse(context.var.useCases.imports.preview.execute(input));
 		})
 		.all('/books/:bookId/imports/preview', () => methodNotAllowed('POST'));
 
@@ -160,7 +163,7 @@ function createLedgerRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment>
 		.post('/books/:bookId/imports/commit', async context => {
 			const input = await readImportRequest(context.req.raw, context.req.param('bookId'), context.var.actor.id);
 
-			return jsonResponse(imports.commit.execute(input), 201);
+			return jsonResponse(context.var.useCases.imports.commit.execute(input), 201);
 		})
 		.all('/books/:bookId/imports/commit', () => methodNotAllowed('POST'));
 

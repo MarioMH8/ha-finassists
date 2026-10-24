@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { jsonResponse, methodNotAllowed, noContent } from '../shared/http-responses';
 import { minorUnits, readJsonBody, requiredText, stringArray } from '../shared/request-parsing';
-import type { FinanceEnvironment, FinanceUseCases } from './finance-route-support';
+import type { FinanceEnvironment } from './finance-route-support';
 import { isFlagEnabled, paginated } from './finance-route-support';
 
 const newParticipantSchema = z.object({
@@ -19,14 +19,13 @@ const newSharedExpenseSchema = z.object({
 
 const settleSharedExpenseSchema = z.object({ participantId: requiredText('participantId') });
 
-function createSharedExpenseRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment> {
+function createSharedExpenseRoutes(): Hono<FinanceEnvironment> {
 	const routes = new Hono<FinanceEnvironment>();
-	const { sharedExpenses } = useCases;
 
 	routes
 		.get('/books/:bookId/shared-expense-participants', context => {
 			const query = context.req.query();
-			const participants = sharedExpenses.listParticipants.execute({
+			const participants = context.var.useCases.sharedExpenses.listParticipants.execute({
 				bookId: context.req.param('bookId'),
 				includeRemoved: isFlagEnabled(query, 'includeRemoved'),
 			});
@@ -37,7 +36,10 @@ function createSharedExpenseRoutes(useCases: FinanceUseCases): Hono<FinanceEnvir
 			const body = await readJsonBody(context.req.raw, newParticipantSchema);
 
 			return jsonResponse(
-				sharedExpenses.createParticipant.execute({ ...body, bookId: context.req.param('bookId') }),
+				context.var.useCases.sharedExpenses.createParticipant.execute({
+					...body,
+					bookId: context.req.param('bookId'),
+				}),
 				201
 			);
 		})
@@ -45,7 +47,10 @@ function createSharedExpenseRoutes(useCases: FinanceUseCases): Hono<FinanceEnvir
 
 	routes
 		.post('/books/:bookId/shared-expense-participants/:participantId/remove', context =>
-			sharedExpenses.removeParticipant.execute(context.req.param('bookId'), context.req.param('participantId'))
+			context.var.useCases.sharedExpenses.removeParticipant.execute(
+				context.req.param('bookId'),
+				context.req.param('participantId')
+			)
 				? noContent()
 				: jsonResponse({ error: 'Participant not found or still referenced' }, 404)
 		)
@@ -54,7 +59,7 @@ function createSharedExpenseRoutes(useCases: FinanceUseCases): Hono<FinanceEnvir
 	routes
 		.get('/books/:bookId/shared-expenses', context => {
 			const query = context.req.query();
-			const expenses = sharedExpenses.list.execute({
+			const expenses = context.var.useCases.sharedExpenses.list.execute({
 				bookId: context.req.param('bookId'),
 				includeClosed: isFlagEnabled(query, 'includeClosed'),
 			});
@@ -66,7 +71,7 @@ function createSharedExpenseRoutes(useCases: FinanceUseCases): Hono<FinanceEnvir
 			const { actor } = context.var;
 
 			return jsonResponse(
-				sharedExpenses.create.execute({
+				context.var.useCases.sharedExpenses.create.execute({
 					...body,
 					actor: { id: actor.id, kind: actor.kind ?? 'home_assistant_user' },
 					bookId: context.req.param('bookId'),
@@ -79,7 +84,10 @@ function createSharedExpenseRoutes(useCases: FinanceUseCases): Hono<FinanceEnvir
 	for (const action of ['close', 'reopen'] as const) {
 		routes
 			.post(`/books/:bookId/shared-expenses/:expenseId/${action}`, context =>
-				sharedExpenses[action].execute(context.req.param('bookId'), context.req.param('expenseId'))
+				context.var.useCases.sharedExpenses[action].execute(
+					context.req.param('bookId'),
+					context.req.param('expenseId')
+				)
 					? noContent()
 					: jsonResponse({ error: 'Shared expense not found or state unchanged' }, 404)
 			)
@@ -90,7 +98,7 @@ function createSharedExpenseRoutes(useCases: FinanceUseCases): Hono<FinanceEnvir
 		.post('/books/:bookId/shared-expenses/:expenseId/settle', async context => {
 			const { participantId } = await readJsonBody(context.req.raw, settleSharedExpenseSchema);
 			const { actor } = context.var;
-			const isSettled = sharedExpenses.settle.execute({
+			const isSettled = context.var.useCases.sharedExpenses.settle.execute({
 				actor: { id: actor.id, kind: actor.kind ?? 'home_assistant_user' },
 				bookId: context.req.param('bookId'),
 				expenseId: context.req.param('expenseId'),

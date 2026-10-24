@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { jsonResponse, methodNotAllowed } from '../shared/http-responses';
 import { minorUnits, nullableReference, readJsonBody, requiredText } from '../shared/request-parsing';
-import type { FinanceEnvironment, FinanceUseCases } from './finance-route-support';
+import type { FinanceEnvironment } from './finance-route-support';
 import { paginated } from './finance-route-support';
 
 const newBudgetSchema = z.object({
@@ -16,15 +16,14 @@ const newBudgetSchema = z.object({
 	plannedMinor: minorUnits('plannedMinor'),
 });
 
-function createBudgetRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment> {
+function createBudgetRoutes(): Hono<FinanceEnvironment> {
 	const routes = new Hono<FinanceEnvironment>();
-	const { budgets } = useCases;
 
 	routes
 		.get('/books/:bookId/budgets', context => {
 			const query = context.req.query();
 			const accountId = context.req.query('accountId');
-			const list = budgets.list.execute({
+			const list = context.var.useCases.budgets.list.execute({
 				bookId: context.req.param('bookId'),
 				...(accountId !== undefined && { accountId }),
 			});
@@ -34,14 +33,20 @@ function createBudgetRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment>
 		.post('/books/:bookId/budgets', async context => {
 			const body = await readJsonBody(context.req.raw, newBudgetSchema);
 
-			return jsonResponse(budgets.create.execute({ ...body, bookId: context.req.param('bookId') }), 201);
+			return jsonResponse(
+				context.var.useCases.budgets.create.execute({ ...body, bookId: context.req.param('bookId') }),
+				201
+			);
 		})
 		.all('/books/:bookId/budgets', () => methodNotAllowed('GET, POST'));
 
 	routes
 		.get('/books/:bookId/budgets/:budgetId/report', context =>
 			jsonResponse(
-				budgets.getReport.execute({ bookId: context.req.param('bookId'), id: context.req.param('budgetId') })
+				context.var.useCases.budgets.getReport.execute({
+					bookId: context.req.param('bookId'),
+					id: context.req.param('budgetId'),
+				})
 			)
 		)
 		.all('/books/:bookId/budgets/:budgetId/report', () => methodNotAllowed('GET'));

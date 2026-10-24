@@ -7,7 +7,7 @@ import { jsonResponse, methodNotAllowed, noContent } from '../shared/http-respon
 import type { HttpEnvironment, TokenManagementUseCases } from '../shared/request-context';
 
 interface TokenEnvironment extends HttpEnvironment {
-	Variables: { actor: { id: string } };
+	Variables: HttpEnvironment['Variables'] & { actor: { id: string } };
 }
 
 const INVALID_TOKEN_NAME = 'Token name must contain between 1 and 80 characters';
@@ -46,12 +46,12 @@ function tokenMetadata(token: Awaited<ReturnType<TokenManagementUseCases['list']
 	};
 }
 
-export function createTokenRoutes(useCases: TokenManagementUseCases): Hono<TokenEnvironment> {
+export function createTokenRoutes(): Hono<TokenEnvironment> {
 	const routes = new Hono<TokenEnvironment>();
 
 	routes
 		.get('/', requireTokenActor, async context => {
-			const tokens = await useCases.list.execute(context.var.actor.id);
+			const tokens = await context.var.di.get('tokenUseCases').list.execute(context.var.actor.id);
 
 			return jsonResponse(tokens.map(token => tokenMetadata(token)));
 		})
@@ -69,7 +69,9 @@ export function createTokenRoutes(useCases: TokenManagementUseCases): Hono<Token
 			}
 
 			try {
-				const issued = await useCases.issue.execute({ name: input.data.name, ownerId: context.var.actor.id });
+				const issued = await context.var.di
+					.get('tokenUseCases')
+					.issue.execute({ name: input.data.name, ownerId: context.var.actor.id });
 
 				return jsonResponse({ ...tokenMetadata(issued.token), secret: issued.secret }, 201);
 			} catch (error) {
@@ -84,7 +86,7 @@ export function createTokenRoutes(useCases: TokenManagementUseCases): Hono<Token
 
 	routes
 		.delete('/:id', requireTokenActor, async context => {
-			const isRevoked = await useCases.revoke.execute({
+			const isRevoked = await context.var.di.get('tokenUseCases').revoke.execute({
 				id: context.req.param('id'),
 				ownerId: context.var.actor.id,
 			});

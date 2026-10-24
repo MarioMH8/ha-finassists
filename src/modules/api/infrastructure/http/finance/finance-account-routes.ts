@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { jsonResponse, methodNotAllowed, noContent } from '../shared/http-responses';
 import { minorUnits, readJsonBody, requiredText } from '../shared/request-parsing';
-import type { FinanceEnvironment, FinanceUseCases } from './finance-route-support';
+import type { FinanceEnvironment } from './finance-route-support';
 import { isFlagEnabled, paginated } from './finance-route-support';
 
 const newAccountSchema = z.object({
@@ -12,14 +12,13 @@ const newAccountSchema = z.object({
 	openingBalanceMinor: minorUnits('openingBalanceMinor'),
 });
 
-function createAccountRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment> {
+function createAccountRoutes(): Hono<FinanceEnvironment> {
 	const routes = new Hono<FinanceEnvironment>();
-	const { accounts } = useCases;
 
 	routes
 		.get('/books/:bookId/accounts', context => {
 			const query = context.req.query();
-			const list = accounts.list.execute({
+			const list = context.var.useCases.accounts.list.execute({
 				bookId: context.req.param('bookId'),
 				includeClosed: isFlagEnabled(query, 'includeClosed'),
 			});
@@ -29,13 +28,16 @@ function createAccountRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment
 		.post('/books/:bookId/accounts', async context => {
 			const body = await readJsonBody(context.req.raw, newAccountSchema);
 
-			return jsonResponse(accounts.create.execute({ ...body, bookId: context.req.param('bookId') }), 201);
+			return jsonResponse(
+				context.var.useCases.accounts.create.execute({ ...body, bookId: context.req.param('bookId') }),
+				201
+			);
 		})
 		.all('/books/:bookId/accounts', () => methodNotAllowed('GET, POST'));
 
 	routes
 		.get('/books/:bookId/accounts/:accountId/balances', context => {
-			const balances = accounts.balances.execute({
+			const balances = context.var.useCases.accounts.balances.execute({
 				asOf: context.req.query('asOf'),
 				bookId: context.req.param('bookId'),
 				id: context.req.param('accountId'),
@@ -52,7 +54,10 @@ function createAccountRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment
 	for (const action of ['open', 'close'] as const) {
 		routes
 			.post(`/books/:bookId/accounts/:accountId/${action}`, context =>
-				accounts[action].execute(context.req.param('bookId'), context.req.param('accountId'))
+				context.var.useCases.accounts[action].execute(
+					context.req.param('bookId'),
+					context.req.param('accountId')
+				)
 					? noContent()
 					: jsonResponse({ error: 'Account not found or state unchanged' }, 404)
 			)

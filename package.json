@@ -21,6 +21,8 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@inferdi/hono": "^6.1.0",
+		"@inferdi/inferdi": "^6.1.0",
 		"hono": "^4.13.13",
 		"react": "19.3.1",
 		"react-dom": "19.3.1",

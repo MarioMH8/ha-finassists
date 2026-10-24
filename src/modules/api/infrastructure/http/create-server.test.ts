@@ -15,6 +15,7 @@ import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
 import { createServer } from './create-server';
+import { createHttpContainer } from './shared/http-container';
 
 interface TokenMetadataResponse {
 	createdAt: string;
@@ -109,6 +110,7 @@ describe('createServer', () => {
 
 	it('uses the configured development actor and bypasses Ingress peer checks', async () => {
 		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
 			developmentActor: {
 				displayName: 'Local Developer',
 				id: 'dev-user',
@@ -117,7 +119,6 @@ describe('createServer', () => {
 			},
 			developmentMode: true,
 			port: 0,
-			tokenUseCases: createTokenUseCases(),
 			trustedIngressIp: '172.30.32.2',
 		});
 
@@ -153,9 +154,8 @@ describe('createServer', () => {
 		const capability = 'random-bootstrap-capability-value-of-at-least-32-characters';
 		const systemCredentialUseCases = await createSystemCredentialUseCases(capability);
 		server = createServer({
+			container: createHttpContainer({ systemCredentialUseCases, tokenUseCases: createTokenUseCases() }),
 			port: 0,
-			systemCredentialUseCases,
-			tokenUseCases: createTokenUseCases(),
 			trustedIngressIp: '[IP_ADDRESS]',
 		});
 
@@ -215,7 +215,11 @@ describe('createServer', () => {
 	});
 
 	it('serves the health endpoint', async () => {
-		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '127.0.0.1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+			port: 0,
+			trustedIngressIp: '127.0.0.1',
+		});
 
 		const response = await fetch(new URL('/health', server.url));
 
@@ -228,7 +232,11 @@ describe('createServer', () => {
 	});
 
 	it('blocks the web interface for an untrusted peer', async () => {
-		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '192.0.2.1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+			port: 0,
+			trustedIngressIp: '192.0.2.1',
+		});
 
 		const response = await fetch(new URL('/', server.url));
 		const tokenResponse = await fetch(new URL('/api/v1/tokens', server.url), {
@@ -240,7 +248,11 @@ describe('createServer', () => {
 	});
 
 	it('serves the web shell to a trusted Ingress peer', async () => {
-		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+			port: 0,
+			trustedIngressIp: '::1',
+		});
 
 		const response = await fetch(requestUrl('/'));
 
@@ -250,7 +262,11 @@ describe('createServer', () => {
 	});
 
 	it('server-renders the Spanish interface using the browser language preference', async () => {
-		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+			port: 0,
+			trustedIngressIp: '::1',
+		});
 
 		const response = await fetch(requestUrl('/'), { headers: { 'Accept-Language': 'es-ES, en;q=0.8' } });
 		const html = await response.text();
@@ -265,7 +281,11 @@ describe('createServer', () => {
 	});
 
 	it('serves matching CSS Module classes in the server HTML, hydration bundle, and stylesheet', async () => {
-		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+			port: 0,
+			trustedIngressIp: '::1',
+		});
 
 		const [pageResponse, scriptResponse, stylesheetResponse] = await Promise.all([
 			fetch(requestUrl('/')),
@@ -297,7 +317,11 @@ describe('createServer', () => {
 	it('requires a valid bearer token for external financial API requests', async () => {
 		const tokenUseCases = createTokenUseCases();
 		const issued = await tokenUseCases.issue.execute({ name: 'External client', ownerId: 'token-owner' });
-		server = createServer({ port: 0, tokenUseCases, trustedIngressIp: '192.0.2.1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases }),
+			port: 0,
+			trustedIngressIp: '192.0.2.1',
+		});
 
 		const missingTokenResponse = await fetch(new URL('/api/v1/accounts', server.url), {
 			headers: { 'X-Remote-User-Id': 'spoofed-user' },
@@ -322,7 +346,11 @@ describe('createServer', () => {
 	});
 
 	it('keeps the MCP endpoint out of the web interface', async () => {
-		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+			port: 0,
+			trustedIngressIp: '::1',
+		});
 
 		const response = await fetch(requestUrl('/mcp'));
 
@@ -330,7 +358,11 @@ describe('createServer', () => {
 	});
 
 	it('requires an identified Ingress actor to manage tokens', async () => {
-		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+			port: 0,
+			trustedIngressIp: '::1',
+		});
 
 		const response = await fetch(requestUrl('/api/v1/tokens'));
 
@@ -339,7 +371,11 @@ describe('createServer', () => {
 	});
 
 	it('issues, lists and revokes personal tokens through the trusted Ingress API', async () => {
-		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+			port: 0,
+			trustedIngressIp: '::1',
+		});
 		const headers = {
 			'Content-Type': 'application/json',
 			'X-Remote-User-Id': 'user-123',
@@ -391,7 +427,11 @@ describe('createServer', () => {
 	});
 
 	it('reports the Home Assistant actor for a trusted Ingress peer', async () => {
-		server = createServer({ port: 0, tokenUseCases: createTokenUseCases(), trustedIngressIp: '::1' });
+		server = createServer({
+			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+			port: 0,
+			trustedIngressIp: '::1',
+		});
 
 		const response = await fetch(requestUrl('/api/v1/session'), {
 			headers: {

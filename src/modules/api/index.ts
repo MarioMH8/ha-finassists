@@ -1,2 +1,2 @@
-export type { ServerOptions, TokenManagementUseCases } from './infrastructure';
-export { createServer, handleRequest, prepareWebAssets, serveWebAsset } from './infrastructure';
+export type { HttpContainer, ServerOptions, TokenManagementUseCases } from './infrastructure';
+export { createHttpContainer, createServer, handleRequest, prepareWebAssets, serveWebAsset } from './infrastructure';

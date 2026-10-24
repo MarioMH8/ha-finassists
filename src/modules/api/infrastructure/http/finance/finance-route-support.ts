@@ -107,7 +107,7 @@ interface RouteActor {
 class RequestTooLargeError extends Error {}
 
 interface FinanceEnvironment {
-	Variables: { actor: RouteActor };
+	Variables: { actor: RouteActor; useCases: FinanceUseCases };
 }
 
 const pageQuerySchema = z.object({

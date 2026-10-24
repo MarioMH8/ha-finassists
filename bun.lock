@@ -5,6 +5,8 @@
     "": {
       "name": "ha-finassists",
       "dependencies": {
+        "@inferdi/hono": "^6.1.0",
+        "@inferdi/inferdi": "^6.1.0",
         "hono": "^4.13.13",
         "react": "19.3.1",
         "react-dom": "19.3.1",
@@ -169,6 +171,10 @@
     "@humanwhocodes/module-importer": ["@humanwhocodes/module-importer@1.0.1", "", {}, "sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA=="],
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
+
+    "@inferdi/hono": ["@inferdi/hono@6.1.0", "", { "peerDependencies": { "@inferdi/inferdi": "^6.0.0", "hono": "^4.0.0" } }, "sha512-ImEaM4MugdaaY5WQzwCy2Gs+0AWxv6pxeiEegY+iSzXkhF8dmr367LbUMufNFBLzKrCgMR2KTSQZjbkQJD3O6g=="],
+
+    "@inferdi/inferdi": ["@inferdi/inferdi@6.1.0", "", {}, "sha512-lbiWw4l+iGjm5j3HYajJNmGlw2zvv2340edfTqlUaMakJxlHij0h82DNCrKVzO1D0xG0easACotEIXhUw9ToyA=="],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 

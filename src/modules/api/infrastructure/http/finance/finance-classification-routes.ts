@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { jsonResponse, methodNotAllowed, noContent } from '../shared/http-responses';
 import { compact, nullableReference, optionalText, readJsonBody, requiredText } from '../shared/request-parsing';
-import type { FinanceEnvironment, FinanceUseCases } from './finance-route-support';
+import type { FinanceEnvironment } from './finance-route-support';
 import { isFlagEnabled, paginated } from './finance-route-support';
 
 const newClassificationSchema = z.object({
@@ -18,19 +18,17 @@ const updateClassificationSchema = z.object({
 });
 
 function createClassificationRoutes(
-	useCases: FinanceUseCases,
 	segment: 'categories' | 'classes',
 	kind: ClassificationKind
 ): Hono<FinanceEnvironment> {
 	const routes = new Hono<FinanceEnvironment>();
-	const { classifications } = useCases;
 	const collection = `/books/:bookId/${segment}` as const;
 	const item = `${collection}/:classificationId` as const;
 
 	routes
 		.get(collection, context => {
 			const query = context.req.query();
-			const list = classifications.list[kind].execute(context.req.param('bookId'), {
+			const list = context.var.useCases.classifications.list[kind].execute(context.req.param('bookId'), {
 				includeArchived: isFlagEnabled(query, 'includeArchived'),
 			});
 
@@ -40,7 +38,10 @@ function createClassificationRoutes(
 			const body = await readJsonBody(context.req.raw, newClassificationSchema);
 
 			return jsonResponse(
-				classifications.create[kind].execute({ ...body, bookId: context.req.param('bookId') }),
+				context.var.useCases.classifications.create[kind].execute({
+					...body,
+					bookId: context.req.param('bookId'),
+				}),
 				201
 			);
 		})
@@ -51,7 +52,7 @@ function createClassificationRoutes(
 			const body = await readJsonBody(context.req.raw, updateClassificationSchema);
 
 			return jsonResponse(
-				classifications.update[kind].execute(
+				context.var.useCases.classifications.update[kind].execute(
 					context.req.param('bookId'),
 					context.req.param('classificationId'),
 					compact(body)
@@ -59,7 +60,10 @@ function createClassificationRoutes(
 			);
 		})
 		.delete(item, context => {
-			classifications.delete[kind].execute(context.req.param('bookId'), context.req.param('classificationId'));
+			context.var.useCases.classifications.delete[kind].execute(
+				context.req.param('bookId'),
+				context.req.param('classificationId')
+			);
 
 			return noContent();
 		})
@@ -69,7 +73,7 @@ function createClassificationRoutes(
 		routes
 			.post(`${item}/${action}`, context =>
 				jsonResponse(
-					classifications[action][kind].execute(
+					context.var.useCases.classifications[action][kind].execute(
 						context.req.param('bookId'),
 						context.req.param('classificationId')
 					)

@@ -14,7 +14,7 @@ import {
 	readJsonBody,
 	requiredText,
 } from '../shared/request-parsing';
-import type { FinanceEnvironment, FinanceUseCases } from './finance-route-support';
+import type { FinanceEnvironment } from './finance-route-support';
 import { paginated } from './finance-route-support';
 
 const newScheduleSchema = z.object({
@@ -57,13 +57,12 @@ const generateOccurrencesSchema = z.object({
 
 const recordOccurrenceSchema = z.object({ transactionId: requiredText('transactionId') });
 
-function createScheduleRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironment> {
+function createScheduleRoutes(): Hono<FinanceEnvironment> {
 	const routes = new Hono<FinanceEnvironment>();
-	const { schedules } = useCases;
 
 	routes
 		.get('/books/:bookId/schedules', context => {
-			const list = schedules.list.execute(context.req.param('bookId'));
+			const list = context.var.useCases.schedules.list.execute(context.req.param('bookId'));
 
 			return jsonResponse(paginated(list, context.req.query()));
 		})
@@ -71,7 +70,7 @@ function createScheduleRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironmen
 			const body = await readJsonBody(context.req.raw, newScheduleSchema);
 
 			return jsonResponse(
-				schedules.create.execute({
+				context.var.useCases.schedules.create.execute({
 					...compact(body),
 					accountId: body.accountId,
 					amountMinor: body.amountMinor,
@@ -90,7 +89,11 @@ function createScheduleRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironmen
 			const body = await readJsonBody(context.req.raw, updateScheduleSchema);
 
 			return jsonResponse(
-				schedules.update.execute(context.req.param('bookId'), context.req.param('scheduleId'), compact(body))
+				context.var.useCases.schedules.update.execute(
+					context.req.param('bookId'),
+					context.req.param('scheduleId'),
+					compact(body)
+				)
 			);
 		})
 		.all('/books/:bookId/schedules/:scheduleId', () => methodNotAllowed('PATCH'));
@@ -100,14 +103,18 @@ function createScheduleRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironmen
 			const { status } = await readJsonBody(context.req.raw, changeScheduleStatusSchema);
 
 			return jsonResponse(
-				schedules.changeStatus.execute(context.req.param('bookId'), context.req.param('scheduleId'), status)
+				context.var.useCases.schedules.changeStatus.execute(
+					context.req.param('bookId'),
+					context.req.param('scheduleId'),
+					status
+				)
 			);
 		})
 		.all('/books/:bookId/schedules/:scheduleId/status', () => methodNotAllowed('PUT'));
 
 	routes
 		.get('/books/:bookId/schedules/:scheduleId/occurrences', context => {
-			const list = schedules.listOccurrences.execute(
+			const list = context.var.useCases.schedules.listOccurrences.execute(
 				context.req.param('bookId'),
 				context.req.param('scheduleId')
 			);
@@ -118,7 +125,7 @@ function createScheduleRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironmen
 			const { maxOccurrences, throughDate } = await readJsonBody(context.req.raw, generateOccurrencesSchema);
 
 			return jsonResponse(
-				schedules.generateOccurrences.execute(
+				context.var.useCases.schedules.generateOccurrences.execute(
 					context.req.param('bookId'),
 					context.req.param('scheduleId'),
 					throughDate,
@@ -133,7 +140,7 @@ function createScheduleRoutes(useCases: FinanceUseCases): Hono<FinanceEnvironmen
 			const { transactionId } = await readJsonBody(context.req.raw, recordOccurrenceSchema);
 
 			return jsonResponse(
-				schedules.recordOccurrence.execute(
+				context.var.useCases.schedules.recordOccurrence.execute(
 					context.req.param('bookId'),
 					context.req.param('occurrenceId'),
 					transactionId

@@ -8,6 +8,8 @@ import type {
 } from '@modules/system-credentials/application';
 import type { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
 
+import type { HttpScope } from './http-container';
+
 interface RequestContext {
 	developmentActor?: HomeAssistantActor;
 	developmentMode?: boolean;
@@ -32,6 +34,7 @@ interface SystemCredentialUseCases {
 
 interface HttpEnvironment {
 	Bindings: { requestContext: RequestContext };
+	Variables: { di: HttpScope };
 }
 
 export type { HttpEnvironment, RequestContext, SystemCredentialUseCases, TokenManagementUseCases };
