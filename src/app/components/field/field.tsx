@@ -13,9 +13,11 @@ interface FieldProps {
 }
 
 function fieldDescriptionIds(id: string, { error, hint }: { error?: unknown; hint?: unknown }): string | undefined {
-	const ids = [hint ? `${id}-hint` : undefined, error ? `${id}-error` : undefined].filter(Boolean);
+	if (error) {
+		return `${id}-error`;
+	}
 
-	return ids.length > 0 ? ids.join(' ') : undefined;
+	return hint ? `${id}-hint` : undefined;
 }
 
 function Field({ children, className, error, hint, htmlFor, label }: FieldProps): ReactElement {
@@ -27,19 +29,18 @@ function Field({ children, className, error, hint, htmlFor, label }: FieldProps)
 				{label}
 			</label>
 			{children}
-			{hint ? (
-				<p
-					className={styles.hint}
-					id={`${htmlFor}-hint`}>
-					{hint}
-				</p>
-			) : undefined}
 			{error ? (
 				<p
 					className={styles.error}
 					id={`${htmlFor}-error`}
 					role='alert'>
 					{error}
+				</p>
+			) : hint ? (
+				<p
+					className={styles.hint}
+					id={`${htmlFor}-hint`}>
+					{hint}
 				</p>
 			) : undefined}
 		</div>
