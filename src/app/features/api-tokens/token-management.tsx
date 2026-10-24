@@ -1,4 +1,3 @@
-import { Button } from '@app/components/button';
 import { Card } from '@app/components/card';
 import { SectionHeading } from '@app/components/section-heading';
 import type { ReactElement } from 'react';
@@ -11,14 +10,6 @@ function TokenManagement(): ReactElement {
 	const state = useApiTokens();
 	const { copy } = state;
 
-	const refreshAction = (
-		<Button
-			onClick={() => void state.loadTokens()}
-			type='button'>
-			{copy.refresh}
-		</Button>
-	);
-
 	return (
 		<>
 			<ServiceStatusCard
@@ -30,7 +21,6 @@ function TokenManagement(): ReactElement {
 				aria-labelledby='tokens-title'
 				className={styles['token-section']}>
 				<SectionHeading
-					actions={refreshAction}
 					description={copy.tokensDescription}
 					title={copy.tokensTitle}
 					titleId='tokens-title'

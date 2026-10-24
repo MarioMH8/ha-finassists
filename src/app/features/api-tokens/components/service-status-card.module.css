@@ -1,7 +1,6 @@
 .card {
   display: grid;
   gap: var(--ha-space-3);
-  padding: var(--ha-space-6) var(--ha-space-7);
 }
 
 .card h2 {
@@ -18,10 +17,6 @@
 }
 
 @media (max-width: 600px) {
-  .card {
-    padding: var(--ha-space-5) var(--ha-space-4);
-  }
-
   .card h2 {
     font-size: var(--ha-font-size-xl);
   }

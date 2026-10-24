@@ -27,7 +27,6 @@
 	"navigationTransactions": "Transacciones",
 	"noTokens": "Todavía no hay tokens activos. Crea uno para conectar una aplicación o servicio.",
 	"ready": "El servicio está en funcionamiento",
-	"refresh": "Actualizar",
 	"revoke": "Revocar",
 	"revokedToken": "Token revocado.",
 	"tokenCopied": "Token copiado.",

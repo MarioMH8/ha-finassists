@@ -54,7 +54,6 @@ interface TransactionsState {
 	listReference: RefObject<HTMLTableSectionElement | null>;
 	listState: LoadState;
 	loadMore: () => Promise<void>;
-	refresh: () => Promise<void>;
 	setAmount: (event: ChangeEvent<HTMLInputElement>) => void;
 	setConfirmingTransactionId: Dispatch<SetStateAction<string | undefined>>;
 	setDate: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -268,7 +267,6 @@ function useTransactions(currencyCode: string): TransactionsState {
 		listReference,
 		listState,
 		loadMore,
-		refresh,
 		setAmount: event => {
 			setAmountValue(event.currentTarget.value);
 		},

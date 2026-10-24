@@ -1,1 +1,1 @@
-export { Card, CARD_TONE, type CardTone } from './card';
+export { Card, CARD_PADDING, CARD_TONE, type CardPadding, type CardTone } from './card';

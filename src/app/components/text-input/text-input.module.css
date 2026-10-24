@@ -1,17 +1,26 @@
-/* Outlined appearance: 56px tall with a label, 32px without one. */
+/* Outlined appearance: 40 / 56px tall. */
 .input {
   width: 100%;
   min-width: 0;
-  min-height: 56px;
-  padding: 0 var(--ha-space-4);
   border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
   border-radius: var(--ha-border-radius-md);
   background: var(--ha-color-surface-default);
   color: var(--ha-color-text-primary);
-  font-size: var(--ha-font-size-l);
   transition:
     border-color var(--ha-animation-duration-fast) ease-out,
     background-color var(--ha-animation-duration-fast) ease-out;
+}
+
+.s {
+  min-height: var(--ha-input-size-s);
+  padding: 0 var(--ha-space-3);
+  font-size: var(--ha-font-size-m);
+}
+
+.m {
+  min-height: var(--ha-input-size-m);
+  padding: 0 var(--ha-space-4);
+  font-size: var(--ha-font-size-l);
 }
 
 .input::placeholder {

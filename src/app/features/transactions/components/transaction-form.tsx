@@ -3,7 +3,7 @@ import { Card } from '@app/components/card';
 import { Field, fieldDescriptionIds } from '@app/components/field';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
-import { TextInput } from '@app/components/text-input';
+import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
 import type { Copy } from '@app/i18n';
 import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
@@ -145,6 +145,7 @@ function TransactionForm({
 							name='amount'
 							onChange={setAmount}
 							ref={amountReference}
+							size={TEXT_INPUT_SIZE.SMALL}
 							value={amount}
 						/>
 					</Field>
@@ -158,6 +159,7 @@ function TransactionForm({
 							invalid={Boolean(dateError)}
 							name='transactionDate'
 							onChange={setDate}
+							size={TEXT_INPUT_SIZE.SMALL}
 							type='date'
 							value={date}
 						/>
@@ -179,19 +181,12 @@ function TransactionForm({
 							maxLength={DESCRIPTION_MAX_LENGTH}
 							name='description'
 							onChange={setDescription}
+							size={TEXT_INPUT_SIZE.SMALL}
 							value={description}
 						/>
 					</Field>
 				</div>
 				<div className={styles.actions}>
-					<Button
-						appearance={BUTTON_APPEARANCE.ACCENT}
-						aria-busy={isSubmitting}
-						disabled={isSubmitting}
-						type='submit'
-						variant={BUTTON_VARIANT.BRAND}>
-						{isSubmitting ? copy.transactionSubmitting : copy.transactionSubmit}
-					</Button>
 					<div
 						aria-atomic='true'
 						aria-live='polite'
@@ -202,6 +197,14 @@ function TransactionForm({
 							</Notice>
 						) : undefined}
 					</div>
+					<Button
+						appearance={BUTTON_APPEARANCE.ACCENT}
+						aria-busy={isSubmitting}
+						disabled={isSubmitting}
+						type='submit'
+						variant={BUTTON_VARIANT.BRAND}>
+						{isSubmitting ? copy.transactionSubmitting : copy.transactionSubmit}
+					</Button>
 				</div>
 			</form>
 		</Card>

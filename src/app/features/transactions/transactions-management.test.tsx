@@ -51,7 +51,6 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 		listReference: createRef<HTMLTableSectionElement>(),
 		listState: LOAD_STATE.READY,
 		loadMore: asyncNoop,
-		refresh: asyncNoop,
 		setAmount: noop,
 		setConfirmingTransactionId: noop,
 		setDate: noop,

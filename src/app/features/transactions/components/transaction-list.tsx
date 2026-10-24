@@ -30,7 +30,6 @@ type TransactionListProps = Pick<
 	| 'listReference'
 	| 'listState'
 	| 'loadMore'
-	| 'refresh'
 	| 'setConfirmingTransactionId'
 	| 'total'
 	| 'transactions'
@@ -49,23 +48,13 @@ function TransactionList({
 	listReference,
 	listState,
 	loadMore,
-	refresh,
 	setConfirmingTransactionId,
 	total,
 	transactions,
 }: TransactionListProps): ReactElement {
-	const refreshAction = (
-		<Button
-			onClick={() => void refresh()}
-			type='button'>
-			{copy.refresh}
-		</Button>
-	);
-
 	return (
 		<Card aria-labelledby='transaction-list-title'>
 			<SectionHeading
-				actions={refreshAction}
 				description={copy.transactionListDescription}
 				title={copy.transactionListTitle}
 				titleId='transaction-list-title'

@@ -83,7 +83,12 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--ha-space-3);
+}
+
+.feedback {
+  margin-right: auto;
 }
 
 .feedback:empty {
