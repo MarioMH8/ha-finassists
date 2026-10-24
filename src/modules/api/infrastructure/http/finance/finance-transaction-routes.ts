@@ -41,6 +41,15 @@ const updateTransactionSchema = z.object({
 	transactionDate: z.string({ error: 'transactionDate must use YYYY-MM-DD' }).optional(),
 });
 
+const transactionIdsSchema = z.object({
+	ids: z
+		.array(z.string({ error: 'ids must be an array of strings' }), {
+			error: 'ids must be an array of strings',
+		})
+		.min(1, { error: 'ids must contain at least one transaction' })
+		.max(100, { error: 'ids cannot contain more than 100 transactions' }),
+});
+
 function createTransactionRoutes(): Hono<FinanceEnvironment> {
 	const routes = new Hono<FinanceEnvironment>();
 
@@ -78,6 +87,12 @@ function createTransactionRoutes(): Hono<FinanceEnvironment> {
 				201
 			);
 		})
+		.delete('/transactions', async context => {
+			const { ids } = await readJsonBody(context.req.raw, transactionIdsSchema);
+			await context.var.useCases.ledger.deleteMany.execute({ ids });
+
+			return noContent();
+		})
 		.delete('/transactions/:id', async context => {
 			await context.var.useCases.ledger.delete.execute({ id: context.req.param('id') });
 
@@ -98,7 +113,7 @@ function createTransactionRoutes(): Hono<FinanceEnvironment> {
 
 			return jsonResponse(transaction);
 		})
-		.all('/transactions', () => methodNotAllowed('GET, POST'))
+		.all('/transactions', () => methodNotAllowed('GET, POST, DELETE'))
 		.all('/transactions/:id', () => methodNotAllowed('DELETE, PATCH'));
 
 	return routes;

@@ -20,6 +20,7 @@ interface TransactionPage {
 
 interface TransactionRepository {
 	delete(criteria: TransactionDeleteCriteria): Promise<boolean>;
+	deleteMany(ids: string[]): Promise<number>;
 	findById(id: string): Promise<Transaction | undefined>;
 	save(transaction: Transaction): Promise<void>;
 	search(criteria?: TransactionCriteria): Promise<TransactionPage>;

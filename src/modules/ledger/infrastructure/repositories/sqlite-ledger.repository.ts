@@ -77,6 +77,17 @@ export class SqliteLedgerRepository implements TransactionRepository {
 		return result.changes > 0;
 	}
 
+	async deleteMany(ids: string[]): Promise<number> {
+		if (ids.length === 0) {
+			return 0;
+		}
+		const placeholders = ids.map(() => '?').join(', ');
+		const result = this.database.query(`DELETE FROM transactions WHERE id IN (${placeholders})`).run(...ids);
+		await Promise.resolve();
+
+		return result.changes;
+	}
+
 	async findById(id: string): Promise<Transaction | undefined> {
 		const row = this.database
 			.query<TransactionRow, [string]>(

@@ -1,4 +1,10 @@
-import { CreateTransaction, DeleteTransaction, ListTransactions, UpdateTransaction } from '@modules/ledger/application';
+import {
+	CreateTransaction,
+	DeleteTransaction,
+	DeleteTransactions,
+	ListTransactions,
+	UpdateTransaction,
+} from '@modules/ledger/application';
 import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
@@ -55,6 +61,7 @@ function setup(): { useCases: FinanceUseCases } {
 			ledger: {
 				create: new CreateTransaction(repository, 'EUR'),
 				delete: new DeleteTransaction(repository),
+				deleteMany: new DeleteTransactions(repository),
 				list: new ListTransactions(repository),
 				update: new UpdateTransaction(repository),
 			},
@@ -229,9 +236,9 @@ describe('transactions REST routes', () => {
 
 		expect(await statusOf(useCases, '/api/v1/books')).toBe(404);
 		expect(await statusOf(useCases, '/api/v1/accounts')).toBe(404);
-		const deleted = await send(useCases, '/api/v1/transactions', 'DELETE');
+		const deleted = await send(useCases, '/api/v1/transactions', 'PUT');
 		expect(deleted.status).toBe(405);
-		expect(deleted.headers.get('allow')).toBe('GET, POST');
+		expect(deleted.headers.get('allow')).toBe('GET, POST, DELETE');
 		const patched = await send(useCases, '/api/v1/transactions/transaction-1', 'PATCH');
 		expect(patched.status).toBe(400);
 		const put = await send(useCases, '/api/v1/transactions/transaction-1', 'PUT');
@@ -285,6 +292,30 @@ describe('transactions REST routes', () => {
 		expect(remaining.total).toBe(0);
 		expect(missing.status).toBe(404);
 		expect(missingBody.error).toContain('not found');
+	});
+
+	it('deletes several transactions in one request', async () => {
+		const { useCases } = setup();
+		const created = await Promise.all(
+			['a', 'b', 'c'].map(async description =>
+				sendJson<TransactionJson>(useCases, '/api/v1/transactions', 'POST', {
+					amountMinor: 100,
+					description,
+					kind: 'expense',
+					transactionDate: '2026-05-10',
+				})
+			)
+		);
+
+		const deleted = await send(useCases, '/api/v1/transactions', 'DELETE', {
+			ids: created.slice(0, 2).map(item => item.id),
+		});
+		const remaining = await sendJson<PaginatedJson<TransactionJson>>(useCases, '/api/v1/transactions');
+		const invalid = await send(useCases, '/api/v1/transactions', 'DELETE', { ids: [] });
+
+		expect(deleted.status).toBe(204);
+		expect(remaining.items.map(item => item.description)).toEqual(['c']);
+		expect(invalid.status).toBe(400);
 	});
 
 	it('serves stateless MCP tools only with a valid bearer token', async () => {

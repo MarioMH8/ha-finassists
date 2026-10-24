@@ -22,6 +22,15 @@ function currentMonthRange(now: Date = new Date()): DateRange {
 	};
 }
 
+function monthsRange(months: number, now: Date = new Date()): DateRange {
+	const span = Math.max(1, months);
+
+	return {
+		fromDate: toIsoDate(new Date(now.getFullYear(), now.getMonth() - (span - 1), 1)),
+		toDate: toIsoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
+	};
+}
+
 function isIsoDate(value: string): boolean {
 	const match = /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$/u.exec(value);
 	if (!match?.groups) {
@@ -35,4 +44,4 @@ function isIsoDate(value: string): boolean {
 	return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
-export { currentMonthRange, type DateRange, isIsoDate, todayIsoDate };
+export { currentMonthRange, type DateRange, isIsoDate, monthsRange, todayIsoDate };

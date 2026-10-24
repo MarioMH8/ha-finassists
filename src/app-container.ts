@@ -1,5 +1,11 @@
 import { Container } from '@inferdi/inferdi';
-import { CreateTransaction, DeleteTransaction, ListTransactions, UpdateTransaction } from '@modules/ledger/application';
+import {
+	CreateTransaction,
+	DeleteTransaction,
+	DeleteTransactions,
+	ListTransactions,
+	UpdateTransaction,
+} from '@modules/ledger/application';
 import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
 import {
 	AuthenticateSystemCredential,
@@ -65,6 +71,7 @@ function buildLedgerUseCases(container: ReturnType<typeof buildCredentialUseCase
 		c => ({
 			create: new CreateTransaction(c.get('ledgerRepository'), c.get('currencyCode')),
 			delete: new DeleteTransaction(c.get('ledgerRepository')),
+			deleteMany: new DeleteTransactions(c.get('ledgerRepository')),
 			list: new ListTransactions(c.get('ledgerRepository')),
 			update: new UpdateTransaction(c.get('ledgerRepository')),
 		}),

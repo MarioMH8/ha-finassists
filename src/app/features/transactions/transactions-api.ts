@@ -171,6 +171,17 @@ async function updateTransaction(id: string, input: Partial<NewTransaction>): Pr
 	return transaction;
 }
 
+async function deleteTransactions(ids: string[]): Promise<void> {
+	const response = await fetch(TRANSACTIONS_URL, {
+		body: JSON.stringify({ ids }),
+		headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+		method: 'DELETE',
+	});
+	if (!response.ok) {
+		throw new Error(`Transaction bulk deletion failed with HTTP ${String(response.status)}`);
+	}
+}
+
 interface TransactionTotals {
 	expenseMinor: number;
 	incomeMinor: number;
@@ -197,6 +208,7 @@ function summarizeTransactions(transactions: readonly Transaction[], currencyCod
 export {
 	createTransaction,
 	deleteTransaction,
+	deleteTransactions,
 	fetchAllTransactions,
 	fetchTransactionPage,
 	isTransaction,

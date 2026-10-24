@@ -8,6 +8,47 @@
   gap: var(--ha-space-4);
 }
 
+.selectionCell {
+  width: 1%;
+  line-height: 0;
+  white-space: nowrap;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ha-color-fill-primary-loud-resting);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.selectedRow {
+  background: var(--ha-color-fill-primary-quiet-resting);
+}
+
+.selectionBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ha-space-3);
+  min-height: 32px;
+}
+
+.selectionBar p {
+  margin: 0;
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+}
+
+.selectionActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
 .date {
   white-space: nowrap;
 }
@@ -32,6 +73,10 @@
 }
 
 .toolbar {
+  /* Nested radius: the table radius minus the toolbar inset. */
+  --chip-border-radius: calc(var(--ha-border-radius-lg) - var(--ha-space-2));
+  --select-border-radius: calc(var(--ha-border-radius-lg) - var(--ha-space-2));
+
   display: flex;
   flex-wrap: wrap;
   align-items: center;

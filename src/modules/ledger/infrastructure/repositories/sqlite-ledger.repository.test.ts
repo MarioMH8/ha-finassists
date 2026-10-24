@@ -90,6 +90,16 @@ describe('SqliteLedgerRepository', () => {
 		expect(page.total).toBe(0);
 	});
 
+	it('deletes several transactions and reports the count', async () => {
+		await Promise.all(['a', 'b', 'c'].map(async id => repository.save(TransactionMother.create({ id }))));
+
+		const deleted = await repository.deleteMany(['a', 'c']);
+		const page = await repository.search();
+
+		expect(deleted).toBe(2);
+		expect(page.items.map(item => item.id)).toEqual(['b']);
+	});
+
 	it('finds and updates an existing transaction', async () => {
 		const transaction = TransactionMother.create({ id: 'a' });
 		await repository.save(transaction);

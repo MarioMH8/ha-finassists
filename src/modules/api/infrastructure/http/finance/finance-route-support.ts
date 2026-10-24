@@ -1,6 +1,7 @@
 import type {
 	CreateTransaction,
 	DeleteTransaction,
+	DeleteTransactions,
 	ListTransactions,
 	UpdateTransaction,
 } from '@modules/ledger/application';
@@ -11,6 +12,7 @@ interface FinanceUseCases {
 	ledger: {
 		create: CreateTransaction;
 		delete: DeleteTransaction;
+		deleteMany: DeleteTransactions;
 		list: ListTransactions;
 		update: UpdateTransaction;
 	};

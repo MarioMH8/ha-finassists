@@ -5,16 +5,18 @@ import type { ChangeEvent, Dispatch, RefObject, SetStateAction, SubmitEvent } fr
 import { useEffect, useRef, useState } from 'react';
 
 import { currencyFractionDigits } from './transaction-amount';
-import { currentMonthRange, todayIsoDate } from './transaction-dates';
+import { monthsRange, todayIsoDate } from './transaction-dates';
+import type { TransactionSummary } from './transaction-summary';
+import { buildTransactionSummary, SUMMARY_MONTHS } from './transaction-summary';
 import type { TransactionFormErrors } from './transaction-validation';
 import { validateTransactionForm } from './transaction-validation';
-import type { Transaction, TransactionKind, TransactionTotals } from './transactions-api';
+import type { Transaction, TransactionKind } from './transactions-api';
 import {
 	createTransaction,
 	deleteTransaction,
+	deleteTransactions,
 	fetchAllTransactions,
 	fetchTransactionPage,
-	summarizeTransactions,
 	TRANSACTION_KIND,
 	updateTransaction,
 } from './transactions-api';
@@ -39,6 +41,7 @@ interface TransactionsState {
 	copy: Copy;
 	currencyCode: string;
 	date: string;
+	deleteSelectedTransactions: (ids: string[]) => Promise<string[]>;
 	deleteTransaction: (transaction: Transaction) => Promise<void>;
 	deletingTransactionId: string | undefined;
 	description: string;
@@ -67,9 +70,9 @@ interface TransactionsState {
 	setKind: (kind: TransactionKind) => void;
 	setPageSize: (size: PageSize) => void;
 	submit: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+	summary: TransactionSummary | undefined;
 	summaryState: LoadState;
 	total: number;
-	totals: TransactionTotals | undefined;
 	transactions: Transaction[];
 }
 
@@ -88,7 +91,7 @@ function useTransactions(currencyCode: string): TransactionsState {
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
 	const [total, setTotal] = useState(0);
 	const [listState, setListState] = useState<LoadState>(LOAD_STATE.LOADING);
-	const [totals, setTotals] = useState<TransactionTotals | undefined>(undefined);
+	const [summary, setSummary] = useState<TransactionSummary | undefined>(undefined);
 	const [summaryState, setSummaryState] = useState<LoadState>(LOAD_STATE.LOADING);
 	const [kind, setKind] = useState<TransactionKind>(TRANSACTION_KIND.EXPENSE);
 	const [amount, setAmountValue] = useState('');
@@ -183,9 +186,9 @@ function useTransactions(currencyCode: string): TransactionsState {
 		const generation = ++summaryGeneration.current;
 		setSummaryState(LOAD_STATE.LOADING);
 		try {
-			const monthTransactions = await fetchAllTransactions(currentMonthRange(), signal);
+			const summaryTransactions = await fetchAllTransactions(monthsRange(SUMMARY_MONTHS), signal);
 			if (generation === summaryGeneration.current) {
-				setTotals(summarizeTransactions(monthTransactions, currencyCode));
+				setSummary(buildTransactionSummary(summaryTransactions, currencyCode, language));
 				setSummaryState(LOAD_STATE.READY);
 			}
 		} catch {
@@ -218,6 +221,20 @@ function useTransactions(currencyCode: string): TransactionsState {
 
 	function cancelDelete(): void {
 		setConfirmingTransactionId(undefined);
+	}
+
+	async function removeSelectedTransactions(ids: string[]): Promise<string[]> {
+		try {
+			await deleteTransactions(ids);
+			setFeedback({ message: copy.transactionsDeleted, tone: 'success' });
+			await refresh();
+
+			return ids;
+		} catch {
+			setFeedback({ message: copy.transactionsDeleteError, tone: 'error' });
+
+			return [];
+		}
 	}
 
 	function openCreate(): void {
@@ -323,6 +340,7 @@ function useTransactions(currencyCode: string): TransactionsState {
 		copy,
 		currencyCode,
 		date,
+		deleteSelectedTransactions: removeSelectedTransactions,
 		deleteTransaction: removeTransaction,
 		deletingTransactionId,
 		description,
@@ -357,9 +375,9 @@ function useTransactions(currencyCode: string): TransactionsState {
 		setKind,
 		setPageSize,
 		submit,
+		summary,
 		summaryState,
 		total,
-		totals,
 		transactions,
 	};
 }

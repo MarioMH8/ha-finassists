@@ -7,6 +7,7 @@ import { createRef } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { MonthSummary, TransactionForm, TransactionList } from './components';
+import { buildTransactionSummary } from './transaction-summary';
 import type { Transaction } from './transactions-api';
 import { LOAD_STATE } from './transactions-constants';
 import type { TransactionsState } from './use-transactions.hook';
@@ -42,6 +43,7 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 		copy: getCopy(language),
 		currencyCode: 'EUR',
 		date: '2024-03-05',
+		deleteSelectedTransactions: () => Promise.resolve([]),
 		deleteTransaction: asyncNoop,
 		deletingTransactionId: undefined,
 		description: '',
@@ -70,9 +72,9 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 		setKind: noop,
 		setPageSize: noop,
 		submit: asyncNoop,
+		summary: buildTransactionSummary([], 'EUR', language, new Date(2024, 2, 15)),
 		summaryState: LOAD_STATE.READY,
 		total: 0,
-		totals: undefined,
 		transactions: [],
 		...overrides,
 	};
@@ -170,6 +172,14 @@ describe('TransactionList', () => {
 		expect(markup).toContain('New transaction');
 	});
 
+	test('offers per-row and select-all checkboxes for bulk deletion', () => {
+		const markup = render('en', <TransactionList {...state('en', { total: 1, transactions: [expense()] })} />);
+
+		expect(markup).toContain('aria-label="Select all transactions"');
+		expect(markup).toContain('aria-label="Select transaction: Lunch"');
+		expect(markup).toContain('Delete selected transactions?');
+	});
+
 	test('asks for confirmation in a dialog before deleting', () => {
 		const markup = render(
 			'es',
@@ -203,14 +213,27 @@ describe('TransactionList', () => {
 
 describe('MonthSummary', () => {
 	test('shows income, expenses and net totals', () => {
+		const summary = buildTransactionSummary([], 'EUR', 'en', new Date(2024, 2, 15));
 		const markup = render(
 			'en',
-			<MonthSummary {...state('en', { totals: { expenseMinor: 2000, incomeMinor: 5000, netMinor: 3000 } })} />
+			<MonthSummary
+				{...state('en', {
+					summary: {
+						...summary,
+						expenseMinor: 2000,
+						incomeMinor: 5000,
+						netMinor: 3000,
+					},
+				})}
+			/>
 		);
 
 		expect(markup).toContain('€50.00');
 		expect(markup).toContain('€20.00');
 		expect(markup).toContain('+€30.00');
+		expect(markup).toContain('Income and expenses');
+		expect(markup).toContain('aria-label="Show chart"');
+		expect(markup).toContain('aria-expanded="false"');
 	});
 
 	test('shows an error when totals cannot be loaded', () => {

@@ -9,6 +9,7 @@ import type {
 } from '../../domain';
 
 export class MockLedgerRepository implements TransactionRepository {
+	private readonly deleteManyMock = mock<TransactionRepository['deleteMany']>(() => Promise.resolve(0));
 	private readonly deleteMock = mock<TransactionRepository['delete']>(() => Promise.resolve(false));
 	private readonly findByIdMock = mock<TransactionRepository['findById']>(() => Promise.resolve(undefined));
 	private readonly saveMock = mock<TransactionRepository['save']>(() => Promise.resolve());
@@ -35,6 +36,10 @@ export class MockLedgerRepository implements TransactionRepository {
 		return this.deleteMock(criteria);
 	}
 
+	async deleteMany(ids: string[]): Promise<number> {
+		return this.deleteManyMock(ids);
+	}
+
 	async findById(id: string): Promise<Transaction | undefined> {
 		return this.findByIdMock(id);
 	}
@@ -49,6 +54,10 @@ export class MockLedgerRepository implements TransactionRepository {
 
 	shouldDelete(isDeleted: boolean): void {
 		this.deleteMock.mockResolvedValue(isDeleted);
+	}
+
+	shouldDeleteMany(deleted: number): void {
+		this.deleteManyMock.mockResolvedValue(deleted);
 	}
 
 	shouldFind(transaction: Transaction | undefined): void {

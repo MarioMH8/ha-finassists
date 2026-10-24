@@ -4,6 +4,7 @@ import type { Transaction } from './transactions-api';
 import {
 	createTransaction,
 	deleteTransaction,
+	deleteTransactions,
 	fetchAllTransactions,
 	fetchTransactionPage,
 	summarizeTransactions,
@@ -144,6 +145,22 @@ describe('transactions api', () => {
 		mockFetch(() => jsonResponse({ error: 'not found' }, 404));
 
 		expect(await outcome(updateTransaction('missing', { amountMinor: 100 }))).toBe('rejected');
+	});
+
+	test('deletes several transactions with one request', async () => {
+		mockFetch(() => new Response(undefined, { status: 204 }));
+
+		await deleteTransactions(['a', 'b']);
+
+		expect(calls[0]?.url).toBe('./api/v1/transactions');
+		expect(calls[0]?.method).toBe('DELETE');
+		expect(JSON.parse(calls[0]?.body ?? '{}')).toEqual({ ids: ['a', 'b'] });
+	});
+
+	test('rejects when bulk deletion fails', async () => {
+		mockFetch(() => jsonResponse({ error: 'invalid' }, 400));
+
+		expect(await outcome(deleteTransactions(['a', 'b']))).toBe('rejected');
 	});
 
 	test('deletes a transaction by its encoded identifier', async () => {

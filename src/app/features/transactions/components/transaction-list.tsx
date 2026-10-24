@@ -13,7 +13,7 @@ import { Select, SELECT_SIZE } from '@app/components/select';
 import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
 import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { formatDate, formatMinorUnits } from '../transaction-amount';
 import { TRANSACTION_KIND } from '../transactions-api';
@@ -31,6 +31,7 @@ type TransactionListProps = Pick<
 	| 'clearFilters'
 	| 'confirmingTransactionId'
 	| 'copy'
+	| 'deleteSelectedTransactions'
 	| 'deleteTransaction'
 	| 'deletingTransactionId'
 	| 'feedback'
@@ -68,6 +69,7 @@ function TransactionList({
 	clearFilters,
 	confirmingTransactionId,
 	copy,
+	deleteSelectedTransactions,
 	deleteTransaction,
 	deletingTransactionId,
 	feedback,
@@ -91,6 +93,10 @@ function TransactionList({
 }: TransactionListProps): ReactElement {
 	const [filtersOpen, setFiltersOpen] = useState(false);
 	const [draftFilters, setDraftFilters] = useState<TransactionFilters>(filters);
+	const [selectedIds, setSelectedIds] = useState<string[]>([]);
+	const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+	const [isDeletingSelected, setIsDeletingSelected] = useState(false);
+	const selectAllReference = useRef<HTMLInputElement>(null);
 	const transactionPendingDelete = transactions.find(transaction => transaction.id === confirmingTransactionId);
 	const isDeleting = deletingTransactionId === transactionPendingDelete?.id;
 	const rangeStart = total === 0 ? 0 : pageIndex * pageSize + 1;
@@ -106,6 +112,39 @@ function TransactionList({
 		draftFilters.fromDate !== '' ||
 		draftFilters.search !== '' ||
 		draftFilters.toDate !== '';
+	const selectedCount = selectedIds.length;
+	const isAllSelected = transactions.length > 0 && selectedCount === transactions.length;
+	const isSomeSelected = selectedCount > 0 && !isAllSelected;
+
+	useEffect(() => {
+		setSelectedIds(current => current.filter(id => transactions.some(transaction => transaction.id === id)));
+	}, [transactions]);
+
+	useEffect(() => {
+		if (selectAllReference.current) {
+			selectAllReference.current.indeterminate = isSomeSelected;
+		}
+	}, [isSomeSelected]);
+
+	function toggleSelected(transactionId: string): void {
+		setSelectedIds(current =>
+			current.includes(transactionId) ? current.filter(id => id !== transactionId) : [...current, transactionId]
+		);
+	}
+
+	function toggleAllSelected(): void {
+		setSelectedIds(isAllSelected ? [] : transactions.map(transaction => transaction.id));
+	}
+
+	async function confirmBulkDelete(): Promise<void> {
+		setIsDeletingSelected(true);
+		const deletedIds = await deleteSelectedTransactions(selectedIds);
+		setIsDeletingSelected(false);
+		setIsBulkDeleteOpen(false);
+		if (deletedIds.length > 0) {
+			setSelectedIds(current => current.filter(id => !deletedIds.includes(id)));
+		}
+	}
 	const tableToolbar = (
 		<div className={styles.toolbar}>
 			<div className={styles.toolbarActions}>
@@ -146,6 +185,32 @@ function TransactionList({
 					))}
 				</Select>
 			</label>
+		</div>
+	);
+	const selectionToolbar = (
+		<div className={styles.selectionBar}>
+			<p>{interpolate(copy.transactionSelectedCount, { count: selectedCount })}</p>
+			<div className={styles.selectionActions}>
+				<Button
+					appearance={BUTTON_APPEARANCE.PLAIN}
+					onClick={() => {
+						setSelectedIds([]);
+					}}
+					size={BUTTON_SIZE.SMALL}
+					type='button'>
+					{copy.cancel}
+				</Button>
+				<Button
+					appearance={BUTTON_APPEARANCE.FILLED}
+					onClick={() => {
+						setIsBulkDeleteOpen(true);
+					}}
+					size={BUTTON_SIZE.SMALL}
+					type='button'
+					variant={BUTTON_VARIANT.DANGER}>
+					{copy.transactionDeleteSelected}
+				</Button>
+			</div>
 		</div>
 	);
 	const filterDialogFooter = (
@@ -201,6 +266,27 @@ function TransactionList({
 			</Button>
 		</>
 	);
+	const bulkDeleteFooter = (
+		<>
+			<Button
+				onClick={() => {
+					setIsBulkDeleteOpen(false);
+				}}
+				type='button'>
+				{copy.cancel}
+			</Button>
+			<Button
+				appearance={BUTTON_APPEARANCE.FILLED}
+				aria-busy={isDeletingSelected}
+				disabled={isDeletingSelected}
+				onClick={() => void confirmBulkDelete()}
+				size={BUTTON_SIZE.MEDIUM}
+				type='button'
+				variant={BUTTON_VARIANT.DANGER}>
+				{isDeletingSelected ? copy.transactionDeleting : copy.transactionDeleteSelected}
+			</Button>
+		</>
+	);
 
 	return (
 		<section
@@ -232,9 +318,19 @@ function TransactionList({
 						) : undefined}
 						<DataTable
 							aria-busy={isListBusy || undefined}
-							header={tableToolbar}>
+							header={selectedCount > 0 ? selectionToolbar : tableToolbar}>
 							<thead>
 								<tr>
+									<DataHeaderCell className={styles.selectionCell}>
+										<input
+											aria-label={copy.transactionSelectAll}
+											checked={isAllSelected}
+											className={styles.checkbox}
+											onChange={toggleAllSelected}
+											ref={selectAllReference}
+											type='checkbox'
+										/>
+									</DataHeaderCell>
 									<DataHeaderCell>{copy.transactionColumnDate}</DataHeaderCell>
 									<DataHeaderCell>{copy.transactionColumnDescription}</DataHeaderCell>
 									<DataHeaderCell align={DATA_ALIGN.END}>
@@ -252,7 +348,24 @@ function TransactionList({
 									const signedMinor = isIncome ? transaction.amountMinor : -transaction.amountMinor;
 
 									return (
-										<tr key={transaction.id}>
+										<tr
+											className={classNames(
+												selectedIds.includes(transaction.id) && styles.selectedRow
+											)}
+											key={transaction.id}>
+											<DataCell className={styles.selectionCell}>
+												<input
+													aria-label={interpolate(copy.transactionSelect, {
+														description,
+													})}
+													checked={selectedIds.includes(transaction.id)}
+													className={styles.checkbox}
+													onChange={() => {
+														toggleSelected(transaction.id);
+													}}
+													type='checkbox'
+												/>
+											</DataCell>
 											<DataCell className={styles.date}>
 												<time dateTime={transaction.transactionDate}>
 													{formatDate(transaction.transactionDate, language)}
@@ -447,6 +560,18 @@ function TransactionList({
 					)}
 				</div>
 			</Dialog>
+			<Dialog
+				closeLabel={copy.close}
+				description={interpolate(copy.transactionDeleteSelectedPrompt, { count: selectedCount })}
+				footer={bulkDeleteFooter}
+				id='transaction-bulk-delete-dialog'
+				onClose={() => {
+					setIsBulkDeleteOpen(false);
+				}}
+				open={isBulkDeleteOpen}
+				title={copy.transactionDeleteSelectedTitle}
+				type={DIALOG_TYPE.ALERT}
+			/>
 			<Dialog
 				closeLabel={copy.close}
 				description={
