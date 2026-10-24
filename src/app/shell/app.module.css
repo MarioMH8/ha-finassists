@@ -8,7 +8,19 @@
   display: grid;
   width: min(100% - 48px, 1120px);
   gap: 24px;
-  margin: 32px auto 48px;
+  margin: 16px auto 48px;
+}
+
+.visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .main-content:focus-visible {
@@ -19,6 +31,6 @@
   .main-content {
     width: min(100% - 24px, 1120px);
     gap: 16px;
-    margin: 16px auto 32px;
+    margin: 8px auto 32px;
   }
 }

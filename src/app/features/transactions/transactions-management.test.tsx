@@ -174,15 +174,18 @@ describe('App', () => {
 		expect(markup).not.toContain('Resumen');
 	});
 
-	test('hides the navigation when it is disabled', () => {
+	test('renders a visually hidden page heading without a branded header', () => {
 		const markup = renderToStaticMarkup(
 			<App
 				language='en'
-				settings={{ ...DEFAULT_SHELL_CONFIG, showNavigation: false }}
+				settings={DEFAULT_SHELL_CONFIG}
 			/>
 		);
 
 		expect(markup).toContain('New transaction');
-		expect(markup).not.toContain('Application navigation');
+		expect(markup).toContain('Application navigation');
+		expect(markup).toContain('<main');
+		expect(markup.indexOf('<h1')).toBeGreaterThan(markup.indexOf('<main'));
+		expect(markup).not.toContain('<svg');
 	});
 });

@@ -8,7 +8,7 @@ import type { ReactElement } from 'react';
 import { useState } from 'react';
 
 import styles from './app.module.css';
-import { AppHeader, AppNavigation } from './components';
+import { AppNavigation } from './components';
 
 interface AppProps {
 	language: Language;
@@ -29,29 +29,22 @@ function App({ language, settings }: AppProps): ReactElement {
 		[SECTION.TOKENS]: copy.navigationTokens,
 		[SECTION.TRANSACTIONS]: copy.navigationTransactions,
 	};
-	const sections: Section[] = settings.showNavigation
-		? [SECTION.TRANSACTIONS, SECTION.TOKENS]
-		: [SECTION.TRANSACTIONS];
+	const sections: Section[] = [SECTION.TRANSACTIONS, SECTION.TOKENS];
 
 	return (
 		<LocaleProvider language={language}>
 			<div className={styles['app-shell']}>
-				<AppHeader
-					applicationName={settings.applicationName}
-					showLogo={settings.showLogo}
+				<AppNavigation
+					ariaLabel={copy.navigationAriaLabel}
+					items={sections.map(item => ({ label: labels[item], value: item }))}
+					onChange={setSection}
+					value={section}
 				/>
-				{sections.length > 1 && (
-					<AppNavigation
-						ariaLabel={copy.navigationAriaLabel}
-						items={sections.map(item => ({ label: labels[item], value: item }))}
-						onChange={setSection}
-						value={section}
-					/>
-				)}
 				<main
 					className={styles['main-content']}
 					id='main-content'
 					tabIndex={-1}>
+					<h1 className={styles['visually-hidden']}>{settings.applicationName}</h1>
 					{section === SECTION.TRANSACTIONS && (
 						<TransactionsManagement currencyCode={settings.currencyCode} />
 					)}

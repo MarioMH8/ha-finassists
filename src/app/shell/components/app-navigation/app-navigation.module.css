@@ -1,16 +1,16 @@
 .band {
-  padding: 0 max(24px, calc((100vw - 1120px) / 2));
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
 
 .band > nav {
+  width: min(100% - 48px, 1120px);
+  margin: 0 auto;
   border-bottom: 0;
 }
 
 @media (max-width: 600px) {
-  .band {
-    padding-right: 8px;
-    padding-left: 8px;
+  .band > nav {
+    width: min(100% - 24px, 1120px);
   }
 }

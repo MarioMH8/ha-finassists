@@ -297,9 +297,9 @@ describe('createServer', () => {
 			scriptResponse.text(),
 			stylesheetResponse.text(),
 		]);
-		const moduleClass = /class="[^"]*app-header_[A-Za-z0-9_-]+/
+		const moduleClass = /class="[^"]*main-content_[A-Za-z0-9_-]+/
 			.exec(page)?.[0]
-			.match(/app-header_[A-Za-z0-9_-]+/)?.[0];
+			.match(/main-content_[A-Za-z0-9_-]+/)?.[0];
 
 		expect(pageResponse.status).toBe(200);
 		expect(scriptResponse.status).toBe(200);

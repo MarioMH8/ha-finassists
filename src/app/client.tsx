@@ -8,8 +8,6 @@ const language = rootElement?.getAttribute('data-language') === LANGUAGE.SPANISH
 const settings = {
 	applicationName: rootElement?.getAttribute('data-application-name') ?? DEFAULT_SHELL_CONFIG.applicationName,
 	currencyCode: rootElement?.getAttribute('data-currency-code') ?? DEFAULT_SHELL_CONFIG.currencyCode,
-	showLogo: rootElement?.getAttribute('data-show-logo') !== 'false',
-	showNavigation: rootElement?.getAttribute('data-show-navigation') !== 'false',
 };
 
 if (rootElement) {

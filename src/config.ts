@@ -39,8 +39,6 @@ const homeAssistantOptionsSchema = z
 	.object({
 		application_name: z.string().optional().catch(undefined),
 		currency: z.string().optional().catch(undefined),
-		show_logo: z.boolean().optional().catch(undefined),
-		show_navigation: z.boolean().optional().catch(undefined),
 		supervisor_ip: z.string().optional().catch(undefined),
 	})
 	.catch({});
@@ -132,8 +130,6 @@ async function loadServerConfig({
 				? normalizedName
 				: DEFAULT_SHELL_CONFIG.applicationName,
 		currencyCode: normalizeCurrencyCode(options.currency),
-		showLogo: options.show_logo ?? DEFAULT_SHELL_CONFIG.showLogo,
-		showNavigation: options.show_navigation ?? DEFAULT_SHELL_CONFIG.showNavigation,
 	};
 
 	const bootstrapCapability = readOptionalEnvironmentValue(environment.SYSTEM_CREDENTIAL_BOOTSTRAP_CAPABILITY);
