@@ -1,5 +1,5 @@
-import type { Classification, ClassificationRepository } from '../domain';
-import { ClassificationError, classificationLabels } from '../domain';
+import type { Classification, ClassificationRepository } from '@modules/classifications/domain';
+import { ClassificationError, classificationLabels } from '@modules/classifications/domain';
 
 function assertBookExists(repository: ClassificationRepository, bookId: string): 'active' | 'archived' {
 	const state = repository.bookState(bookId);

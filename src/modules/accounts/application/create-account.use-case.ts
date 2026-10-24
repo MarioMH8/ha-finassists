@@ -1,9 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
+import type { AccountRepository } from '@modules/accounts/domain';
+import { Account, AccountBookArchivedError, AccountBookNotFoundError } from '@modules/accounts/domain';
 import type { BookRepository } from '@modules/books/domain';
-
-import type { AccountRepository } from '../domain';
-import { Account, AccountBookArchivedError, AccountBookNotFoundError } from '../domain';
 
 interface CreateAccountInput {
 	bookId: string;

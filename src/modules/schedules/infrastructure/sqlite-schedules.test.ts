@@ -1,9 +1,5 @@
 import { CreateTransaction } from '@modules/ledger/application';
 import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
-import { migrateDatabase } from '@modules/storage/infrastructure';
-import { Database } from 'bun:sqlite';
-import { describe, expect, it } from 'bun:test';
-
 import {
 	ChangeScheduleStatus,
 	CreateSchedule,
@@ -11,7 +7,7 @@ import {
 	ListSchedules,
 	RecordScheduleOccurrence,
 	UpdateSchedule,
-} from '../application';
+} from '@modules/schedules/application';
 import {
 	ScheduleNotFoundError,
 	ScheduleOccurrence,
@@ -22,7 +18,11 @@ import {
 	ScheduleOccurrenceLedgerTransactionNotFoundError,
 	ScheduleOccurrenceLinkConflictError,
 	ScheduleOccurrenceNotFoundError,
-} from '../domain';
+} from '@modules/schedules/domain';
+import { migrateDatabase } from '@modules/storage/infrastructure';
+import { Database } from 'bun:sqlite';
+import { describe, expect, it } from 'bun:test';
+
 import {
 	initializeScheduleSchema,
 	SqliteScheduleOccurrenceRepository,

@@ -1,7 +1,7 @@
+import { FinancialTransactionMother } from '@modules/ledger/domain/transaction.mother';
+import { MockLedgerRepository } from '@modules/ledger/infrastructure/repositories/mock-ledger.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { FinancialTransactionMother } from '../domain/transaction.mother';
-import { MockLedgerRepository } from '../infrastructure/repositories/mock-ledger.repository';
 import { DeleteTransaction } from './delete-transaction.use-case';
 
 describe('DeleteTransaction', () => {

@@ -1,5 +1,5 @@
-import type { BudgetActualsQuery, BudgetReport, BudgetRepository } from '../domain';
-import { BudgetNotFoundError } from '../domain';
+import type { BudgetActualsQuery, BudgetReport, BudgetRepository } from '@modules/budgets/domain';
+import { BudgetNotFoundError } from '@modules/budgets/domain';
 
 interface GetBudgetReportInput {
 	bookId: string;

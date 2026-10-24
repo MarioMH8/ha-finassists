@@ -1,6 +1,5 @@
+import type { Budget, BudgetCriteria, BudgetDeleteCriteria, BudgetRepository } from '@modules/budgets/domain';
 import { expect, mock } from 'bun:test';
-
-import type { Budget, BudgetCriteria, BudgetDeleteCriteria, BudgetRepository } from '../../domain';
 
 export class MockBudgetRepository implements BudgetRepository {
 	private readonly deleteMock = mock<BudgetRepository['delete']>(() => false);

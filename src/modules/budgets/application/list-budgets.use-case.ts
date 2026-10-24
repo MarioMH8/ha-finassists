@@ -1,4 +1,4 @@
-import type { Budget, BudgetRepository } from '../domain';
+import type { Budget, BudgetRepository } from '@modules/budgets/domain';
 
 interface ListBudgetsInput {
 	accountId?: string;

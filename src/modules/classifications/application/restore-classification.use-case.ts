@@ -1,4 +1,5 @@
-import type { Classification, ClassificationRepository } from '../domain';
+import type { Classification, ClassificationRepository } from '@modules/classifications/domain';
+
 import { assertWritableBook, requireActiveParent, requireClassification } from './guards';
 
 /**

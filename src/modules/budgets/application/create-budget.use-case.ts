@@ -2,9 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { AccountRepository } from '@modules/accounts/domain';
 import type { BookRepository } from '@modules/books/domain';
-import type { CategoryRepository, ClassRepository } from '@modules/classifications/domain';
-
-import type { BudgetRepository } from '../domain';
+import type { BudgetRepository } from '@modules/budgets/domain';
 import {
 	Budget,
 	BudgetAccountNotFoundError,
@@ -14,7 +12,8 @@ import {
 	BudgetCategoryNotFoundError,
 	BudgetClassArchivedError,
 	BudgetClassNotFoundError,
-} from '../domain';
+} from '@modules/budgets/domain';
+import type { CategoryRepository, ClassRepository } from '@modules/classifications/domain';
 
 interface CreateBudgetInput {
 	accountId: string;

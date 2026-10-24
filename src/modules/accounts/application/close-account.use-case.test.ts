@@ -1,7 +1,7 @@
+import { AccountMother } from '@modules/accounts/domain/account.mother';
+import { MockAccountRepository } from '@modules/accounts/infrastructure/repositories/mock-account.repository';
 import { afterEach, beforeEach, describe, expect, it, setSystemTime } from 'bun:test';
 
-import { AccountMother } from '../domain/account.mother';
-import { MockAccountRepository } from '../infrastructure/repositories/mock-account.repository';
 import { CloseAccount } from './close-account.use-case';
 
 const NOW = '2026-02-01T00:00:00.000Z';

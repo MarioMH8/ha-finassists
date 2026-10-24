@@ -1,5 +1,5 @@
-import type { CreateTransactionInput, LedgerRepository } from '../domain';
-import { FinancialTransaction } from '../domain';
+import type { CreateTransactionInput, LedgerRepository } from '@modules/ledger/domain';
+import { FinancialTransaction } from '@modules/ledger/domain';
 
 class CreateTransaction {
 	constructor(private readonly repository: LedgerRepository) {}

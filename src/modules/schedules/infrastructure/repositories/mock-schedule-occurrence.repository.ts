@@ -1,6 +1,9 @@
+import type {
+	ScheduleOccurrence,
+	ScheduleOccurrenceCriteria,
+	ScheduleOccurrenceRepository,
+} from '@modules/schedules/domain';
 import { expect, mock } from 'bun:test';
-
-import type { ScheduleOccurrence, ScheduleOccurrenceCriteria, ScheduleOccurrenceRepository } from '../../domain';
 
 export class MockScheduleOccurrenceRepository implements ScheduleOccurrenceRepository {
 	private readonly findMock = mock<ScheduleOccurrenceRepository['find']>();

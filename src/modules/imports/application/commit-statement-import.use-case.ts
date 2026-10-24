@@ -1,7 +1,7 @@
+import type { StatementImportRecord } from '@modules/imports/domain';
+import { ImportError } from '@modules/imports/domain';
 import type { LedgerRepository } from '@modules/ledger/domain';
 
-import type { StatementImportRecord } from '../domain';
-import { ImportError } from '../domain';
 import type { ImportDependencies, ImportRequest } from './plan-import';
 import { planImport } from './plan-import';
 

@@ -1,6 +1,13 @@
+import {
+	PAYEE_CSV,
+	QIF_BASIC,
+	QIF_OPTION_AND_SPLIT,
+	STATEMENT_CSV,
+	toUtf8,
+	toWindows1252,
+} from '@modules/imports/fixtures';
 import { describe, expect, it } from 'bun:test';
 
-import { PAYEE_CSV, QIF_BASIC, QIF_OPTION_AND_SPLIT, STATEMENT_CSV, toUtf8, toWindows1252 } from '../fixtures';
 import {
 	assertWithinLimits,
 	decodeText,

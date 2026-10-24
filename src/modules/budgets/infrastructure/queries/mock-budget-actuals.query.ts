@@ -1,6 +1,5 @@
+import type { Budget, BudgetActualsQuery } from '@modules/budgets/domain';
 import { expect, mock } from 'bun:test';
-
-import type { Budget, BudgetActualsQuery } from '../../domain';
 
 export class MockBudgetActualsQuery implements BudgetActualsQuery {
 	private readonly actualMinorMock = mock<BudgetActualsQuery['actualMinor']>(() => 0n);

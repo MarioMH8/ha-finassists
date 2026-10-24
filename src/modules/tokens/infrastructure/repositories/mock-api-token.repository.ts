@@ -1,6 +1,5 @@
+import type { ApiToken, ApiTokenCriteria, ApiTokenDeleteCriteria, ApiTokenRepository } from '@modules/tokens/domain';
 import { expect, mock } from 'bun:test';
-
-import type { ApiToken, ApiTokenCriteria, ApiTokenDeleteCriteria, ApiTokenRepository } from '../../domain';
 
 export class MockApiTokenRepository implements ApiTokenRepository {
 	private readonly deleteMock = mock<ApiTokenRepository['delete']>(() => Promise.resolve(false));

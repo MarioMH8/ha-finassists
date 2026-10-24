@@ -1,4 +1,4 @@
-import type { ApiToken, ApiTokenRepository } from '../domain';
+import type { ApiToken, ApiTokenRepository } from '@modules/tokens/domain';
 
 export class ListApiTokens {
 	constructor(private readonly apiTokenRepository: ApiTokenRepository) {}

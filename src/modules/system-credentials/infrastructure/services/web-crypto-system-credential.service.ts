@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer';
 
-import type { SystemCredentialSecret, SystemCredentialService } from '../../domain';
+import type { SystemCredentialSecret, SystemCredentialService } from '@modules/system-credentials/domain';
 
 const SYSTEM_CREDENTIAL_PREFIX_LENGTH = 11;
 

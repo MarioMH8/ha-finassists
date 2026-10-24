@@ -1,4 +1,4 @@
-import type { AccountRepository } from '../domain';
+import type { AccountRepository } from '@modules/accounts/domain';
 
 class CloseAccount {
 	constructor(private readonly repository: AccountRepository) {}

@@ -1,11 +1,10 @@
 import { Button, BUTTON_VARIANT } from '@app/components/button';
+import styles from '@app/features/api-tokens/token-management.module.css';
+import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
+import { formatTokenDate } from '@app/features/api-tokens/use-api-tokens.hook';
 import { formatTokenCount } from '@app/i18n';
 import { useLocale } from '@app/i18n/locale-context';
 import type { ReactElement } from 'react';
-
-import styles from '../token-management.module.css';
-import type { ApiTokenManagementState } from '../use-api-tokens.hook';
-import { formatTokenDate } from '../use-api-tokens.hook';
 
 type ActiveTokenListProps = Pick<
 	ApiTokenManagementState,

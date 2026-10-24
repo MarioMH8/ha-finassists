@@ -1,8 +1,8 @@
+import { TransactionDateFormatInvalidError } from '@modules/ledger/domain';
+import { FinancialTransactionMother } from '@modules/ledger/domain/transaction.mother';
+import { MockLedgerRepository } from '@modules/ledger/infrastructure/repositories/mock-ledger.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { TransactionDateFormatInvalidError } from '../domain';
-import { FinancialTransactionMother } from '../domain/transaction.mother';
-import { MockLedgerRepository } from '../infrastructure/repositories/mock-ledger.repository';
 import { CreateTransaction } from './create-transaction.use-case';
 
 describe('CreateTransaction', () => {

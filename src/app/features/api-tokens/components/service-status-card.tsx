@@ -1,7 +1,6 @@
+import styles from '@app/features/api-tokens/token-management.module.css';
+import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
 import type { ReactElement } from 'react';
-
-import styles from '../token-management.module.css';
-import type { ApiTokenManagementState } from '../use-api-tokens.hook';
 
 type ServiceStatusCardProps = Pick<ApiTokenManagementState, 'copy' | 'serviceMessage' | 'serviceState'>;
 

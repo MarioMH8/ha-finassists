@@ -1,7 +1,6 @@
+import type { BookCriteria, BookRepository } from '@modules/books/domain';
+import { Book } from '@modules/books/domain';
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
-
-import type { BookCriteria, BookRepository } from '../../domain';
-import { Book } from '../../domain';
 
 interface BookRow {
 	archived_at: null | string;

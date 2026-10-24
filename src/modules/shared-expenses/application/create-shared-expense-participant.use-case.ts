@@ -1,11 +1,10 @@
 import type { BookRepository } from '@modules/books/domain';
-
-import type { SharedExpenseRepository } from '../domain';
+import type { SharedExpenseRepository } from '@modules/shared-expenses/domain';
 import {
 	SharedExpenseParticipant,
 	SharedExpenseParticipantBookArchivedError,
 	SharedExpenseParticipantBookNotFoundError,
-} from '../domain';
+} from '@modules/shared-expenses/domain';
 
 interface CreateSharedExpenseParticipantInput {
 	bookId: string;

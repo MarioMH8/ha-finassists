@@ -1,11 +1,10 @@
 import type { LedgerRepository } from '@modules/ledger/domain';
-
-import type { ScheduleOccurrenceRepository, ScheduleRepository } from '../domain';
-import type { CreateScheduledPaymentInput, UpdateScheduledPaymentInput } from '../domain/schedule';
-import { SCHEDULE_STATUS, ScheduledPayment } from '../domain/schedule';
-import { ScheduleNotFoundError } from '../domain/schedule.error';
-import type { LedgerTransactionReference } from '../domain/schedule-occurrence';
-import { ScheduleOccurrence } from '../domain/schedule-occurrence';
+import type { ScheduleOccurrenceRepository, ScheduleRepository } from '@modules/schedules/domain';
+import type { CreateScheduledPaymentInput, UpdateScheduledPaymentInput } from '@modules/schedules/domain/schedule';
+import { SCHEDULE_STATUS, ScheduledPayment } from '@modules/schedules/domain/schedule';
+import { ScheduleNotFoundError } from '@modules/schedules/domain/schedule.error';
+import type { LedgerTransactionReference } from '@modules/schedules/domain/schedule-occurrence';
+import { ScheduleOccurrence } from '@modules/schedules/domain/schedule-occurrence';
 import {
 	ScheduleOccurrenceGenerationLimitInvalidError,
 	ScheduleOccurrenceGenerationThroughDateInvalidError,
@@ -13,7 +12,7 @@ import {
 	ScheduleOccurrenceLedgerTransactionMismatchError,
 	ScheduleOccurrenceLedgerTransactionNotFoundError,
 	ScheduleOccurrenceNotFoundError,
-} from '../domain/schedule-occurrence.error';
+} from '@modules/schedules/domain/schedule-occurrence.error';
 
 class CreateSchedule {
 	constructor(private readonly schedules: ScheduleRepository) {}

@@ -1,5 +1,6 @@
-import type { ClassificationRepository } from '../domain';
-import { Classification } from '../domain';
+import type { ClassificationRepository } from '@modules/classifications/domain';
+import { Classification } from '@modules/classifications/domain';
+
 import { assertWritableBook, requireActiveParent, requireClassification } from './guards';
 
 interface UpdateClassificationInput {

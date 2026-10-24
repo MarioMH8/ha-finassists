@@ -2,8 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { BookRepository } from '@modules/books/domain';
 import type { IngressActor } from '@modules/home-assistant/domain';
-
-import type { SharedExpenseRepository } from '../domain';
+import type { SharedExpenseRepository } from '@modules/shared-expenses/domain';
 import {
 	SharedExpense,
 	SharedExpenseBookArchivedError,
@@ -11,7 +10,7 @@ import {
 	SharedExpenseParticipantInactiveError,
 	SharedExpenseParticipantNotFoundError,
 	SharedExpenseParticipantsDuplicateError,
-} from '../domain';
+} from '@modules/shared-expenses/domain';
 
 interface CreateSharedExpenseInput {
 	actor: IngressActor;

@@ -1,8 +1,8 @@
+import { ApiTokenMother } from '@modules/tokens/domain/api-token.mother';
+import { MockApiTokenRepository } from '@modules/tokens/infrastructure/repositories/mock-api-token.repository';
+import { MockTokenCredentialService } from '@modules/tokens/infrastructure/services/mock-token-credential.service';
 import { describe, expect, it } from 'bun:test';
 
-import { ApiTokenMother } from '../domain/api-token.mother';
-import { MockApiTokenRepository } from '../infrastructure/repositories/mock-api-token.repository';
-import { MockTokenCredentialService } from '../infrastructure/services/mock-token-credential.service';
 import { AuthenticateApiToken } from './authenticate-api-token.use-case';
 
 describe('AuthenticateApiToken', () => {

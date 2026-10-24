@@ -1,8 +1,8 @@
+import { ArchiveBook, CreateBook, DeleteBook, EnsureDefaultBook, ListBooks } from '@modules/books/application';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
-import { ArchiveBook, CreateBook, DeleteBook, EnsureDefaultBook, ListBooks } from '../../application';
 import { SqliteBookRepository } from './sqlite-book.repository';
 
 describe('book use cases', () => {

@@ -1,7 +1,7 @@
+import { BookNameInvalidError } from '@modules/books/domain';
+import { MockBookRepository } from '@modules/books/infrastructure/repositories/mock-book.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { BookNameInvalidError } from '../domain';
-import { MockBookRepository } from '../infrastructure/repositories/mock-book.repository';
 import { CreateBook } from './create-book.use-case';
 
 describe('CreateBook', () => {

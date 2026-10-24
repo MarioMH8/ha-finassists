@@ -1,7 +1,7 @@
+import { BookMother } from '@modules/books/domain/book.mother';
+import { MockBookRepository } from '@modules/books/infrastructure/repositories/mock-book.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { BookMother } from '../domain/book.mother';
-import { MockBookRepository } from '../infrastructure/repositories/mock-book.repository';
 import { EnsureDefaultBook } from './ensure-default-book.use-case';
 
 describe('EnsureDefaultBook', () => {

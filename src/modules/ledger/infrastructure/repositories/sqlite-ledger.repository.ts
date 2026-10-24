@@ -1,19 +1,18 @@
 import { randomUUID } from 'node:crypto';
 
-import type { Database } from 'bun:sqlite';
-
 import type {
 	CreateTransactionInput,
 	CreateTransferInput,
 	LedgerRepository,
 	TransactionPart,
 	TransactionStatus,
-} from '../../domain';
+} from '@modules/ledger/domain';
 import {
 	FinancialTransaction,
 	TransferAmountDirectionInvalidError,
 	TransferPeerReconciliationError,
-} from '../../domain';
+} from '@modules/ledger/domain';
+import type { Database } from 'bun:sqlite';
 
 const JSON_NULL = JSON.parse('null') as null;
 
@@ -247,7 +246,7 @@ class SqliteLedgerRepository implements LedgerRepository {
 	update(
 		bookId: string,
 		id: string,
-		input: import('../../domain').UpdateTransactionInput
+		input: import('@modules/ledger/domain').UpdateTransactionInput
 	): FinancialTransaction | undefined {
 		const update = this.database.transaction(() => {
 			const existing = this.database

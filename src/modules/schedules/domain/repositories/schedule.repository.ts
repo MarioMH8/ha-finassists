@@ -1,4 +1,4 @@
-import type { ScheduledPayment, ScheduleFrequency, ScheduleStatus } from '../schedule';
+import type { ScheduledPayment, ScheduleFrequency, ScheduleStatus } from '@modules/schedules/domain/schedule';
 
 interface ScheduleCriteria {
 	accountId?: string;

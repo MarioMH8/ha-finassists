@@ -1,4 +1,4 @@
-import type { Book } from '../book';
+import type { Book } from '@modules/books/domain/book';
 
 interface BookCriteria {
 	archivedAt?: null | string;

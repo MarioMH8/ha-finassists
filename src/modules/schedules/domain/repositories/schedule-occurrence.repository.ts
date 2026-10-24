@@ -1,4 +1,4 @@
-import type { OccurrenceStatus, ScheduleOccurrence } from '../schedule-occurrence';
+import type { OccurrenceStatus, ScheduleOccurrence } from '@modules/schedules/domain/schedule-occurrence';
 
 interface ScheduleOccurrenceCriteria {
 	accountId?: string;

@@ -1,6 +1,9 @@
+import type {
+	AccountTransactionTotalsCriteria,
+	AccountTransactionTotalsQuery,
+	TransactionTotals,
+} from '@modules/accounts/domain';
 import { expect, mock } from 'bun:test';
-
-import type { AccountTransactionTotalsCriteria, AccountTransactionTotalsQuery, TransactionTotals } from '../../domain';
 
 export class MockAccountTransactionTotalsQuery implements AccountTransactionTotalsQuery {
 	private readonly sumByStatusMock = mock<AccountTransactionTotalsQuery['sumByStatus']>(() => ({

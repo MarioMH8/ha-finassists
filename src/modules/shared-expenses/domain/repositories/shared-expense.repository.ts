@@ -1,5 +1,5 @@
-import type { SharedExpenseParticipant } from '../participant';
-import type { SharedExpense, SharedExpenseActor } from '../shared-expense';
+import type { SharedExpenseParticipant } from '@modules/shared-expenses/domain/participant';
+import type { SharedExpense, SharedExpenseActor } from '@modules/shared-expenses/domain/shared-expense';
 
 interface ListSharedExpensesOptions {
 	includeClosed?: boolean;

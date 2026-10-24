@@ -1,17 +1,17 @@
 import { CreateBook, EnsureDefaultBook } from '@modules/books/application';
 import { SqliteBookRepository } from '@modules/books/infrastructure';
-import { migrateDatabase } from '@modules/storage/infrastructure';
-import { Database } from 'bun:sqlite';
-import { describe, expect, it } from 'bun:test';
-
 import {
 	CreateTransaction,
 	CreateTransfer,
 	DeleteTransaction,
 	SetTransactionStatus,
 	UpdateTransaction,
-} from '../../application';
-import { FinancialTransaction } from '../../domain';
+} from '@modules/ledger/application';
+import { FinancialTransaction } from '@modules/ledger/domain';
+import { migrateDatabase } from '@modules/storage/infrastructure';
+import { Database } from 'bun:sqlite';
+import { describe, expect, it } from 'bun:test';
+
 import { SqliteLedgerRepository } from './sqlite-ledger.repository';
 
 const JSON_NULL = JSON.parse('null') as null;

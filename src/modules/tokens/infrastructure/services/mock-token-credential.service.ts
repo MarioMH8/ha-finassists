@@ -1,6 +1,5 @@
+import type { TokenCredential, TokenCredentialService } from '@modules/tokens/domain';
 import { expect, mock } from 'bun:test';
-
-import type { TokenCredential, TokenCredentialService } from '../../domain';
 
 export class MockTokenCredentialService implements TokenCredentialService {
 	private readonly createMock = mock<TokenCredentialService['create']>();

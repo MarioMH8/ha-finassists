@@ -1,4 +1,4 @@
-import type { SharedExpenseRepository } from '../domain';
+import type { SharedExpenseRepository } from '@modules/shared-expenses/domain';
 
 class RemoveSharedExpenseParticipant {
 	constructor(private readonly expenses: SharedExpenseRepository) {}

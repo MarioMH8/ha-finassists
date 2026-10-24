@@ -1,6 +1,6 @@
+import { MockApiTokenRepository } from '@modules/tokens/infrastructure/repositories/mock-api-token.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { MockApiTokenRepository } from '../infrastructure/repositories/mock-api-token.repository';
 import { RevokeApiToken } from './revoke-api-token.use-case';
 import { RevokeApiTokenParametersMother } from './revoke-api-token.use-case.mother';
 

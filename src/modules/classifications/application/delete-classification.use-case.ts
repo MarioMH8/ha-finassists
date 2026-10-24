@@ -1,5 +1,6 @@
-import type { ClassificationRepository } from '../domain';
-import { ClassificationError, classificationLabels } from '../domain';
+import type { ClassificationRepository } from '@modules/classifications/domain';
+import { ClassificationError, classificationLabels } from '@modules/classifications/domain';
+
 import { assertWritableBook, requireClassification } from './guards';
 
 /**

@@ -1,13 +1,12 @@
 import { randomUUID } from 'node:crypto';
 
-import type { Database } from 'bun:sqlite';
-
 import type {
 	ImportFormat,
 	RecordStatementImportInput,
 	StatementImportRecord,
 	StatementImportRepository,
-} from '../domain';
+} from '@modules/imports/domain';
+import type { Database } from 'bun:sqlite';
 
 interface StatementImportRow {
 	account_id: string;

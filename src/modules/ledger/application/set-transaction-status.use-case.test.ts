@@ -1,8 +1,8 @@
+import type { TransactionStatus } from '@modules/ledger/domain';
+import { FinancialTransactionMother } from '@modules/ledger/domain/transaction.mother';
+import { MockLedgerRepository } from '@modules/ledger/infrastructure/repositories/mock-ledger.repository';
 import { describe, expect, it } from 'bun:test';
 
-import type { TransactionStatus } from '../domain';
-import { FinancialTransactionMother } from '../domain/transaction.mother';
-import { MockLedgerRepository } from '../infrastructure/repositories/mock-ledger.repository';
 import { SetTransactionStatus } from './set-transaction-status.use-case';
 
 const ALLOWED_TRANSITIONS: [TransactionStatus, TransactionStatus][] = [

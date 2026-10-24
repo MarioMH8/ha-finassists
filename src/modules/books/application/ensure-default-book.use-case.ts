@@ -1,5 +1,5 @@
-import type { BookRepository } from '../domain';
-import { Book } from '../domain';
+import type { BookRepository } from '@modules/books/domain';
+import { Book } from '@modules/books/domain';
 
 class EnsureDefaultBook {
 	constructor(private readonly repository: BookRepository) {}

@@ -1,6 +1,5 @@
+import type { Classification, ClassificationKind, ClassificationRepository } from '@modules/classifications/domain';
 import { expect, mock } from 'bun:test';
-
-import type { Classification, ClassificationKind, ClassificationRepository } from '../../domain';
 
 export class MockClassificationRepository<
 	K extends ClassificationKind = ClassificationKind,

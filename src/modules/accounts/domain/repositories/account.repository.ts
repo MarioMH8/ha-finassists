@@ -1,4 +1,4 @@
-import type { Account, AccountKind } from '../account';
+import type { Account, AccountKind } from '@modules/accounts/domain/account';
 
 interface AccountCriteria {
 	bookId?: string;

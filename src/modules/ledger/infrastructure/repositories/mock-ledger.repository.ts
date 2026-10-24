@@ -1,5 +1,3 @@
-import { expect, mock } from 'bun:test';
-
 import type {
 	CreateTransactionInput,
 	CreateTransferInput,
@@ -7,7 +5,8 @@ import type {
 	LedgerRepository,
 	TransactionStatus,
 	UpdateTransactionInput,
-} from '../../domain';
+} from '@modules/ledger/domain';
+import { expect, mock } from 'bun:test';
 
 type Transfer = ReturnType<LedgerRepository['createTransfer']>;
 

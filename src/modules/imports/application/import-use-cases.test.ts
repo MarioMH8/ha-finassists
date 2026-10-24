@@ -5,16 +5,16 @@ import { CloseAccount } from '@modules/accounts/application';
 import { SqliteAccountRepository } from '@modules/accounts/infrastructure';
 import { ArchiveBook, CreateBook, EnsureDefaultBook } from '@modules/books/application';
 import { SqliteBookRepository } from '@modules/books/infrastructure';
+import type { ImportFormat } from '@modules/imports/domain';
+import { DEFAULT_IMPORT_LIMITS, ImportError } from '@modules/imports/domain';
+import { PAYEE_CSV, QIF_BASIC, STATEMENT_CSV, toUtf8, toWindows1252 } from '@modules/imports/fixtures';
+import { SqliteStatementImportRepository } from '@modules/imports/infrastructure';
 import type { LedgerRepository } from '@modules/ledger/domain';
 import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import type { ImportFormat } from '../domain';
-import { DEFAULT_IMPORT_LIMITS, ImportError } from '../domain';
-import { PAYEE_CSV, QIF_BASIC, STATEMENT_CSV, toUtf8, toWindows1252 } from '../fixtures';
-import { SqliteStatementImportRepository } from '../infrastructure';
 import type { ImportDependencies } from '.';
 import { CommitStatementImport, PreviewStatementImport } from '.';
 

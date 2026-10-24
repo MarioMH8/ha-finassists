@@ -1,4 +1,4 @@
-import type { BookRepository } from '../domain';
+import type { BookRepository } from '@modules/books/domain';
 
 class ArchiveBook {
 	constructor(private readonly repository: BookRepository) {}

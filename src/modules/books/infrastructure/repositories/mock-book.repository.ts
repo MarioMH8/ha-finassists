@@ -1,6 +1,5 @@
+import type { Book, BookCriteria, BookRepository } from '@modules/books/domain';
 import { expect, mock } from 'bun:test';
-
-import type { Book, BookCriteria, BookRepository } from '../../domain';
 
 export class MockBookRepository implements BookRepository {
 	private readonly deleteMock = mock<BookRepository['delete']>(() => false);

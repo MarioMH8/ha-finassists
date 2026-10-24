@@ -1,7 +1,6 @@
+import type { ApiTokenCriteria, ApiTokenDeleteCriteria, ApiTokenRepository } from '@modules/tokens/domain';
+import { ApiToken } from '@modules/tokens/domain';
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
-
-import type { ApiTokenCriteria, ApiTokenDeleteCriteria, ApiTokenRepository } from '../../domain';
-import { ApiToken } from '../../domain';
 
 interface TokenRow {
 	created_at: string;

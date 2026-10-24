@@ -1,7 +1,10 @@
+import type {
+	SharedExpenseActor,
+	SharedExpenseRepository,
+	SharedExpenseSettlementStatus,
+} from '@modules/shared-expenses/domain';
+import { SharedExpense, SharedExpenseParticipant } from '@modules/shared-expenses/domain';
 import type { Database } from 'bun:sqlite';
-
-import type { SharedExpenseActor, SharedExpenseRepository, SharedExpenseSettlementStatus } from '../../domain';
-import { SharedExpense, SharedExpenseParticipant } from '../../domain';
 
 interface ExpenseRow {
 	actor_id: null | string;

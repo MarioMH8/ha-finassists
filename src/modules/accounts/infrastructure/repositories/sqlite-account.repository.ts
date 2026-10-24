@@ -1,5 +1,3 @@
-import type { Database, SQLQueryBindings } from 'bun:sqlite';
-
 import type {
 	AccountCriteria,
 	AccountDeleteCriteria,
@@ -8,8 +6,9 @@ import type {
 	AccountTransactionTotalsCriteria,
 	AccountTransactionTotalsQuery,
 	TransactionTotals,
-} from '../../domain';
-import { Account, AccountIdentityConflictError } from '../../domain';
+} from '@modules/accounts/domain';
+import { Account, AccountIdentityConflictError } from '@modules/accounts/domain';
+import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
 interface AccountRow {
 	book_id: string;

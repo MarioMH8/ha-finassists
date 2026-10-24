@@ -3,15 +3,15 @@ import { CreateAccount } from '@modules/accounts/application';
 import { SqliteAccountRepository } from '@modules/accounts/infrastructure';
 import { CreateBook } from '@modules/books/application';
 import { SqliteBookRepository } from '@modules/books/infrastructure';
+import { CreateBudget, GetBudgetReport, ListBudgets } from '@modules/budgets/application';
+import { Budget, BudgetIdentityConflictError, BudgetPeriodOverlapError } from '@modules/budgets/domain';
+import { initializeBudgetSchema } from '@modules/budgets/infrastructure/initialize-budget-schema';
+import { SqliteBudgetActualsQuery } from '@modules/budgets/infrastructure/queries';
 import { CreateClassification, SqliteCategoryRepository, SqliteClassRepository } from '@modules/classifications';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
-import { CreateBudget, GetBudgetReport, ListBudgets } from '../../application';
-import { Budget, BudgetIdentityConflictError, BudgetPeriodOverlapError } from '../../domain';
-import { initializeBudgetSchema } from '../initialize-budget-schema';
-import { SqliteBudgetActualsQuery } from '../queries';
 import { SqliteBudgetRepository } from './sqlite-budget.repository';
 
 function setup() {

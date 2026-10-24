@@ -1,4 +1,5 @@
-import type { ImportFormat, ImportIssue, PayeeDirectoryEntry, StatementImportRecord } from '../domain';
+import type { ImportFormat, ImportIssue, PayeeDirectoryEntry, StatementImportRecord } from '@modules/imports/domain';
+
 import type { ImportDependencies, ImportRequest } from './plan-import';
 import { planImport } from './plan-import';
 

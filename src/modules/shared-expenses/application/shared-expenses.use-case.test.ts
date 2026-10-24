@@ -1,9 +1,5 @@
 import { CreateBook } from '@modules/books/application';
 import { SqliteBookRepository } from '@modules/books/infrastructure';
-import { migrateDatabase } from '@modules/storage/infrastructure';
-import { Database } from 'bun:sqlite';
-import { describe, expect, it } from 'bun:test';
-
 import {
 	SharedExpenseBookArchivedError,
 	SharedExpenseBookNotFoundError,
@@ -12,8 +8,12 @@ import {
 	SharedExpenseParticipantInactiveError,
 	SharedExpenseParticipantNotFoundError,
 	SharedExpenseParticipantsDuplicateError,
-} from '../domain';
-import { initializeSharedExpenseSchema, SqliteSharedExpenseRepository } from '../infrastructure';
+} from '@modules/shared-expenses/domain';
+import { initializeSharedExpenseSchema, SqliteSharedExpenseRepository } from '@modules/shared-expenses/infrastructure';
+import { migrateDatabase } from '@modules/storage/infrastructure';
+import { Database } from 'bun:sqlite';
+import { describe, expect, it } from 'bun:test';
+
 import {
 	CloseSharedExpense,
 	CreateSharedExpense,

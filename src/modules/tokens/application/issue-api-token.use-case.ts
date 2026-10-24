@@ -1,5 +1,5 @@
-import type { ApiTokenRepository, TokenCredentialService } from '../domain';
-import { ApiToken } from '../domain';
+import type { ApiTokenRepository, TokenCredentialService } from '@modules/tokens/domain';
+import { ApiToken } from '@modules/tokens/domain';
 
 interface IssueApiTokenParameters {
 	name: string;

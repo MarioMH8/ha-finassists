@@ -1,7 +1,7 @@
+import { ClassificationMother } from '@modules/classifications/domain/classification.mother';
+import { MockClassificationRepository } from '@modules/classifications/infrastructure/repositories/mock-classification.repository';
 import { afterEach, beforeEach, describe, expect, it, setSystemTime } from 'bun:test';
 
-import { ClassificationMother } from '../domain/classification.mother';
-import { MockClassificationRepository } from '../infrastructure/repositories/mock-classification.repository';
 import { ArchiveClassification } from './archive-classification.use-case';
 
 const NOW = '2026-02-01T00:00:00.000Z';

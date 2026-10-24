@@ -1,14 +1,14 @@
 import { migrateDatabase } from '@modules/storage/infrastructure';
-import { Database } from 'bun:sqlite';
-import { afterEach, describe, expect, it } from 'bun:test';
-
 import {
 	AuthenticateSystemCredential,
 	ExchangeSystemCredential,
 	RevokeSystemCredential,
 	RotateSystemCredential,
-} from '../../application';
-import { WebCryptoSystemCredentialService } from '../services/web-crypto-system-credential.service';
+} from '@modules/system-credentials/application';
+import { WebCryptoSystemCredentialService } from '@modules/system-credentials/infrastructure/services/web-crypto-system-credential.service';
+import { Database } from 'bun:sqlite';
+import { afterEach, describe, expect, it } from 'bun:test';
+
 import { SqliteSystemCredentialRepository } from './sqlite-system-credential.repository';
 
 describe('SqliteSystemCredentialRepository', () => {

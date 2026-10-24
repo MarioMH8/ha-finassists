@@ -1,7 +1,3 @@
-import { migrateDatabase } from '@modules/storage/infrastructure';
-import { Database } from 'bun:sqlite';
-import { describe, expect, it } from 'bun:test';
-
 import {
 	ArchiveClassification,
 	CreateClassification,
@@ -10,9 +6,13 @@ import {
 	ListClassificationTree,
 	RestoreClassification,
 	UpdateClassification,
-} from '../../application';
-import type { ClassificationErrorCode, ClassificationKind } from '../../domain';
-import { Classification, ClassificationError } from '../../domain';
+} from '@modules/classifications/application';
+import type { ClassificationErrorCode, ClassificationKind } from '@modules/classifications/domain';
+import { Classification, ClassificationError } from '@modules/classifications/domain';
+import { migrateDatabase } from '@modules/storage/infrastructure';
+import { Database } from 'bun:sqlite';
+import { describe, expect, it } from 'bun:test';
+
 import { SqliteCategoryRepository, SqliteClassRepository } from './sqlite-classification.repository';
 
 const JSON_NULL = JSON.parse('null') as null;

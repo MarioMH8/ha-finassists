@@ -1,4 +1,4 @@
-import type { ApiTokenRepository } from '../domain';
+import type { ApiTokenRepository } from '@modules/tokens/domain';
 
 export interface RevokeApiTokenParameters {
 	id: string;

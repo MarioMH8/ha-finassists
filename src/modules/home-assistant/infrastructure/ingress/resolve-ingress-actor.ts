@@ -1,7 +1,7 @@
 import { isIP } from 'node:net';
 
-import type { IngressActor } from '../../domain';
-import { ACTOR_KIND } from '../../domain';
+import type { IngressActor } from '@modules/home-assistant/domain';
+import { ACTOR_KIND } from '@modules/home-assistant/domain';
 
 const DEFAULT_TRUSTED_INGRESS_IP = '172.30.32.2';
 

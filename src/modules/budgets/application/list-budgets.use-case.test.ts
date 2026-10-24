@@ -1,7 +1,7 @@
+import { BudgetMother } from '@modules/budgets/domain/budget.mother';
+import { MockBudgetRepository } from '@modules/budgets/infrastructure/repositories/mock-budget.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { BudgetMother } from '../domain/budget.mother';
-import { MockBudgetRepository } from '../infrastructure/repositories/mock-budget.repository';
 import { ListBudgets } from './list-budgets.use-case';
 
 describe('ListBudgets', () => {

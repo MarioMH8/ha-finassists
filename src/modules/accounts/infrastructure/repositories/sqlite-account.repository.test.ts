@@ -1,17 +1,23 @@
-import { ArchiveBook, CreateBook, EnsureDefaultBook } from '@modules/books/application';
-import { SqliteBookRepository } from '@modules/books/infrastructure';
-import { migrateDatabase } from '@modules/storage/infrastructure';
-import { Database } from 'bun:sqlite';
-import { describe, expect, it } from 'bun:test';
-
-import { CloseAccount, CreateAccount, GetAccountBalances, ListAccounts, ReopenAccount } from '../../application';
+import {
+	CloseAccount,
+	CreateAccount,
+	GetAccountBalances,
+	ListAccounts,
+	ReopenAccount,
+} from '@modules/accounts/application';
 import {
 	Account,
 	AccountAsOfDateInvalidError,
 	AccountBookArchivedError,
 	AccountBookNotFoundError,
 	AccountIdentityConflictError,
-} from '../../domain';
+} from '@modules/accounts/domain';
+import { ArchiveBook, CreateBook, EnsureDefaultBook } from '@modules/books/application';
+import { SqliteBookRepository } from '@modules/books/infrastructure';
+import { migrateDatabase } from '@modules/storage/infrastructure';
+import { Database } from 'bun:sqlite';
+import { describe, expect, it } from 'bun:test';
+
 import { SqliteAccountRepository } from './sqlite-account.repository';
 
 type Status = 'cleared' | 'reconciled' | 'uncleared';

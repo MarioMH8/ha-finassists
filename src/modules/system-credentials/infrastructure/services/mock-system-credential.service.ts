@@ -1,6 +1,5 @@
+import type { SystemCredentialSecret, SystemCredentialService } from '@modules/system-credentials/domain';
 import { expect, mock } from 'bun:test';
-
-import type { SystemCredentialSecret, SystemCredentialService } from '../../domain';
 
 export class MockSystemCredentialService implements SystemCredentialService {
 	private readonly createMock = mock<SystemCredentialService['create']>();

@@ -1,4 +1,8 @@
-import type { ListSharedExpensesOptions, SharedExpense, SharedExpenseRepository } from '../domain';
+import type {
+	ListSharedExpensesOptions,
+	SharedExpense,
+	SharedExpenseRepository,
+} from '@modules/shared-expenses/domain';
 
 interface ListSharedExpensesInput extends ListSharedExpensesOptions {
 	bookId: string;

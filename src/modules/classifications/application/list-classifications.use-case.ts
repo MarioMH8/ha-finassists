@@ -1,5 +1,6 @@
-import type { Classification, ClassificationNode, ClassificationRepository } from '../domain';
-import { buildClassificationTree } from '../domain';
+import type { Classification, ClassificationNode, ClassificationRepository } from '@modules/classifications/domain';
+import { buildClassificationTree } from '@modules/classifications/domain';
+
 import { assertBookExists } from './guards';
 
 interface ListClassificationsOptions {

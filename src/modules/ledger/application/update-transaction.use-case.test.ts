@@ -1,8 +1,8 @@
+import { ReconciledTransactionBalanceChangeError } from '@modules/ledger/domain';
+import { FinancialTransactionMother } from '@modules/ledger/domain/transaction.mother';
+import { MockLedgerRepository } from '@modules/ledger/infrastructure/repositories/mock-ledger.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { ReconciledTransactionBalanceChangeError } from '../domain';
-import { FinancialTransactionMother } from '../domain/transaction.mother';
-import { MockLedgerRepository } from '../infrastructure/repositories/mock-ledger.repository';
 import { UpdateTransaction } from './update-transaction.use-case';
 
 describe('UpdateTransaction', () => {

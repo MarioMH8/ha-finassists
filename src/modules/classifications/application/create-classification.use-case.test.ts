@@ -1,8 +1,8 @@
+import { ClassificationError } from '@modules/classifications/domain';
+import { ClassificationMother } from '@modules/classifications/domain/classification.mother';
+import { MockClassificationRepository } from '@modules/classifications/infrastructure/repositories/mock-classification.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { ClassificationError } from '../domain';
-import { ClassificationMother } from '../domain/classification.mother';
-import { MockClassificationRepository } from '../infrastructure/repositories/mock-classification.repository';
 import { CreateClassification } from './create-classification.use-case';
 
 const ARCHIVED_AT = '2026-01-01T00:00:00.000Z';

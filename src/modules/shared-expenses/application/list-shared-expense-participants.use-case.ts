@@ -2,7 +2,7 @@ import type {
 	ListSharedExpenseParticipantsOptions,
 	SharedExpenseParticipant,
 	SharedExpenseRepository,
-} from '../domain';
+} from '@modules/shared-expenses/domain';
 
 interface ListSharedExpenseParticipantsInput extends ListSharedExpenseParticipantsOptions {
 	bookId: string;

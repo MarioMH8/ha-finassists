@@ -1,4 +1,4 @@
-import type { ApiToken } from '../api-token';
+import type { ApiToken } from '@modules/tokens/domain/api-token';
 
 interface ApiTokenCriteria {
 	id?: string;

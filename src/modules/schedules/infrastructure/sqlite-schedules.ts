@@ -1,5 +1,3 @@
-import type { Database, SQLQueryBindings } from 'bun:sqlite';
-
 import type {
 	ScheduleCriteria,
 	ScheduleFrequency,
@@ -7,13 +5,14 @@ import type {
 	ScheduleOccurrenceRepository,
 	ScheduleRepository,
 	ScheduleStatus,
-} from '../domain';
-import { ScheduledPayment } from '../domain';
-import { ScheduleOccurrence } from '../domain/schedule-occurrence';
+} from '@modules/schedules/domain';
+import { ScheduledPayment } from '@modules/schedules/domain';
+import { ScheduleOccurrence } from '@modules/schedules/domain/schedule-occurrence';
 import {
 	ScheduleOccurrenceIdentityConflictError,
 	ScheduleOccurrenceLinkConflictError,
-} from '../domain/schedule-occurrence.error';
+} from '@modules/schedules/domain/schedule-occurrence.error';
+import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
 interface ScheduleRow {
 	account_id: string;

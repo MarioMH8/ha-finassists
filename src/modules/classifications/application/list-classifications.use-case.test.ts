@@ -1,7 +1,7 @@
+import { ClassificationMother } from '@modules/classifications/domain/classification.mother';
+import { MockClassificationRepository } from '@modules/classifications/infrastructure/repositories/mock-classification.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { ClassificationMother } from '../domain/classification.mother';
-import { MockClassificationRepository } from '../infrastructure/repositories/mock-classification.repository';
 import { ListClassifications, ListClassificationTree } from './list-classifications.use-case';
 
 function createRepository() {

@@ -1,7 +1,7 @@
+import { ApiTokenMother } from '@modules/tokens/domain/api-token.mother';
+import { MockApiTokenRepository } from '@modules/tokens/infrastructure/repositories/mock-api-token.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { ApiTokenMother } from '../domain/api-token.mother';
-import { MockApiTokenRepository } from '../infrastructure/repositories/mock-api-token.repository';
 import { ListApiTokens } from './list-api-tokens.use-case';
 
 describe('ListApiTokens', () => {

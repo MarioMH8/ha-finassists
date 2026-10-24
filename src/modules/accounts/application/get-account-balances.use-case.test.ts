@@ -1,12 +1,12 @@
+import { AccountAsOfDateInvalidError, AccountNotFoundError } from '@modules/accounts/domain';
+import { AccountMother } from '@modules/accounts/domain/account.mother';
+import { MockAccountRepository } from '@modules/accounts/infrastructure/repositories/mock-account.repository';
+import { MockAccountTransactionTotalsQuery } from '@modules/accounts/infrastructure/repositories/mock-account-transaction-totals.query';
 import { BookMother } from '@modules/books/domain/book.mother';
 import { MockBookRepository } from '@modules/books/infrastructure/repositories/mock-book.repository';
 import { Currency, Money } from '@modules/money/domain';
 import { describe, expect, it } from 'bun:test';
 
-import { AccountAsOfDateInvalidError, AccountNotFoundError } from '../domain';
-import { AccountMother } from '../domain/account.mother';
-import { MockAccountRepository } from '../infrastructure/repositories/mock-account.repository';
-import { MockAccountTransactionTotalsQuery } from '../infrastructure/repositories/mock-account-transaction-totals.query';
 import { GetAccountBalances } from './get-account-balances.use-case';
 
 function createUseCase() {

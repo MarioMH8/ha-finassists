@@ -1,7 +1,6 @@
+import type { BudgetCriteria, BudgetDeleteCriteria, BudgetRepository } from '@modules/budgets/domain';
+import { Budget, BudgetIdentityConflictError, BudgetPeriodOverlapError } from '@modules/budgets/domain';
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
-
-import type { BudgetCriteria, BudgetDeleteCriteria, BudgetRepository } from '../../domain';
-import { Budget, BudgetIdentityConflictError, BudgetPeriodOverlapError } from '../../domain';
 
 interface BudgetRow {
 	account_id: string;

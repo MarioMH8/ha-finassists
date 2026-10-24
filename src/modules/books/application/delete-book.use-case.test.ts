@@ -1,6 +1,6 @@
+import { MockBookRepository } from '@modules/books/infrastructure/repositories/mock-book.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { MockBookRepository } from '../infrastructure/repositories/mock-book.repository';
 import { DeleteBook } from './delete-book.use-case';
 
 describe('DeleteBook', () => {

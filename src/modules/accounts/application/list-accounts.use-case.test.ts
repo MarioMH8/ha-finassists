@@ -1,8 +1,7 @@
-import { ListAccounts } from '@modules/accounts';
+import { ListAccounts } from '@modules/accounts/application';
+import { AccountMother } from '@modules/accounts/domain/account.mother';
+import { MockAccountRepository } from '@modules/accounts/infrastructure/repositories/mock-account.repository';
 import { describe, expect, it } from 'bun:test';
-
-import { AccountMother } from '../domain/account.mother';
-import { MockAccountRepository } from '../infrastructure/repositories/mock-account.repository';
 
 describe('ListAccounts', () => {
 	describe('execute', () => {

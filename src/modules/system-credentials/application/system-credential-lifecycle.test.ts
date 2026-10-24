@@ -1,9 +1,9 @@
+import { SystemCredentialMother } from '@modules/system-credentials/domain/system-credential.mother';
+import { SystemCredentialSecretMother } from '@modules/system-credentials/domain/system-credential-secret.mother';
+import { MockSystemCredentialRepository } from '@modules/system-credentials/infrastructure/repositories/mock-system-credential.repository';
+import { MockSystemCredentialService } from '@modules/system-credentials/infrastructure/services/mock-system-credential.service';
 import { describe, expect, it } from 'bun:test';
 
-import { SystemCredentialMother } from '../domain/system-credential.mother';
-import { SystemCredentialSecretMother } from '../domain/system-credential-secret.mother';
-import { MockSystemCredentialRepository } from '../infrastructure/repositories/mock-system-credential.repository';
-import { MockSystemCredentialService } from '../infrastructure/services/mock-system-credential.service';
 import {
 	AuthenticateSystemCredential,
 	ExchangeSystemCredential,

@@ -1,4 +1,8 @@
-import type { SystemCredential, SystemCredentialRepository, SystemCredentialService } from '../domain';
+import type {
+	SystemCredential,
+	SystemCredentialRepository,
+	SystemCredentialService,
+} from '@modules/system-credentials/domain';
 
 const SYSTEM_CREDENTIAL_ID = 'home-assistant-integration';
 

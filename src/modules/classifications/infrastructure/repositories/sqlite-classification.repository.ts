@@ -1,7 +1,11 @@
+import type {
+	CategoryRepository,
+	ClassificationKind,
+	ClassificationRepository,
+	ClassRepository,
+} from '@modules/classifications/domain';
+import { Classification } from '@modules/classifications/domain';
 import type { Database } from 'bun:sqlite';
-
-import type { CategoryRepository, ClassificationKind, ClassificationRepository, ClassRepository } from '../../domain';
-import { Classification } from '../../domain';
 
 interface ClassificationRow {
 	archived_at: null | string;

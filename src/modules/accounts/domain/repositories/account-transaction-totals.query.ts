@@ -1,4 +1,4 @@
-import type { TransactionTotals } from '../account';
+import type { TransactionTotals } from '@modules/accounts/domain/account';
 
 interface AccountTransactionTotalsCriteria {
 	accountId: string;

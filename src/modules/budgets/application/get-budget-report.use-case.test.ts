@@ -1,9 +1,9 @@
+import { BudgetNotFoundError } from '@modules/budgets/domain';
+import { BudgetMother } from '@modules/budgets/domain/budget.mother';
+import { MockBudgetActualsQuery } from '@modules/budgets/infrastructure/queries/mock-budget-actuals.query';
+import { MockBudgetRepository } from '@modules/budgets/infrastructure/repositories/mock-budget.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { BudgetNotFoundError } from '../domain';
-import { BudgetMother } from '../domain/budget.mother';
-import { MockBudgetActualsQuery } from '../infrastructure/queries/mock-budget-actuals.query';
-import { MockBudgetRepository } from '../infrastructure/repositories/mock-budget.repository';
 import { GetBudgetReport } from './get-budget-report.use-case';
 
 describe('GetBudgetReport', () => {

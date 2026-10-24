@@ -1,5 +1,5 @@
-import type { LedgerRepository, TransactionStatus } from '../domain';
-import { TRANSACTION_STATUS } from '../domain';
+import type { LedgerRepository, TransactionStatus } from '@modules/ledger/domain';
+import { TRANSACTION_STATUS } from '@modules/ledger/domain';
 
 const ALLOWED_TRANSITIONS: Record<TransactionStatus, TransactionStatus[]> = {
 	[TRANSACTION_STATUS.CLEARED]: [TRANSACTION_STATUS.UNCLEARED, TRANSACTION_STATUS.RECONCILED],

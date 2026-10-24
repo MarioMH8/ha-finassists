@@ -1,6 +1,5 @@
+import type { Account, AccountCriteria, AccountDeleteCriteria, AccountRepository } from '@modules/accounts/domain';
 import { expect, mock } from 'bun:test';
-
-import type { Account, AccountCriteria, AccountDeleteCriteria, AccountRepository } from '../../domain';
 
 export class MockAccountRepository implements AccountRepository {
 	private readonly deleteMock = mock<AccountRepository['delete']>(() => false);

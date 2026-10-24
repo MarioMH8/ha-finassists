@@ -2,10 +2,6 @@ import { AccountMother } from '@modules/accounts/domain/account.mother';
 import { MockAccountRepository } from '@modules/accounts/infrastructure/repositories/mock-account.repository';
 import { BookMother } from '@modules/books/domain/book.mother';
 import { MockBookRepository } from '@modules/books/infrastructure/repositories/mock-book.repository';
-import { ClassificationMother } from '@modules/classifications/domain/classification.mother';
-import { MockClassificationRepository } from '@modules/classifications/infrastructure/repositories/mock-classification.repository';
-import { describe, expect, it } from 'bun:test';
-
 import {
 	BudgetAccountNotFoundError,
 	BudgetBookArchivedError,
@@ -14,8 +10,12 @@ import {
 	BudgetCategoryNotFoundError,
 	BudgetClassArchivedError,
 	BudgetClassNotFoundError,
-} from '../domain';
-import { MockBudgetRepository } from '../infrastructure/repositories/mock-budget.repository';
+} from '@modules/budgets/domain';
+import { MockBudgetRepository } from '@modules/budgets/infrastructure/repositories/mock-budget.repository';
+import { ClassificationMother } from '@modules/classifications/domain/classification.mother';
+import { MockClassificationRepository } from '@modules/classifications/infrastructure/repositories/mock-classification.repository';
+import { describe, expect, it } from 'bun:test';
+
 import { CreateBudget } from './create-budget.use-case';
 
 const NO_SCOPE = JSON.parse('null') as null;

@@ -1,4 +1,4 @@
-import type { LedgerRepository } from '../domain';
+import type { LedgerRepository } from '@modules/ledger/domain';
 
 class ListTransactions {
 	constructor(private readonly repository: LedgerRepository) {}

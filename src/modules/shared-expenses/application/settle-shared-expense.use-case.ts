@@ -1,7 +1,6 @@
 import type { IngressActor } from '@modules/home-assistant/domain';
-
-import type { SharedExpenseRepository } from '../domain';
-import { SharedExpense } from '../domain';
+import type { SharedExpenseRepository } from '@modules/shared-expenses/domain';
+import { SharedExpense } from '@modules/shared-expenses/domain';
 
 interface SettleSharedExpenseInput {
 	actor: IngressActor;

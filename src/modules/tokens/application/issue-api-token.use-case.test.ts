@@ -1,7 +1,7 @@
+import { MockApiTokenRepository } from '@modules/tokens/infrastructure/repositories/mock-api-token.repository';
+import { MockTokenCredentialService } from '@modules/tokens/infrastructure/services/mock-token-credential.service';
 import { describe, expect, it } from 'bun:test';
 
-import { MockApiTokenRepository } from '../infrastructure/repositories/mock-api-token.repository';
-import { MockTokenCredentialService } from '../infrastructure/services/mock-token-credential.service';
 import { IssueApiToken } from './issue-api-token.use-case';
 import { IssueApiTokenParametersMother } from './issue-api-token.use-case.mother';
 

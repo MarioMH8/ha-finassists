@@ -1,8 +1,8 @@
+import { TransferAccountsMustDifferError } from '@modules/ledger/domain';
+import { FinancialTransactionMother } from '@modules/ledger/domain/transaction.mother';
+import { MockLedgerRepository } from '@modules/ledger/infrastructure/repositories/mock-ledger.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { TransferAccountsMustDifferError } from '../domain';
-import { FinancialTransactionMother } from '../domain/transaction.mother';
-import { MockLedgerRepository } from '../infrastructure/repositories/mock-ledger.repository';
 import { CreateTransfer } from './create-transfer.use-case';
 
 describe('CreateTransfer', () => {

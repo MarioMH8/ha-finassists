@@ -1,6 +1,5 @@
+import type { SystemCredential, SystemCredentialRepository } from '@modules/system-credentials/domain';
 import type { Database } from 'bun:sqlite';
-
-import type { SystemCredential, SystemCredentialRepository } from '../../domain';
 
 interface SystemCredentialRow {
 	created_at: string;

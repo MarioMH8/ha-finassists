@@ -1,6 +1,5 @@
+import type { Budget, BudgetActualsQuery } from '@modules/budgets/domain';
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
-
-import type { Budget, BudgetActualsQuery } from '../../domain';
 
 interface ActualRow {
 	amount_minor: string;

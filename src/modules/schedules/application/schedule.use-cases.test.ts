@@ -1,7 +1,5 @@
 import { FinancialTransactionMother } from '@modules/ledger/domain/transaction.mother';
 import { MockLedgerRepository } from '@modules/ledger/infrastructure/repositories/mock-ledger.repository';
-import { afterEach, describe, expect, it, setSystemTime } from 'bun:test';
-
 import {
 	ScheduleAmountInvalidError,
 	ScheduleDateRangeInvalidError,
@@ -14,11 +12,13 @@ import {
 	ScheduleOccurrenceNotFoundError,
 	ScheduleOccurrenceRecordInvalidError,
 	ScheduleTransitionInvalidError,
-} from '../domain';
-import { ScheduledPaymentMother } from '../domain/schedule.mother';
-import { ScheduleOccurrenceMother } from '../domain/schedule-occurrence.mother';
-import { MockScheduleRepository } from '../infrastructure/repositories/mock-schedule.repository';
-import { MockScheduleOccurrenceRepository } from '../infrastructure/repositories/mock-schedule-occurrence.repository';
+} from '@modules/schedules/domain';
+import { ScheduledPaymentMother } from '@modules/schedules/domain/schedule.mother';
+import { ScheduleOccurrenceMother } from '@modules/schedules/domain/schedule-occurrence.mother';
+import { MockScheduleRepository } from '@modules/schedules/infrastructure/repositories/mock-schedule.repository';
+import { MockScheduleOccurrenceRepository } from '@modules/schedules/infrastructure/repositories/mock-schedule-occurrence.repository';
+import { afterEach, describe, expect, it, setSystemTime } from 'bun:test';
+
 import {
 	ChangeScheduleStatus,
 	CreateSchedule,

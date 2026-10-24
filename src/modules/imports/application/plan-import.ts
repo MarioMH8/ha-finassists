@@ -1,9 +1,5 @@
 import type { AccountRepository } from '@modules/accounts/domain';
 import type { BookRepository } from '@modules/books/domain';
-import type { CreateTransactionInput } from '@modules/ledger/domain';
-import { FinancialTransaction } from '@modules/ledger/domain';
-import { Currency, Money } from '@modules/money/domain';
-
 import type {
 	ImportFormat,
 	ImportIssue,
@@ -13,7 +9,7 @@ import type {
 	SourceRecord,
 	StatementImportRecord,
 	StatementImportRepository,
-} from '../domain';
+} from '@modules/imports/domain';
 import {
 	assertWithinLimits,
 	decodeText,
@@ -29,7 +25,10 @@ import {
 	parsePayeeCsv,
 	parseQif,
 	parseStatementCsv,
-} from '../domain';
+} from '@modules/imports/domain';
+import type { CreateTransactionInput } from '@modules/ledger/domain';
+import { FinancialTransaction } from '@modules/ledger/domain';
+import { Currency, Money } from '@modules/money/domain';
 
 interface ImportRequest {
 	accountId: string;

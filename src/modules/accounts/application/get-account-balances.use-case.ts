@@ -1,8 +1,7 @@
+import type { AccountBalances, AccountRepository, AccountTransactionTotalsQuery } from '@modules/accounts/domain';
+import { AccountAsOfDateInvalidError, AccountNotFoundError } from '@modules/accounts/domain';
 import type { BookRepository } from '@modules/books/domain';
 import { Currency } from '@modules/money/domain';
-
-import type { AccountBalances, AccountRepository, AccountTransactionTotalsQuery } from '../domain';
-import { AccountAsOfDateInvalidError, AccountNotFoundError } from '../domain';
 
 interface GetAccountBalancesInput {
 	/**

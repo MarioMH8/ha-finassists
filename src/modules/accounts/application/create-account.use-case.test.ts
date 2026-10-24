@@ -1,9 +1,9 @@
+import { AccountBookArchivedError, AccountBookNotFoundError } from '@modules/accounts/domain';
+import { MockAccountRepository } from '@modules/accounts/infrastructure/repositories/mock-account.repository';
 import { BookMother } from '@modules/books/domain/book.mother';
 import { MockBookRepository } from '@modules/books/infrastructure/repositories/mock-book.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { AccountBookArchivedError, AccountBookNotFoundError } from '../domain';
-import { MockAccountRepository } from '../infrastructure/repositories/mock-account.repository';
 import { CreateAccount } from './create-account.use-case';
 
 const input = { bookId: 'book-1', kind: 'savings', name: 'Rainy day', openingBalanceMinor: 2500 };

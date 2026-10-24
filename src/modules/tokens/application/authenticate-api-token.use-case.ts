@@ -1,4 +1,4 @@
-import type { ApiToken, ApiTokenRepository, TokenCredentialService } from '../domain';
+import type { ApiToken, ApiTokenRepository, TokenCredentialService } from '@modules/tokens/domain';
 
 export class AuthenticateApiToken {
 	constructor(
