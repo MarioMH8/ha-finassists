@@ -23,6 +23,7 @@ from .const import CONF_BASE_URL, CONF_SYSTEM_TOKEN, DOMAIN, PLATFORMS, UPDATE_I
 SERVICE_REFRESH = "refresh"
 SERVICE_ADD_EXPENSE = "add_expense"
 SERVICE_ADD_INCOME = "add_income"
+SERVICE_DELETE_TRANSACTION = "delete_transaction"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -120,7 +121,7 @@ def _to_minor_units(amount: Any, currency_code: str) -> int:
 
 
 def _async_register_services(hass: HomeAssistant) -> None:
-    """Register the refresh, add-expense, and add-income services once."""
+    """Register the refresh, add-expense, add-income, and delete-transaction services once."""
     import voluptuous as vol
 
     if not hass.services.has_service(DOMAIN, SERVICE_REFRESH):
@@ -167,3 +168,24 @@ def _async_register_services(hass: HomeAssistant) -> None:
             hass.services.async_register(
                 DOMAIN, service, make_handler(kind), schema=transaction_schema
             )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_DELETE_TRANSACTION):
+        async def async_delete_transaction(call: ServiceCall) -> None:
+            runtime = hass.data.get(DOMAIN, {}).get(call.data["entry_id"])
+            if runtime is None:
+                raise ValueError("Unknown Fin Assist config entry")
+            try:
+                await runtime["api"].async_delete_transaction(call.data["transaction_id"])
+            except FinAssistApiError as err:
+                raise ValueError(str(err)) from err
+            await runtime["coordinator"].async_request_refresh()
+
+        hass.services.async_register(
+            DOMAIN, SERVICE_DELETE_TRANSACTION, async_delete_transaction,
+            schema=vol.Schema(
+                {
+                    vol.Required("entry_id"): str,
+                    vol.Required("transaction_id"): str,
+                }
+            ),
+        )

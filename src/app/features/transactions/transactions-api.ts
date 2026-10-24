@@ -143,6 +143,16 @@ async function createTransaction(input: NewTransaction): Promise<Transaction> {
 	return transaction;
 }
 
+async function deleteTransaction(id: string): Promise<void> {
+	const response = await fetch(`${TRANSACTIONS_URL}/${encodeURIComponent(id)}`, {
+		headers: { Accept: 'application/json' },
+		method: 'DELETE',
+	});
+	if (!response.ok) {
+		throw new Error(`Transaction deletion failed with HTTP ${String(response.status)}`);
+	}
+}
+
 interface TransactionTotals {
 	expenseMinor: number;
 	incomeMinor: number;
@@ -168,6 +178,7 @@ function summarizeTransactions(transactions: readonly Transaction[], currencyCod
 
 export {
 	createTransaction,
+	deleteTransaction,
 	fetchAllTransactions,
 	fetchTransactionPage,
 	isTransaction,

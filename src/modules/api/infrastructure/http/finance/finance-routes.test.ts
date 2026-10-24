@@ -1,4 +1,4 @@
-import { CreateTransaction, ListTransactions } from '@modules/ledger/application';
+import { CreateTransaction, DeleteTransaction, ListTransactions } from '@modules/ledger/application';
 import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
@@ -52,7 +52,11 @@ function setup(): { useCases: FinanceUseCases } {
 
 	return {
 		useCases: {
-			ledger: { create: new CreateTransaction(repository, 'EUR'), list: new ListTransactions(repository) },
+			ledger: {
+				create: new CreateTransaction(repository, 'EUR'),
+				delete: new DeleteTransaction(repository),
+				list: new ListTransactions(repository),
+			},
 		},
 	};
 }
@@ -199,6 +203,28 @@ describe('transactions REST routes', () => {
 		const deleted = await send(useCases, '/api/v1/transactions', 'DELETE');
 		expect(deleted.status).toBe(405);
 		expect(deleted.headers.get('allow')).toBe('GET, POST');
+		const patched = await send(useCases, '/api/v1/transactions/transaction-1', 'PATCH');
+		expect(patched.status).toBe(405);
+		expect(patched.headers.get('allow')).toBe('DELETE');
+	});
+
+	it('deletes a transaction and reports a missing one', async () => {
+		const { useCases } = setup();
+		const created = await sendJson<TransactionJson>(useCases, '/api/v1/transactions', 'POST', {
+			amountMinor: 1250,
+			kind: 'expense',
+			transactionDate: '2026-05-10',
+		});
+
+		const deleted = await send(useCases, `/api/v1/transactions/${created.id}`, 'DELETE');
+		const remaining = await sendJson<PaginatedJson<TransactionJson>>(useCases, '/api/v1/transactions');
+		const missing = await send(useCases, `/api/v1/transactions/${created.id}`, 'DELETE');
+		const missingBody = await readJson<{ error: string }>(missing);
+
+		expect(deleted.status).toBe(204);
+		expect(remaining.total).toBe(0);
+		expect(missing.status).toBe(404);
+		expect(missingBody.error).toContain('not found');
 	});
 
 	it('serves stateless MCP tools only with a valid bearer token', async () => {
@@ -291,21 +317,33 @@ describe('transactions REST routes', () => {
 				params: { arguments: { kind: 'expense', limit: 10 }, name: 'list_transactions' },
 			})
 		);
+		const deleted = await readJson<MCPJson>(
+			await call({
+				id: 6,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: { arguments: { id: created.result.structuredContent.id }, name: 'delete_transaction' },
+			})
+		);
 		const removed = await readJson<MCPJson>(
-			await call({ id: 6, jsonrpc: '2.0', method: 'tools/call', params: { arguments: {}, name: 'list_books' } })
+			await call({ id: 7, jsonrpc: '2.0', method: 'tools/call', params: { arguments: {}, name: 'list_books' } })
 		);
 		const notification = await call({ jsonrpc: '2.0', method: 'notifications/initialized' });
 		const invalidOrigin = await call(
-			{ id: 7, jsonrpc: '2.0', method: 'ping' },
+			{ id: 8, jsonrpc: '2.0', method: 'ping' },
 			{ Origin: 'https://untrusted.example' }
 		);
-		const unacceptable = await call({ id: 8, jsonrpc: '2.0', method: 'ping' }, { Accept: 'application/json' });
+		const unacceptable = await call({ id: 9, jsonrpc: '2.0', method: 'ping' }, { Accept: 'application/json' });
 		const responseToGet = await handleMcpRequest(new Request('http://localhost/mcp'), tokenUseCases, useCases);
 
 		const initializedBody = await readJson<MCPJson>(initialized);
 		expect(initializedBody.result.serverInfo.name).toBe('fin-assist');
 		expect(initialized.headers.get('mcp-session-id')).toBeNull();
-		expect(listed.result.tools.map(tool => tool.name)).toEqual(['create_transaction', 'list_transactions']);
+		expect(listed.result.tools.map(tool => tool.name)).toEqual([
+			'create_transaction',
+			'delete_transaction',
+			'list_transactions',
+		]);
 		expect(created.result.isError).toBe(false);
 		expect(created.result.structuredContent).toMatchObject({
 			actorId: 'mcp-owner',
@@ -314,6 +352,7 @@ describe('transactions REST routes', () => {
 		});
 		expect(invalid.result.isError).toBe(true);
 		expect(mcpList.result.structuredContent.total).toBe(1);
+		expect(deleted.result.isError).toBe(false);
 		expect(removed.error.code).toBe(-32_602);
 		expect(notification.status).toBe(202);
 		expect(invalidOrigin.status).toBe(403);
@@ -321,7 +360,7 @@ describe('transactions REST routes', () => {
 		expect(responseToGet.status).toBe(405);
 
 		await tokenUseCases.revoke.execute({ id: issued.token.id, ownerId: 'mcp-owner' });
-		const noAuth = await call({ id: 9, jsonrpc: '2.0', method: 'tools/list' });
+		const noAuth = await call({ id: 10, jsonrpc: '2.0', method: 'tools/list' });
 		expect(noAuth.status).toBe(401);
 	});
 

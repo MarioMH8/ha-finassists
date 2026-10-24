@@ -1,13 +1,24 @@
 import { expect, mock } from 'bun:test';
 
-import type { Transaction, TransactionCriteria, TransactionPage, TransactionRepository } from '../../domain';
+import type {
+	Transaction,
+	TransactionCriteria,
+	TransactionDeleteCriteria,
+	TransactionPage,
+	TransactionRepository,
+} from '../../domain';
 
 export class MockLedgerRepository implements TransactionRepository {
+	private readonly deleteMock = mock<TransactionRepository['delete']>(() => Promise.resolve(false));
 	private readonly saveMock = mock<TransactionRepository['save']>(() => Promise.resolve());
 	private readonly searchMock = mock<TransactionRepository['search']>(() => Promise.resolve({ items: [], total: 0 }));
 
 	get saved(): Transaction[] {
 		return this.saveMock.mock.calls.map(([transaction]) => transaction);
+	}
+
+	assertDeleteHasBeenCalledWith(criteria: TransactionDeleteCriteria): void {
+		expect(this.deleteMock).toHaveBeenCalledWith(criteria);
 	}
 
 	assertSaveHasBeenCalledWith(transaction: Transaction): void {
@@ -18,12 +29,20 @@ export class MockLedgerRepository implements TransactionRepository {
 		expect(this.searchMock).toHaveBeenCalledWith(criteria);
 	}
 
+	async delete(criteria: TransactionDeleteCriteria): Promise<boolean> {
+		return this.deleteMock(criteria);
+	}
+
 	async save(transaction: Transaction): Promise<void> {
 		return this.saveMock(transaction);
 	}
 
 	async search(criteria: TransactionCriteria = {}): Promise<TransactionPage> {
 		return this.searchMock(criteria);
+	}
+
+	shouldDelete(isDeleted: boolean): void {
+		this.deleteMock.mockResolvedValue(isDeleted);
 	}
 
 	shouldSearch(page: TransactionPage): void {

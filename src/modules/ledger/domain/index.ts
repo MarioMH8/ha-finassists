@@ -1,5 +1,6 @@
 export type {
 	TransactionCriteria,
+	TransactionDeleteCriteria,
 	TransactionPage,
 	TransactionRepository,
 } from './repositories/transaction.repository';
@@ -17,4 +18,5 @@ export {
 	TransactionDateFormatInvalidError,
 	TransactionDescriptionTooLongError,
 	TransactionKindInvalidError,
+	TransactionNotFoundError,
 } from './transaction.error';

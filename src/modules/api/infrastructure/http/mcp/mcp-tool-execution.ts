@@ -24,6 +24,9 @@ function getToolRequest(
 				path: '/api/v1/transactions',
 			};
 		}
+		case 'delete_transaction': {
+			return { method: 'DELETE', path: `/api/v1/transactions/${encodeURIComponent(String(arguments_.id))}` };
+		}
 		case 'list_transactions': {
 			const query = new URLSearchParams();
 			for (const filter of LIST_FILTERS) {
@@ -63,7 +66,8 @@ async function invokeTool(
 		actor,
 		useCases
 	);
-	const value = JSON.parse(await response.text()) as unknown;
+	const text = await response.text();
+	const value: unknown = text === '' ? undefined : JSON.parse(text);
 
 	return { isError: !response.ok, ...textResult(value) };
 }

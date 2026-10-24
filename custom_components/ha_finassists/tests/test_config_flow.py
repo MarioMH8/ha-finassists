@@ -525,6 +525,8 @@ class _PagedSession:
         self.calls.append({"method": method, "url": url, **kwargs})
         if method == "POST":
             return _RequestContext(_Response(201, {"id": "transaction-1"}))
+        if method == "DELETE":
+            return _RequestContext(_Response(204))
         return _RequestContext(_Response(200, self.pages[len(self.calls) - 1]))
 
 
@@ -574,6 +576,14 @@ class TransactionApiTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertNotIn("description", session.calls[1]["json"])
 
+    async def test_delete_transaction_uses_contract_path(self) -> None:
+        session = _PagedSession([])
+        api = FinAssistApi("http://fin-assist/api/v1", "token", session)
+        await api.async_delete_transaction("transaction-1")
+
+        self.assertEqual(session.calls[0]["method"], "DELETE")
+        self.assertTrue(session.calls[0]["url"].endswith("/transactions/transaction-1"))
+
 
 class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
     def _register(self) -> tuple[dict[str, Any], Any, Any]:
@@ -585,7 +595,7 @@ class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
                 async_register=lambda domain, service, handler, schema: handlers.__setitem__(service, handler),
             ),
         )
-        api = SimpleNamespace(async_create_transaction=AsyncMock())
+        api = SimpleNamespace(async_create_transaction=AsyncMock(), async_delete_transaction=AsyncMock())
         coordinator = SimpleNamespace(
             data={"currencyCode": "EUR"}, async_request_refresh=AsyncMock()
         )
@@ -618,6 +628,23 @@ class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             await handlers["add_expense"](SimpleNamespace(data={"entry_id": "missing", "amount": "1"}))
         api.async_create_transaction.assert_not_awaited()
+
+    async def test_delete_transaction_removes_and_refreshes(self) -> None:
+        handlers, api, coordinator = self._register()
+        await handlers["delete_transaction"](
+            SimpleNamespace(data={"entry_id": "entry-1", "transaction_id": "transaction-1"})
+        )
+
+        api.async_delete_transaction.assert_awaited_once_with("transaction-1")
+        coordinator.async_request_refresh.assert_awaited_once()
+
+    async def test_delete_transaction_rejects_unknown_entry(self) -> None:
+        handlers, api, _ = self._register()
+        with self.assertRaises(ValueError):
+            await handlers["delete_transaction"](
+                SimpleNamespace(data={"entry_id": "missing", "transaction_id": "transaction-1"})
+            )
+        api.async_delete_transaction.assert_not_awaited()
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 import { Badge, BADGE_TONE } from '@app/components/badge';
-import { Button } from '@app/components/button';
+import { Button, BUTTON_SIZE, BUTTON_VARIANT } from '@app/components/button';
 import { Card } from '@app/components/card';
 import { classNames } from '@app/components/class-names';
-import { DataCell, DataTable } from '@app/components/data-table';
+import { DataCell, DataRowActions, DataTable } from '@app/components/data-table';
 import { EmptyState } from '@app/components/empty-state';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
@@ -17,17 +17,39 @@ import styles from './transaction-list.module.css';
 
 type TransactionListProps = Pick<
 	TransactionsState,
-	'copy' | 'hasMore' | 'isLoadingMore' | 'language' | 'listState' | 'loadMore' | 'refresh' | 'total' | 'transactions'
+	| 'cancelDelete'
+	| 'confirmationReference'
+	| 'confirmingTransactionId'
+	| 'copy'
+	| 'deleteTransaction'
+	| 'deletingTransactionId'
+	| 'hasMore'
+	| 'isLoadingMore'
+	| 'language'
+	| 'listReference'
+	| 'listState'
+	| 'loadMore'
+	| 'refresh'
+	| 'setConfirmingTransactionId'
+	| 'total'
+	| 'transactions'
 >;
 
 function TransactionList({
+	cancelDelete,
+	confirmationReference,
+	confirmingTransactionId,
 	copy,
+	deleteTransaction,
+	deletingTransactionId,
 	hasMore,
 	isLoadingMore,
 	language,
+	listReference,
 	listState,
 	loadMore,
 	refresh,
+	setConfirmingTransactionId,
 	total,
 	transactions,
 }: TransactionListProps): ReactElement {
@@ -63,9 +85,10 @@ function TransactionList({
 									<th>{copy.transactionColumnDescription}</th>
 									<th>{copy.transactionColumnKind}</th>
 									<th className={styles.amountHeading}>{copy.transactionColumnAmount}</th>
+									<th className={styles.actionsHeading}>{copy.transactionColumnActions}</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody ref={listReference}>
 								{transactions.map(transaction => {
 									const isIncome = transaction.kind === TRANSACTION_KIND.INCOME;
 									const signedMinor = isIncome ? transaction.amountMinor : -transaction.amountMinor;
@@ -100,6 +123,41 @@ function TransactionList({
 													language,
 													'exceptZero'
 												)}
+											</DataCell>
+											<DataCell className={styles.actions}>
+												<DataRowActions>
+													{confirmingTransactionId === transaction.id ? (
+														<>
+															<Button
+																aria-label={`${copy.transactionConfirmDelete}: ${transaction.description || copy.transactionNoDescription}`}
+																disabled={deletingTransactionId === transaction.id}
+																onClick={() => void deleteTransaction(transaction)}
+																ref={confirmationReference}
+																size={BUTTON_SIZE.COMPACT}
+																type='button'
+																variant={BUTTON_VARIANT.DANGER_CONFIRM}>
+																{copy.transactionConfirmDelete}
+															</Button>
+															<Button
+																onClick={() => cancelDelete(transaction.id)}
+																size={BUTTON_SIZE.COMPACT}
+																type='button'>
+																{copy.cancel}
+															</Button>
+														</>
+													) : (
+														<Button
+															aria-label={`${copy.transactionDelete}: ${transaction.description || copy.transactionNoDescription}`}
+															data-transaction-id={transaction.id}
+															disabled={deletingTransactionId === transaction.id}
+															onClick={() => setConfirmingTransactionId(transaction.id)}
+															size={BUTTON_SIZE.COMPACT}
+															type='button'
+															variant={BUTTON_VARIANT.DANGER}>
+															{copy.transactionDelete}
+														</Button>
+													)}
+												</DataRowActions>
 											</DataCell>
 										</tr>
 									);

@@ -6,10 +6,10 @@ A self-hosted financial app for Home Assistant, distributed as a Home Assistant 
 
 Fin Assist is intentionally minimal: it records **expenses and incomes** and nothing else. There are no accounts, categories, budgets, schedules, imports, or shared expenses; the product will grow from this base iteratively.
 
-- **Ingress UI:** a form to add an expense or income, a monthly summary, a recent-transactions list, and personal API-token management.
-- **REST API:** `GET`/`POST /api/v1/transactions` (see [the OpenAPI contract](docs/api-v1.openapi.yaml)).
-- **MCP:** `create_transaction` and `list_transactions` tools at `/mcp` (Streamable HTTP, bearer token).
-- **Home Assistant integration:** monthly income/expense sensors and `add_expense`, `add_income`, and `refresh` services; see [its README](custom_components/ha_finassists/README.md).
+- **Ingress UI:** a form to add an expense or income, a monthly summary, a recent-transactions list with per-row deletion, and personal API-token management.
+- **REST API:** `GET`/`POST /api/v1/transactions` and `DELETE /api/v1/transactions/{transactionId}` (see [the OpenAPI contract](docs/api-v1.openapi.yaml)).
+- **MCP:** `create_transaction`, `list_transactions`, and `delete_transaction` tools at `/mcp` (Streamable HTTP, bearer token).
+- **Home Assistant integration:** monthly income/expense sensors and `add_expense`, `add_income`, `delete_transaction`, and `refresh` services; see [its README](custom_components/ha_finassists/README.md).
 - **Currency:** one currency for the whole installation, set with the app's `currency` option (ISO 4217, default `EUR`).
 
 Upgrading from a build with the full financial model drops the old financial tables (books, accounts, transactions, ...) on first start; API tokens and the Home Assistant system credential are preserved.

@@ -1,6 +1,6 @@
 # Fin Assist Home Assistant integration
 
-This custom integration records expenses and incomes in Fin Assist. It provides two monthly total sensors, `refresh`, `add_expense` and `add_income` services, and a bundled Lovelace card. The implementation is provided for Phase 4, but this repository has not been validated against a live Home Assistant/Supervisor installation; treat the topology and lifecycle acceptance checks below as pending.
+This custom integration records expenses and incomes in Fin Assist. It provides two monthly total sensors, `refresh`, `add_expense`, `add_income` and `delete_transaction` services, and a bundled Lovelace card. The implementation is provided for Phase 4, but this repository has not been validated against a live Home Assistant/Supervisor installation; treat the topology and lifecycle acceptance checks below as pending.
 
 ## Installation and setup
 
@@ -17,6 +17,7 @@ At startup, the add-on generates a random, one-use bootstrap capability, stores 
 - **Income this month** and **Expenses this month**: monetary sensors (state class `total`) grouped under one Fin Assist device per config entry. They sum the transactions dated in the current calendar month, read from `GET /api/v1/transactions`. Integer minor units are converted using the currency's actual fraction-digit precision, and the unit is the currency code reported by the API. When the month has no transactions yet, the currency is unknown, so the sensors assume `EUR` until the first transaction arrives. Both sensors expose `kind`, `month` and `integration_entry_id` attributes.
 - `ha_finassists.refresh` requests an immediate refresh (optional `entry_id`).
 - `ha_finassists.add_expense` and `ha_finassists.add_income` record a transaction through `POST /api/v1/transactions` and then refresh the sensors. Fields: `entry_id` (required), `amount` (required, greater than zero, in major units such as `12.50`; more decimal places than the currency allows are rejected), `date` (optional, defaults to today) and `description` (optional).
+- `ha_finassists.delete_transaction` deletes a transaction through `DELETE /api/v1/transactions/{transactionId}` and then refreshes the sensors. Fields: `entry_id` (required) and `transaction_id` (required). Deletion is permanent and installation-wide.
 - Polling interval is five minutes. The integration does not manage accounts, books, categories, budgets, schedules or imports.
 
 ```yaml

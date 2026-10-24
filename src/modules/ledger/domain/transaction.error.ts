@@ -28,10 +28,17 @@ class TransactionDescriptionTooLongError extends Error {
 	}
 }
 
+class TransactionNotFoundError extends Error {
+	constructor(id: string) {
+		super(`transaction ${id} not found`);
+	}
+}
+
 export {
 	TransactionAmountInvalidError,
 	TransactionDateCalendarInvalidError,
 	TransactionDateFormatInvalidError,
 	TransactionDescriptionTooLongError,
 	TransactionKindInvalidError,
+	TransactionNotFoundError,
 };

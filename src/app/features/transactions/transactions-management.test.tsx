@@ -32,9 +32,14 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 	return {
 		amount: '',
 		amountReference: createRef<HTMLInputElement>(),
+		cancelDelete: noop,
+		confirmationReference: createRef<HTMLButtonElement>(),
+		confirmingTransactionId: undefined,
 		copy: getCopy(language),
 		currencyCode: 'EUR',
 		date: '2024-03-05',
+		deleteTransaction: asyncNoop,
+		deletingTransactionId: undefined,
 		description: '',
 		errors: {},
 		feedback: undefined,
@@ -43,10 +48,12 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 		isSubmitting: false,
 		kind: 'expense',
 		language,
+		listReference: createRef<HTMLTableSectionElement>(),
 		listState: LOAD_STATE.READY,
 		loadMore: asyncNoop,
 		refresh: asyncNoop,
 		setAmount: noop,
+		setConfirmingTransactionId: noop,
 		setDate: noop,
 		setDescription: noop,
 		setKind: noop,
@@ -131,6 +138,28 @@ describe('TransactionList', () => {
 		expect(markup).toContain('No description');
 		expect(markup).toContain('Showing 2 of 3');
 		expect(markup).toContain('Load more');
+	});
+
+	test('offers a delete action per row that asks for confirmation', () => {
+		const markup = render('en', <TransactionList {...state('en', { total: 1, transactions: [expense()] })} />);
+
+		expect(markup).toContain('Actions');
+		expect(markup).toContain('Delete');
+		expect(markup).toContain('aria-label="Delete: Lunch"');
+		expect(markup).not.toContain('Confirm delete');
+	});
+
+	test('replaces the delete action with an inline confirmation', () => {
+		const markup = render(
+			'es',
+			<TransactionList
+				{...state('es', { confirmingTransactionId: 'transaction-1', total: 1, transactions: [expense()] })}
+			/>
+		);
+
+		expect(markup).toContain('Confirmar eliminación');
+		expect(markup).toContain('Cancelar');
+		expect(markup).not.toContain('>Eliminar<');
 	});
 
 	test('hides load more when every transaction is shown', () => {

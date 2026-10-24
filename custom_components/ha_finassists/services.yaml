@@ -74,3 +74,21 @@ add_income:
       required: false
       selector:
         text:
+delete_transaction:
+  name: Delete transaction
+  description: Delete a recorded transaction in Fin Assist.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that owns the transaction.
+      required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    transaction_id:
+      name: Transaction ID
+      description: Identifier of the transaction to delete.
+      required: true
+      example: 0f8fad5b-d9cb-469f-a165-70867728950e
+      selector:
+        text:

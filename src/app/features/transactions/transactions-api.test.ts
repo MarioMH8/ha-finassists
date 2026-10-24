@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import type { Transaction } from './transactions-api';
 import {
 	createTransaction,
+	deleteTransaction,
 	fetchAllTransactions,
 	fetchTransactionPage,
 	summarizeTransactions,
@@ -125,6 +126,21 @@ describe('transactions api', () => {
 		);
 
 		expect(result).toBe('rejected');
+	});
+
+	test('deletes a transaction by its encoded identifier', async () => {
+		mockFetch(() => new Response(undefined, { status: 204 }));
+
+		await deleteTransaction('transaction/1');
+
+		expect(calls[0]?.url).toBe('./api/v1/transactions/transaction%2F1');
+		expect(calls[0]?.method).toBe('DELETE');
+	});
+
+	test('rejects when deletion fails', async () => {
+		mockFetch(() => jsonResponse({ error: 'not found' }, 404));
+
+		expect(await outcome(deleteTransaction('missing'))).toBe('rejected');
 	});
 
 	test('summarizes income, expenses and net in the configured currency', () => {

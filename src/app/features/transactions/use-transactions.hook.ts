@@ -1,7 +1,7 @@
 import type { Copy } from '@app/i18n';
 import type { Language } from '@app/i18n/language';
 import { useLocale } from '@app/i18n/locale-context';
-import type { ChangeEvent, RefObject, SubmitEvent } from 'react';
+import type { ChangeEvent, Dispatch, RefObject, SetStateAction, SubmitEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import { currentMonthRange, todayIsoDate } from './transaction-dates';
@@ -10,6 +10,7 @@ import { validateTransactionForm } from './transaction-validation';
 import type { Transaction, TransactionKind, TransactionTotals } from './transactions-api';
 import {
 	createTransaction,
+	deleteTransaction,
 	fetchAllTransactions,
 	fetchTransactionPage,
 	summarizeTransactions,
@@ -34,9 +35,14 @@ interface Feedback {
 interface TransactionsState {
 	amount: string;
 	amountReference: RefObject<HTMLInputElement | null>;
+	cancelDelete: (transactionId: string) => void;
+	confirmationReference: RefObject<HTMLButtonElement | null>;
+	confirmingTransactionId: string | undefined;
 	copy: Copy;
 	currencyCode: string;
 	date: string;
+	deleteTransaction: (transaction: Transaction) => Promise<void>;
+	deletingTransactionId: string | undefined;
 	description: string;
 	errors: TransactionFormErrors;
 	feedback: Feedback | undefined;
@@ -45,10 +51,12 @@ interface TransactionsState {
 	isSubmitting: boolean;
 	kind: TransactionKind;
 	language: Language;
+	listReference: RefObject<HTMLTableSectionElement | null>;
 	listState: LoadState;
 	loadMore: () => Promise<void>;
 	refresh: () => Promise<void>;
 	setAmount: (event: ChangeEvent<HTMLInputElement>) => void;
+	setConfirmingTransactionId: Dispatch<SetStateAction<string | undefined>>;
 	setDate: (event: ChangeEvent<HTMLInputElement>) => void;
 	setDescription: (event: ChangeEvent<HTMLInputElement>) => void;
 	setKind: (kind: TransactionKind) => void;
@@ -80,7 +88,13 @@ function useTransactions(currencyCode: string): TransactionsState {
 	const [errors, setErrors] = useState<TransactionFormErrors>({});
 	const [feedback, setFeedback] = useState<Feedback | undefined>(undefined);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [confirmingTransactionId, setConfirmingTransactionId] = useState<string | undefined>(undefined);
+	const [deletingTransactionId, setDeletingTransactionId] = useState<string | undefined>(undefined);
+	const [focusAfterRemoval, setFocusAfterRemoval] = useState<number | undefined>(undefined);
+	const [focusDeleteTransactionId, setFocusDeleteTransactionId] = useState<string | undefined>(undefined);
 	const amountReference = useRef<HTMLInputElement>(null);
+	const confirmationReference = useRef<HTMLButtonElement>(null);
+	const listReference = useRef<HTMLTableSectionElement>(null);
 	const listGeneration = useRef(0);
 	const summaryGeneration = useRef(0);
 
@@ -93,6 +107,27 @@ function useTransactions(currencyCode: string): TransactionsState {
 
 		return () => controller.abort();
 	}, []);
+
+	useEffect(() => {
+		if (confirmingTransactionId) {
+			confirmationReference.current?.focus();
+		}
+	}, [confirmingTransactionId]);
+
+	useEffect(() => {
+		if (focusAfterRemoval !== undefined) {
+			const buttons = listReference.current?.querySelectorAll<HTMLButtonElement>('[data-variant="danger"]');
+			const lastIndex = Math.max(0, (buttons?.length ?? 1) - 1);
+			(buttons?.[Math.min(focusAfterRemoval, lastIndex)] ?? amountReference.current)?.focus();
+			setFocusAfterRemoval(undefined);
+		}
+		if (focusDeleteTransactionId) {
+			listReference.current
+				?.querySelector<HTMLButtonElement>(`[data-transaction-id="${CSS.escape(focusDeleteTransactionId)}"]`)
+				?.focus();
+			setFocusDeleteTransactionId(undefined);
+		}
+	}, [focusAfterRemoval, focusDeleteTransactionId, transactions]);
 
 	async function loadList(signal?: AbortSignal): Promise<void> {
 		const generation = ++listGeneration.current;
@@ -152,6 +187,32 @@ function useTransactions(currencyCode: string): TransactionsState {
 		}
 	}
 
+	async function removeTransaction(transaction: Transaction): Promise<void> {
+		const index = transactions.findIndex(existing => existing.id === transaction.id);
+		setDeletingTransactionId(transaction.id);
+		try {
+			await deleteTransaction(transaction.id);
+			listGeneration.current += 1;
+			setTransactions(current => current.filter(existing => existing.id !== transaction.id));
+			setTotal(current => Math.max(0, current - 1));
+			setConfirmingTransactionId(undefined);
+			setFeedback({ message: copy.transactionDeleted, tone: 'success' });
+			setFocusAfterRemoval(index);
+			await loadSummary();
+		} catch {
+			setConfirmingTransactionId(undefined);
+			setFocusDeleteTransactionId(transaction.id);
+			setFeedback({ message: copy.transactionDeleteError, tone: 'error' });
+		} finally {
+			setDeletingTransactionId(undefined);
+		}
+	}
+
+	function cancelDelete(transactionId: string): void {
+		setConfirmingTransactionId(undefined);
+		setFocusDeleteTransactionId(transactionId);
+	}
+
 	async function submit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
 		event.preventDefault();
 		if (isSubmitting) {
@@ -188,9 +249,14 @@ function useTransactions(currencyCode: string): TransactionsState {
 	return {
 		amount,
 		amountReference,
+		cancelDelete,
+		confirmationReference,
+		confirmingTransactionId,
 		copy,
 		currencyCode,
 		date,
+		deleteTransaction: removeTransaction,
+		deletingTransactionId,
 		description,
 		errors,
 		feedback,
@@ -199,12 +265,14 @@ function useTransactions(currencyCode: string): TransactionsState {
 		isSubmitting,
 		kind,
 		language,
+		listReference,
 		listState,
 		loadMore,
 		refresh,
 		setAmount: event => {
 			setAmountValue(event.currentTarget.value);
 		},
+		setConfirmingTransactionId,
 		setDate: event => {
 			setDateValue(event.currentTarget.value);
 		},

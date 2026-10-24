@@ -66,6 +66,18 @@ describe('SqliteLedgerRepository', () => {
 		expect(page.items.map(item => item.id)).toEqual(['02']);
 	});
 
+	it('deletes an existing transaction and reports a missing one', async () => {
+		await repository.save(TransactionMother.create({ id: 'a' }));
+
+		const isFirstDeletion = await repository.delete({ id: 'a' });
+		const isSecondDeletion = await repository.delete({ id: 'a' });
+		const page = await repository.search();
+
+		expect(isFirstDeletion).toBe(true);
+		expect(isSecondDeletion).toBe(false);
+		expect(page.total).toBe(0);
+	});
+
 	it('rejects a non-positive amount at the database level', () => {
 		expect(() =>
 			database

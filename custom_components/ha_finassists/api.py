@@ -125,6 +125,10 @@ class FinAssistApi:
             raise FinAssistApiError("Fin Assist returned an invalid transaction")
         return result
 
+    async def async_delete_transaction(self, transaction_id: str) -> None:
+        """Delete a recorded transaction."""
+        await self.async_request("DELETE", f"transactions/{transaction_id}")
+
     async def async_exchange_bootstrap_capability(
         self, bootstrap_capability: str
     ) -> dict[str, str]:

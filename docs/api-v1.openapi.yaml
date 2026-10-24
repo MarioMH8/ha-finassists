@@ -159,6 +159,16 @@ paths:
         '201': { description: Created transaction, content: { application/json: { schema: { $ref: '#/components/schemas/Transaction' } } } }
         '400': { $ref: '#/components/responses/BadRequest' }
         '405': { $ref: '#/components/responses/MethodNotAllowed' }
+  /transactions/{transactionId}:
+    delete:
+      summary: Delete a transaction
+      description: Deletion is permanent and installation-wide; the transaction is removed for every actor.
+      parameters:
+        - { $ref: '#/components/parameters/transactionId' }
+      responses:
+        '204': { description: Transaction deleted }
+        '404': { description: Transaction does not exist }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
 components:
   securitySchemes:
     bearerAuth:
@@ -181,6 +191,11 @@ components:
       schema: { type: integer, minimum: 0, default: 0 }
     tokenId:
       name: tokenId
+      in: path
+      required: true
+      schema: { type: string }
+    transactionId:
+      name: transactionId
       in: path
       required: true
       schema: { type: string }

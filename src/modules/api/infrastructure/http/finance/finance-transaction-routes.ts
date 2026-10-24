@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 
-import { jsonResponse, methodNotAllowed } from '../shared/http-responses';
+import { jsonResponse, methodNotAllowed, noContent } from '../shared/http-responses';
 import { minorUnits, nonNegativeInteger, optionalText, parseInput, readJsonBody } from '../shared/request-parsing';
 import type { FinanceEnvironment } from './finance-route-support';
 
@@ -69,7 +69,13 @@ function createTransactionRoutes(): Hono<FinanceEnvironment> {
 				201
 			);
 		})
-		.all('/transactions', () => methodNotAllowed('GET, POST'));
+		.delete('/transactions/:id', async context => {
+			await context.var.useCases.ledger.delete.execute({ id: context.req.param('id') });
+
+			return noContent();
+		})
+		.all('/transactions', () => methodNotAllowed('GET, POST'))
+		.all('/transactions/:id', () => methodNotAllowed('DELETE'));
 
 	return routes;
 }

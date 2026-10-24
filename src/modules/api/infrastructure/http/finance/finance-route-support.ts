@@ -1,9 +1,9 @@
-import type { CreateTransaction, ListTransactions } from '@modules/ledger/application';
+import type { CreateTransaction, DeleteTransaction, ListTransactions } from '@modules/ledger/application';
 
 import { jsonResponse } from '../shared/http-responses';
 
 interface FinanceUseCases {
-	ledger: { create: CreateTransaction; list: ListTransactions };
+	ledger: { create: CreateTransaction; delete: DeleteTransaction; list: ListTransactions };
 }
 
 interface RouteActor {

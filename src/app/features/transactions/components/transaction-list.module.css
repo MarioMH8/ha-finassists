@@ -16,6 +16,15 @@
   text-align: right;
 }
 
+.actionsHeading {
+  text-align: right;
+}
+
+.actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
 .income {
   color: var(--success);
   font-weight: 600;

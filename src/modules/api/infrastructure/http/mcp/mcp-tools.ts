@@ -33,6 +33,11 @@ const TOOLS: McpTool[] = [
 		name: 'create_transaction',
 	},
 	{
+		description: 'Delete a recorded expense or income by its identifier.',
+		inputSchema: objectSchema({ id: stringProperty('Identifier of the transaction to delete') }, ['id']),
+		name: 'delete_transaction',
+	},
+	{
 		description: 'List expenses and incomes, newest first.',
 		inputSchema: objectSchema({
 			fromDate: stringProperty('Optional inclusive start date as YYYY-MM-DD'),

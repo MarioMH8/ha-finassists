@@ -19,7 +19,7 @@ _Avoid_: Operator (when the action came from an automation or reusable credentia
 ## Financial records
 
 **Transaction**:
-A dated record of money spent or received, with a kind, a positive amount, and an optional description. Transactions are append-only: they cannot be edited or deleted.
+A dated record of money spent or received, with a kind, a positive amount, and an optional description. Transactions are immutable: they cannot be edited, but they can be deleted, which removes them permanently.
 _Avoid_: Operation, entry
 
 **Kind**:

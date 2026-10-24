@@ -12,19 +12,19 @@ A self-hosted household-finance app, distributed as one Home Assistant repositor
 
 ## Product scope
 
-Included: creating and listing transactions, each with a kind (expense or income), a positive amount in minor units, an optional description, and a date. One installation-wide currency is set with the app's `currency` option.
+Included: creating, listing and deleting transactions, each with a kind (expense or income), a positive amount in minor units, an optional description, and a date. One installation-wide currency is set with the app's `currency` option.
 
-Explicitly out of scope for now: accounts and balances, transfers, categories and classes, budgets, scheduled payments, shared expenses, statement imports, multiple books, editing or deleting transactions, and bank synchronization. Each can return later as its own iteration; earlier designs were removed from the code. The REST contract is new and does not need compatibility with the reference Python API.
+Explicitly out of scope for now: accounts and balances, transfers, categories and classes, budgets, scheduled payments, shared expenses, statement imports, multiple books, editing transactions, and bank synchronization. Each can return later as its own iteration; earlier designs were removed from the code. The REST contract is new and does not need compatibility with the reference Python API.
 
 ## Product shape
 
 | Surface | Responsibility |
 | --- | --- |
-| Home Assistant Ingress app | Add-transaction form, monthly summary, recent transactions, and personal-token management. |
-| Bun service | Transaction rules, persistent data, REST API, MCP tools (`create_transaction`, `list_transactions`), token management, and audit attribution. |
+| Home Assistant Ingress app | Add-transaction form, monthly summary, recent transactions with per-row deletion, and personal-token management. |
+| Bun service | Transaction rules, persistent data, REST API, MCP tools (`create_transaction`, `list_transactions`, `delete_transaction`), token management, and audit attribution. |
 | REST API | New contract for the native integration and external local-network clients. |
 | MCP | Read and write tools over Streamable HTTP, authenticated with the same personal-token model as REST. |
-| Custom Home Assistant integration | Native Home Assistant configuration, monthly income/expense sensors, and add-expense/add-income services. It uses a separate system identity for audit attribution. |
+| Custom Home Assistant integration | Native Home Assistant configuration, monthly income/expense sensors, and add-expense/add-income/delete-transaction services. It uses a separate system identity for audit attribution. |
 | Lovelace card | A quick view of the month's totals with a refresh action. It is served as a frontend resource by the integration rather than as a second HACS repository category. |
 
 The Ingress UI follows Home Assistant's visual patterns, supports its light/dark themes, and avoids private frontend APIs. The initial UI languages are Spanish and English, selected from Home Assistant's language preference, with English as fallback.

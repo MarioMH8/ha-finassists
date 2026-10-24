@@ -1,6 +1,12 @@
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
-import type { TransactionCriteria, TransactionKind, TransactionPage, TransactionRepository } from '../../domain';
+import type {
+	TransactionCriteria,
+	TransactionDeleteCriteria,
+	TransactionKind,
+	TransactionPage,
+	TransactionRepository,
+} from '../../domain';
 import { Transaction } from '../../domain';
 
 interface TransactionRow {
@@ -51,6 +57,13 @@ function toTransaction(row: TransactionRow): Transaction {
 
 export class SqliteLedgerRepository implements TransactionRepository {
 	constructor(private readonly database: Database) {}
+
+	async delete({ id }: TransactionDeleteCriteria): Promise<boolean> {
+		const result = this.database.query('DELETE FROM transactions WHERE id = ?').run(id);
+		await Promise.resolve();
+
+		return result.changes > 0;
+	}
 
 	async save(transaction: Transaction): Promise<void> {
 		this.database
