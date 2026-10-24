@@ -4,7 +4,9 @@ import type { ReactElement, SVGProps } from 'react';
 import styles from './icon.module.css';
 
 const ICON_NAME = {
+	CHART: 'chart',
 	CHECK: 'check',
+	CHEVRON_DOWN: 'chevronDown',
 	CHEVRON_LEFT: 'chevronLeft',
 	CHEVRON_RIGHT: 'chevronRight',
 	CLOSE: 'close',
@@ -17,7 +19,9 @@ const ICON_NAME = {
 type IconName = (typeof ICON_NAME)[keyof typeof ICON_NAME];
 
 const ICON_PATH: Record<IconName, string> = {
+	chart: 'M3,3H5V19H21V21H3V3M7,17V10H9V17H7M11,17V6H13V17H11M15,17V13H17V17H15Z',
 	check: 'M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z',
+	chevronDown: 'M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z',
 	chevronLeft: 'M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z',
 	chevronRight: 'M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z',
 	close: 'M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z',

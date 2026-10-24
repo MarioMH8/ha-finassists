@@ -5,7 +5,7 @@
   min-height: 32px;
   padding: 0 var(--ha-space-3);
   border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
-  border-radius: var(--ha-border-radius-md);
+  border-radius: var(--chip-border-radius, var(--ha-border-radius-md));
   background: transparent;
   color: var(--ha-color-text-primary);
   font-family: var(--ha-font-family-body);

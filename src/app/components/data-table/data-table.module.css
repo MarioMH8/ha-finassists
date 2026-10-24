@@ -6,7 +6,7 @@
 }
 
 .header {
-  padding: var(--ha-space-3) var(--ha-space-4);
+  padding: var(--ha-space-2);
   border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
 }
 
@@ -27,7 +27,6 @@
 .table th {
   padding: var(--ha-space-2) var(--ha-space-4);
   border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
-  background: var(--ha-color-surface-lower);
   color: var(--ha-color-text-secondary);
   font-size: var(--ha-font-size-s);
   font-weight: var(--ha-font-weight-medium);

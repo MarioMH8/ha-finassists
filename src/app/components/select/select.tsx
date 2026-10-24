@@ -1,4 +1,5 @@
 import { classNames } from '@app/components/class-names';
+import { Icon, ICON_NAME } from '@app/components/icon';
 import type { ReactElement, Ref, SelectHTMLAttributes } from 'react';
 
 import styles from './select.module.css';
@@ -26,13 +27,19 @@ function Select({
 	...props
 }: SelectProps): ReactElement {
 	return (
-		<select
-			aria-invalid={invalid || undefined}
-			className={classNames(styles.select, styles[size], className)}
-			ref={ref}
-			{...props}>
-			{children}
-		</select>
+		<span className={styles.wrapper}>
+			<select
+				aria-invalid={invalid || undefined}
+				className={classNames(styles.select, styles[size], className)}
+				ref={ref}
+				{...props}>
+				{children}
+			</select>
+			<Icon
+				className={styles.chevron}
+				name={ICON_NAME.CHEVRON_DOWN}
+			/>
+		</span>
 	);
 }
 

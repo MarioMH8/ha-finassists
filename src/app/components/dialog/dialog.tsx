@@ -80,7 +80,7 @@ function Dialog({
 						appearance={BUTTON_APPEARANCE.PLAIN}
 						aria-label={closeLabel}
 						onClick={onClose}
-						size={BUTTON_SIZE.MEDIUM}
+						size={BUTTON_SIZE.LARGE}
 						title={closeLabel}
 						type='button'>
 						<Icon name={ICON_NAME.CLOSE} />
