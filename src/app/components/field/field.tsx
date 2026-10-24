@@ -26,6 +26,7 @@ function Field({ children, className, error, hint, htmlFor, label }: FieldProps)
 				htmlFor={htmlFor}>
 				{label}
 			</label>
+			{children}
 			{hint ? (
 				<p
 					className={styles.hint}
@@ -33,7 +34,6 @@ function Field({ children, className, error, hint, htmlFor, label }: FieldProps)
 					{hint}
 				</p>
 			) : undefined}
-			{children}
 			{error ? (
 				<p
 					className={styles.error}

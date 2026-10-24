@@ -105,29 +105,29 @@ function TransactionForm({
 				className={styles.form}
 				noValidate
 				onSubmit={event => void submit(event)}>
-				<fieldset className={styles.kind}>
-					<legend className={styles.legend}>{copy.transactionKindLabel}</legend>
-					<div className={styles.options}>
-						{KIND_OPTIONS.map(option => (
-							<label
-								className={styles.option}
-								key={option.value}>
-								<input
-									checked={kind === option.value}
-									className={styles.radio}
-									name='kind'
-									onChange={() => {
-										setKind(option.value);
-									}}
-									type='radio'
-									value={option.value}
-								/>
-								<span className={styles.optionLabel}>{copy[option.label]}</span>
-							</label>
-						))}
-					</div>
-				</fieldset>
 				<div className={styles.grid}>
+					<fieldset className={styles.kind}>
+						<legend className={styles.legend}>{copy.transactionKindLabel}</legend>
+						<div className={styles.options}>
+							{KIND_OPTIONS.map(option => (
+								<label
+									className={styles.option}
+									key={option.value}>
+									<input
+										checked={kind === option.value}
+										className={styles.radio}
+										name='kind'
+										onChange={() => {
+											setKind(option.value);
+										}}
+										type='radio'
+										value={option.value}
+									/>
+									<span className={styles.optionLabel}>{copy[option.label]}</span>
+								</label>
+							))}
+						</div>
+					</fieldset>
 					<Field
 						error={amountError}
 						hint={amountHint}

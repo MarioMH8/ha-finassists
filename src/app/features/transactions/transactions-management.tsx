@@ -12,9 +12,9 @@ function TransactionsManagement({ currencyCode }: TransactionsManagementProps): 
 
 	return (
 		<>
-			<TransactionForm {...state} />
 			<MonthSummary {...state} />
 			<TransactionList {...state} />
+			<TransactionForm {...state} />
 		</>
 	);
 }
