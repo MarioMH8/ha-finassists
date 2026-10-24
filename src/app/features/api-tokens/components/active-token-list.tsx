@@ -1,9 +1,15 @@
 import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/button';
-import { Icon, ICON_NAME } from '@app/components/icon';
+import { Card } from '@app/components/card';
+import { Dialog, DIALOG_TYPE } from '@app/components/dialog';
+import { EmptyState } from '@app/components/empty-state';
+import { ICON_NAME } from '@app/components/icon';
 import { List, ListItem } from '@app/components/list';
+import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
+import { Notice, NOTICE_TONE } from '@app/components/notice';
+import { SectionHeading } from '@app/components/section-heading';
 import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
 import { formatTokenDate } from '@app/features/api-tokens/use-api-tokens.hook';
-import { formatTokenCount } from '@app/i18n';
+import { formatTokenCount, interpolate } from '@app/i18n';
 import { useLocale } from '@app/i18n/locale-context';
 import type { ReactElement } from 'react';
 
@@ -12,95 +18,150 @@ import styles from './active-token-list.module.css';
 type ActiveTokenListProps = Pick<
 	ApiTokenManagementState,
 	| 'cancelRevoke'
-	| 'confirmationReference'
 	| 'confirmingTokenId'
 	| 'copy'
+	| 'feedback'
+	| 'isLoading'
+	| 'listError'
 	| 'revokeToken'
+	| 'revokingTokenId'
 	| 'setConfirmingTokenId'
 	| 'tokenCount'
 	| 'tokenHeadingReference'
 	| 'tokenListReference'
-	| 'tokenListStatusMessage'
 	| 'tokens'
 >;
 
 function ActiveTokenList({
 	cancelRevoke,
-	confirmationReference,
 	confirmingTokenId,
 	copy,
+	feedback,
+	isLoading,
+	listError,
 	revokeToken,
+	revokingTokenId,
 	setConfirmingTokenId,
 	tokenCount,
 	tokenHeadingReference,
 	tokenListReference,
-	tokenListStatusMessage,
 	tokens,
 }: ActiveTokenListProps): ReactElement {
 	const { language } = useLocale();
+	const pendingToken = tokens.find(token => token.id === confirmingTokenId);
+	const isRevoking = revokingTokenId === pendingToken?.id;
+
+	const confirmationFooter = (
+		<>
+			<Button
+				onClick={() => {
+					if (pendingToken) {
+						cancelRevoke(pendingToken.id);
+					}
+				}}
+				type='button'>
+				{copy.cancel}
+			</Button>
+			<Button
+				appearance={BUTTON_APPEARANCE.FILLED}
+				aria-busy={isRevoking}
+				disabled={isRevoking}
+				onClick={() => {
+					if (pendingToken) {
+						void revokeToken(pendingToken);
+					}
+				}}
+				type='button'
+				variant={BUTTON_VARIANT.DANGER}>
+				{isRevoking ? copy.revokingToken : copy.revoke}
+			</Button>
+		</>
+	);
 
 	return (
 		<>
-			<div className={styles.heading}>
-				<h3
-					ref={tokenHeadingReference}
-					tabIndex={-1}>
-					{copy.activeTokens}
-				</h3>
-				<p>{formatTokenCount(tokenCount, language)}</p>
-			</div>
-			<p
-				className={styles.state}
-				hidden={!tokenListStatusMessage}>
-				{tokenListStatusMessage}
-			</p>
-			<List
-				aria-label={copy.activeTokens}
-				ref={tokenListReference}>
-				{tokens.map(token => (
-					<ListItem
-						actions={
-							confirmingTokenId === token.id ? (
-								<>
-									<Button
-										appearance={BUTTON_APPEARANCE.FILLED}
-										aria-label={`${copy.confirmRevoke}: ${token.name}`}
-										onClick={() => void revokeToken(token)}
-										ref={confirmationReference}
-										title={copy.confirmRevoke}
-										type='button'
-										variant={BUTTON_VARIANT.DANGER}>
-										<Icon name={ICON_NAME.CHECK} />
-									</Button>
-									<Button
-										aria-label={copy.cancel}
-										onClick={() => cancelRevoke(token.id)}
-										title={copy.cancel}
-										type='button'>
-										<Icon name={ICON_NAME.CLOSE} />
-									</Button>
-								</>
-							) : (
-								<Button
-									appearance={BUTTON_APPEARANCE.PLAIN}
-									data-token-id={token.id}
-									onClick={() => setConfirmingTokenId(token.id)}
-									type='button'
-									variant={BUTTON_VARIANT.DANGER}>
-									{copy.revoke}
-								</Button>
-							)
-						}
-						key={token.id}>
-						<div className={styles.details}>
-							<strong>{token.name}</strong>
-							<span>
-								{token.prefix} · {formatTokenDate(token.createdAt, language)}
-							</span>
-						</div>
-					</ListItem>
-				))}
-			</List>
+			<Card
+				aria-labelledby='active-tokens-title'
+				bleed>
+				<div className={styles.heading}>
+					<SectionHeading
+						description={formatTokenCount(tokenCount, language)}
+						level={3}
+						title={copy.activeTokens}
+						titleId='active-tokens-title'
+						titleRef={tokenHeadingReference}
+					/>
+				</div>
+				<div className={styles.body}>
+					{feedback.message ? (
+						<Notice tone={feedback.state === 'error' ? NOTICE_TONE.ERROR : NOTICE_TONE.SUCCESS}>
+							{feedback.message}
+						</Notice>
+					) : undefined}
+					{listError ? (
+						<Notice tone={NOTICE_TONE.ERROR}>{copy.errorLoadingTokens}</Notice>
+					) : isLoading && tokens.length === 0 ? (
+						<Notice>{copy.loadingTokens}</Notice>
+					) : tokens.length === 0 ? (
+						<EmptyState title={copy.tokensEmptyTitle}>{copy.noTokens}</EmptyState>
+					) : (
+						<List
+							aria-label={copy.activeTokens}
+							ref={tokenListReference}>
+							{tokens.map(token => {
+								const actions = (
+									<span
+										className={styles.menu}
+										data-token-id={token.id}>
+										<Menu
+											items={[
+												{
+													icon: ICON_NAME.DELETE,
+													label: copy.revoke,
+													onSelect: () => {
+														setConfirmingTokenId(token.id);
+													},
+													tone: MENU_ITEM_TONE.DANGER,
+												},
+											]}
+											label={interpolate(copy.tokenOptions, { name: token.name })}
+										/>
+									</span>
+								);
+
+								return (
+									<ListItem
+										actions={actions}
+										key={token.id}>
+										<div className={styles.details}>
+											<strong>{token.name}</strong>
+											<span>
+												{token.prefix} · {formatTokenDate(token.createdAt, language)}
+											</span>
+										</div>
+									</ListItem>
+								);
+							})}
+						</List>
+					)}
+				</div>
+			</Card>
+			<Dialog
+				closeLabel={copy.close}
+				description={
+					pendingToken ? interpolate(copy.revokeTokenPrompt, { name: pendingToken.name }) : undefined
+				}
+				footer={confirmationFooter}
+				id='revoke-token-dialog'
+				onClose={() => {
+					if (pendingToken) {
+						cancelRevoke(pendingToken.id);
+					}
+				}}
+				open={pendingToken !== undefined}
+				title={copy.revokeTokenTitle}
+				type={DIALOG_TYPE.ALERT}
+			/>
 		</>
 	);
 }

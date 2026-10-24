@@ -38,24 +38,29 @@ interface Feedback {
 
 interface ApiTokenManagementState {
 	cancelRevoke: (tokenId: string) => void;
-	confirmationReference: RefObject<HTMLButtonElement | null>;
+	closeCreate: () => void;
 	confirmingTokenId: string | undefined;
 	copy: Copy;
+	copyFeedback: Feedback;
 	copyToken: () => Promise<void>;
 	createToken: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
 	feedback: Feedback;
+	isCreateOpen: boolean;
 	isCreating: boolean;
+	isLoading: boolean;
 	issuedSecret: string | undefined;
 	issuedTokenReference: RefObject<HTMLElement | null>;
+	listError: boolean;
 	loadTokens: (signal?: AbortSignal) => Promise<void>;
+	openCreate: () => void;
 	revokeToken: (token: TokenMetadata) => Promise<void>;
+	revokingTokenId: string | undefined;
 	serviceMessage: string;
 	serviceState: ServiceState;
 	setConfirmingTokenId: Dispatch<SetStateAction<string | undefined>>;
 	tokenCount: number;
 	tokenHeadingReference: RefObject<HTMLHeadingElement | null>;
 	tokenListReference: RefObject<HTMLUListElement | null>;
-	tokenListStatusMessage: string;
 	tokenNameReference: RefObject<HTMLInputElement | null>;
 	tokens: TokenMetadata[];
 }
@@ -112,16 +117,18 @@ function useApiTokens(): ApiTokenManagementState {
 	const [listError, setListError] = useState(false);
 	const [serviceState, setServiceState] = useState<ServiceState>(SERVICE_STATE.CHECKING);
 	const [isCreating, setIsCreating] = useState(false);
+	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const [confirmingTokenId, setConfirmingTokenId] = useState<string | undefined>(undefined);
+	const [revokingTokenId, setRevokingTokenId] = useState<string | undefined>(undefined);
 	const [issuedSecret, setIssuedSecret] = useState<string | undefined>(undefined);
 	const [feedback, setFeedback] = useState<Feedback>({ message: '', state: FEEDBACK_STATE.EMPTY });
+	const [copyFeedback, setCopyFeedback] = useState<Feedback>({ message: '', state: FEEDBACK_STATE.EMPTY });
 	const [focusAfterRemoval, setFocusAfterRemoval] = useState<number | undefined>(undefined);
 	const [focusRevokeTokenId, setFocusRevokeTokenId] = useState<string | undefined>(undefined);
 	const tokenNameReference = useRef<HTMLInputElement>(null);
 	const tokenListReference = useRef<HTMLUListElement>(null);
 	const tokenHeadingReference = useRef<HTMLHeadingElement>(null);
 	const issuedTokenReference = useRef<HTMLElement>(null);
-	const confirmationReference = useRef<HTMLButtonElement>(null);
 	const loadGeneration = useRef(0);
 
 	useEffect(() => {
@@ -133,12 +140,6 @@ function useApiTokens(): ApiTokenManagementState {
 	}, []);
 
 	useEffect(() => {
-		if (confirmingTokenId) {
-			confirmationReference.current?.focus();
-		}
-	}, [confirmingTokenId]);
-
-	useEffect(() => {
 		if (issuedSecret) {
 			issuedTokenReference.current?.focus();
 		}
@@ -146,14 +147,16 @@ function useApiTokens(): ApiTokenManagementState {
 
 	useEffect(() => {
 		if (focusAfterRemoval !== undefined) {
-			const buttons = tokenListReference.current?.querySelectorAll<HTMLButtonElement>('[data-variant="danger"]');
-			const lastIndex = Math.max(0, (buttons?.length ?? 1) - 1);
-			(buttons?.[Math.min(focusAfterRemoval, lastIndex)] ?? tokenHeadingReference.current)?.focus();
+			const triggers = tokenListReference.current?.querySelectorAll<HTMLButtonElement>('[aria-haspopup="menu"]');
+			const lastIndex = Math.max(0, (triggers?.length ?? 1) - 1);
+			(triggers?.[Math.min(focusAfterRemoval, lastIndex)] ?? tokenHeadingReference.current)?.focus();
 			setFocusAfterRemoval(undefined);
 		}
 		if (focusRevokeTokenId) {
 			tokenListReference.current
-				?.querySelector<HTMLButtonElement>(`[data-token-id="${CSS.escape(focusRevokeTokenId)}"]`)
+				?.querySelector<HTMLButtonElement>(
+					`[data-token-id="${CSS.escape(focusRevokeTokenId)}"] [aria-haspopup="menu"]`
+				)
 				?.focus();
 			setFocusRevokeTokenId(undefined);
 		}
@@ -236,7 +239,10 @@ function useApiTokens(): ApiTokenManagementState {
 			const { secret, ...metadata } = value;
 			setTokens(current => [metadata, ...current]);
 			setIssuedSecret(secret);
+			setCopyFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
 			setConfirmingTokenId(undefined);
+			setIsCreateOpen(false);
+			setFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
 			if (tokenNameReference.current) {
 				tokenNameReference.current.value = '';
 			}
@@ -249,6 +255,7 @@ function useApiTokens(): ApiTokenManagementState {
 
 	async function revokeToken(token: TokenMetadata): Promise<void> {
 		const index = tokens.findIndex(existing => existing.id === token.id);
+		setRevokingTokenId(token.id);
 		try {
 			const response = await fetch(`./api/v1/tokens/${encodeURIComponent(token.id)}`, { method: 'DELETE' });
 			if (!response.ok) {
@@ -263,12 +270,24 @@ function useApiTokens(): ApiTokenManagementState {
 			setConfirmingTokenId(undefined);
 			setFocusRevokeTokenId(token.id);
 			setFeedback({ message: copy.errorRevokingToken, state: FEEDBACK_STATE.ERROR });
+		} finally {
+			setRevokingTokenId(undefined);
 		}
 	}
 
 	function cancelRevoke(tokenId: string): void {
 		setConfirmingTokenId(undefined);
 		setFocusRevokeTokenId(tokenId);
+	}
+
+	function openCreate(): void {
+		setFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
+		setIsCreateOpen(true);
+	}
+
+	function closeCreate(): void {
+		setIsCreateOpen(false);
+		setFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
 	}
 
 	async function copyToken(): Promise<void> {
@@ -278,19 +297,12 @@ function useApiTokens(): ApiTokenManagementState {
 
 		try {
 			await navigator.clipboard.writeText(issuedSecret);
-			setFeedback({ message: copy.tokenCopied, state: FEEDBACK_STATE.SUCCESS });
+			setCopyFeedback({ message: copy.tokenCopied, state: FEEDBACK_STATE.SUCCESS });
 		} catch {
-			setFeedback({ message: copy.copyFailed, state: FEEDBACK_STATE.ERROR });
+			setCopyFeedback({ message: copy.copyFailed, state: FEEDBACK_STATE.ERROR });
 		}
 	}
 
-	const tokenListStatusMessage = isLoading
-		? copy.loadingTokens
-		: listError
-			? copy.errorLoadingTokens
-			: tokens.length === 0
-				? copy.noTokens
-				: '';
 	const serviceMessage =
 		serviceState === SERVICE_STATE.CHECKING
 			? copy.checking
@@ -300,24 +312,29 @@ function useApiTokens(): ApiTokenManagementState {
 
 	return {
 		cancelRevoke,
-		confirmationReference,
+		closeCreate,
 		confirmingTokenId,
 		copy,
+		copyFeedback,
 		copyToken,
 		createToken,
 		feedback,
+		isCreateOpen,
 		isCreating,
+		isLoading,
 		issuedSecret,
 		issuedTokenReference,
+		listError,
 		loadTokens,
+		openCreate,
 		revokeToken,
+		revokingTokenId,
 		serviceMessage,
 		serviceState,
 		setConfirmingTokenId,
 		tokenCount: tokens.length,
 		tokenHeadingReference,
 		tokenListReference,
-		tokenListStatusMessage,
 		tokenNameReference,
 		tokens,
 	};

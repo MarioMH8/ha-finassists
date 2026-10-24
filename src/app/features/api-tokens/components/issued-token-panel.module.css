@@ -1,27 +1,20 @@
 .panel {
   display: grid;
-  gap: var(--ha-space-2);
+  gap: var(--ha-space-3);
 }
 
 .panel[hidden] {
   display: none;
 }
 
-.panel h3 {
-  margin: 0;
-}
-
-.warning {
-  margin: 0;
-  color: var(--ha-color-text-secondary);
-}
-
 .secret {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--ha-space-4);
-  margin-top: var(--ha-space-1);
+  gap: var(--ha-space-3);
+  padding: var(--ha-space-3);
+  border-radius: var(--ha-border-radius-md);
+  background: var(--ha-color-surface-default);
 }
 
 .secret code {
@@ -34,6 +27,7 @@
 
 @media (max-width: 600px) {
   .secret {
+    align-items: flex-start;
     flex-direction: column;
   }
 }

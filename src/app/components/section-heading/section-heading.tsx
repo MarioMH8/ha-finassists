@@ -1,5 +1,5 @@
 import { classNames } from '@app/components/class-names';
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement, ReactNode, Ref } from 'react';
 
 import styles from './section-heading.module.css';
 
@@ -11,6 +11,7 @@ interface SectionHeadingProps {
 	level?: 2 | 3;
 	title: ReactNode;
 	titleId?: string;
+	titleRef?: Ref<HTMLHeadingElement>;
 }
 
 function SectionHeading({
@@ -21,6 +22,7 @@ function SectionHeading({
 	level = 2,
 	title,
 	titleId,
+	titleRef,
 }: SectionHeadingProps): ReactElement {
 	const Heading = level === 2 ? 'h2' : 'h3';
 
@@ -30,7 +32,8 @@ function SectionHeading({
 				{eyebrow ? <p className={styles.eyebrow}>{eyebrow}</p> : undefined}
 				<Heading
 					className={styles.title}
-					id={titleId}>
+					id={titleId}
+					ref={titleRef}>
 					{title}
 				</Heading>
 				{description ? <p className={styles.description}>{description}</p> : undefined}

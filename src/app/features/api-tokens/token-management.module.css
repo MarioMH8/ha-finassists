@@ -1,8 +1,3 @@
-.token-section {
-  display: grid;
-  gap: var(--ha-space-5);
-}
-
 .footer {
   color: var(--ha-color-text-secondary);
   font-size: var(--ha-font-size-s);

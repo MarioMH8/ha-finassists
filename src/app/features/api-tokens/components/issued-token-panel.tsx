@@ -1,5 +1,7 @@
-import { Button } from '@app/components/button';
+import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/button';
 import { Card, CARD_TONE } from '@app/components/card';
+import { Notice, NOTICE_TONE } from '@app/components/notice';
+import { SectionHeading } from '@app/components/section-heading';
 import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
 import type { ReactElement } from 'react';
 
@@ -7,11 +9,12 @@ import styles from './issued-token-panel.module.css';
 
 type IssuedTokenPanelProps = Pick<
 	ApiTokenManagementState,
-	'copy' | 'copyToken' | 'issuedSecret' | 'issuedTokenReference'
+	'copy' | 'copyFeedback' | 'copyToken' | 'issuedSecret' | 'issuedTokenReference'
 >;
 
 function IssuedTokenPanel({
 	copy,
+	copyFeedback,
 	copyToken,
 	issuedSecret,
 	issuedTokenReference,
@@ -24,16 +27,27 @@ function IssuedTokenPanel({
 			ref={issuedTokenReference}
 			tabIndex={-1}
 			tone={CARD_TONE.SUBTLE}>
-			<h3 id='issued-token-title'>{copy.issuedTokenTitle}</h3>
-			<p className={styles.warning}>{copy.issuedTokenWarning}</p>
+			<SectionHeading
+				level={3}
+				title={copy.issuedTokenTitle}
+				titleId='issued-token-title'
+			/>
+			<Notice tone={NOTICE_TONE.WARNING}>{copy.issuedTokenWarning}</Notice>
 			<div className={styles.secret}>
 				<code>{issuedSecret}</code>
 				<Button
+					appearance={BUTTON_APPEARANCE.FILLED}
 					onClick={() => void copyToken()}
-					type='button'>
+					type='button'
+					variant={BUTTON_VARIANT.BRAND}>
 					{copy.copyToken}
 				</Button>
 			</div>
+			{copyFeedback.message ? (
+				<Notice tone={copyFeedback.state === 'error' ? NOTICE_TONE.ERROR : NOTICE_TONE.SUCCESS}>
+					{copyFeedback.message}
+				</Notice>
+			) : undefined}
 		</Card>
 	);
 }
