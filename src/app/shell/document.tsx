@@ -29,7 +29,7 @@ function Document({ children, developmentMode, language, settings }: DocumentPro
 					name='viewport'
 				/>
 				<meta
-					content='#03a9f4'
+					content='#009ac7'
 					name='theme-color'
 				/>
 				<title>{settings.applicationName}</title>
