@@ -5,6 +5,11 @@
   background: var(--ha-color-surface-default);
 }
 
+.header {
+  padding: var(--ha-space-3) var(--ha-space-4);
+  border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -44,15 +49,26 @@
   background: var(--ha-color-fill-primary-quiet-resting);
 }
 
+.table .start {
+  text-align: left;
+}
+
+.table .center {
+  text-align: center;
+}
+
+.table .end {
+  text-align: right;
+}
+
 .numeric {
   font-variant-numeric: tabular-nums;
-  text-align: right;
   white-space: nowrap;
 }
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   gap: var(--ha-space-1);
 }

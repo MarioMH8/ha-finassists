@@ -1,17 +1,34 @@
 import { classNames } from '@app/components/class-names';
-import type { HTMLAttributes, ReactElement, ReactNode, TableHTMLAttributes, TdHTMLAttributes } from 'react';
+import type {
+	HTMLAttributes,
+	ReactElement,
+	ReactNode,
+	TableHTMLAttributes,
+	TdHTMLAttributes,
+	ThHTMLAttributes,
+} from 'react';
 
 import styles from './data-table.module.css';
+
+const DATA_ALIGN = {
+	CENTER: 'center',
+	END: 'end',
+	START: 'start',
+} as const;
+
+type DataAlign = (typeof DATA_ALIGN)[keyof typeof DATA_ALIGN];
 
 interface DataTableProps extends TableHTMLAttributes<HTMLTableElement> {
 	caption?: ReactNode;
 	children: ReactNode;
+	header?: ReactNode;
 	wrapperClassName?: string;
 }
 
-function DataTable({ caption, children, className, wrapperClassName, ...props }: DataTableProps): ReactElement {
+function DataTable({ caption, children, className, header, wrapperClassName, ...props }: DataTableProps): ReactElement {
 	return (
 		<div className={classNames(styles.wrapper, wrapperClassName)}>
+			{header ? <div className={styles.header}>{header}</div> : undefined}
 			<table
 				className={classNames(styles.table, className)}
 				{...props}>
@@ -22,14 +39,32 @@ function DataTable({ caption, children, className, wrapperClassName, ...props }:
 	);
 }
 
-interface DataCellProps extends TdHTMLAttributes<HTMLTableCellElement> {
+interface DataCellProps extends Omit<TdHTMLAttributes<HTMLTableCellElement>, 'align'> {
+	align?: DataAlign;
 	numeric?: boolean;
 }
 
-function DataCell({ className, numeric = false, ...props }: DataCellProps): ReactElement {
+function DataCell({ align, className, numeric = false, ...props }: DataCellProps): ReactElement {
 	return (
 		<td
-			className={classNames(numeric && styles.numeric, className)}
+			className={classNames(
+				styles[align ?? (numeric ? DATA_ALIGN.END : DATA_ALIGN.START)],
+				numeric && styles.numeric,
+				className
+			)}
+			{...props}
+		/>
+	);
+}
+
+interface DataHeaderCellProps extends Omit<ThHTMLAttributes<HTMLTableCellElement>, 'align'> {
+	align?: DataAlign;
+}
+
+function DataHeaderCell({ align = DATA_ALIGN.START, className, ...props }: DataHeaderCellProps): ReactElement {
+	return (
+		<th
+			className={classNames(styles[align], className)}
 			{...props}
 		/>
 	);
@@ -44,4 +79,4 @@ function DataRowActions({ className, ...props }: HTMLAttributes<HTMLDivElement>)
 	);
 }
 
-export { DataCell, DataRowActions, DataTable };
+export { DATA_ALIGN, type DataAlign, DataCell, DataHeaderCell, DataRowActions, DataTable };

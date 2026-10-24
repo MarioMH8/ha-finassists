@@ -1,0 +1,53 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  min-height: 32px;
+  padding: 0 var(--ha-space-3);
+  border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  border-radius: var(--ha-border-radius-md);
+  background: transparent;
+  color: var(--ha-color-text-primary);
+  font-family: var(--ha-font-family-body);
+  font-size: var(--ha-font-size-m);
+  font-weight: var(--ha-font-weight-normal);
+  line-height: var(--ha-line-height-condensed);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--ha-animation-duration-fast) ease-out,
+    border-color var(--ha-animation-duration-fast) ease-out;
+}
+
+.chip:hover:not(:disabled) {
+  background: var(--ha-color-fill-neutral-quiet-hover);
+  border-color: var(--ha-color-border-neutral-normal);
+}
+
+.chip:focus-visible {
+  outline: var(--ha-border-width-md) solid var(--ha-color-focus);
+  outline-offset: 2px;
+}
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chip svg {
+  --ha-icon-size: 18px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--ha-space-1);
+  border-radius: var(--ha-border-radius-pill);
+  background: var(--ha-color-fill-primary-loud-resting);
+  color: var(--ha-color-on-primary-loud);
+  font-size: var(--ha-font-size-xs);
+  line-height: 1;
+}

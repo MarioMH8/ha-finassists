@@ -1,1 +1,1 @@
-export { DataCell, DataRowActions, DataTable } from './data-table';
+export { DATA_ALIGN, type DataAlign, DataCell, DataHeaderCell, DataRowActions, DataTable } from './data-table';
