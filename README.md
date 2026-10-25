@@ -1,4 +1,4 @@
-![Fin Assist — household finances, inside Home Assistant](https://raw.githubusercontent.com/MarioMH8/ha-finassists/develop/docs/assets/banner-light.png)
+![Fin Assist — household finances, inside Home Assistant](https://raw.githubusercontent.com/MarioMH8/ha-finassists/develop/docs/assets/banner.png)
 
 [![CI](https://img.shields.io/github/actions/workflow/status/MarioMH8/ha-finassists/ci.yml?branch=develop&label=CI&style=flat-square)](https://github.com/MarioMH8/ha-finassists/actions/workflows/ci.yml)
 ![Home Assistant add-on](https://img.shields.io/badge/Home%20Assistant-add--on-18bcf2?style=flat-square&logo=homeassistant&logoColor=white)
