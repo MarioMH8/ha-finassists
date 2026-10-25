@@ -93,7 +93,7 @@ function queryString(query: TransactionQuery): string {
 async function fetchTransactionPage(query: TransactionQuery, signal?: AbortSignal): Promise<TransactionPage> {
 	const response = await fetch(`${TRANSACTIONS_URL}${queryString(query)}`, {
 		headers: { Accept: 'application/json' },
-		signal,
+		...(signal && { signal }),
 	});
 	if (!response.ok) {
 		throw new Error(`Transaction list request failed with HTTP ${String(response.status)}`);

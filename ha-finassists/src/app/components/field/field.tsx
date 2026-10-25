@@ -5,7 +5,7 @@ import styles from './field.module.css';
 
 interface FieldProps {
 	children: ReactNode;
-	className?: string;
+	className?: string | undefined;
 	error?: ReactNode;
 	hint?: ReactNode;
 	htmlFor: string;

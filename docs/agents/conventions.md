@@ -6,7 +6,7 @@ Use Bun for installation, development, builds, tests, and runtime. Keep runtime 
 
 ## TypeScript
 
-The TypeScript compiler is configured in strict mode with no emitted output. The `ha-finassists` workspace package owns the app: keep its server code and React UI source under `ha-finassists/src/`. The root `tsconfig.json` covers the app and the release scripts for typed linting, and `ha-finassists/tsconfig.json` is the one the build uses. Development serves a client bundle compiled in memory; production bundles the server and client into the generated `ha-finassists/dist/` directory.
+Both TypeScript configs extend `@hexadrop/tsconfig`, which turns on the strictest checks (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, unused locals and parameters, verbatim module syntax) and emits nothing. The only override is `noPropertyAccessFromIndexSignature`, because CSS Modules resolve to an index signature and the UI reads `styles.card`. The `ha-finassists` workspace package owns the app: keep its server code and React UI source under `ha-finassists/src/`. The root `tsconfig.json` covers the app and the release scripts for typed linting, and `ha-finassists/tsconfig.json` is the one the build uses. Development serves a client bundle compiled in memory; production bundles the server and client into the generated `ha-finassists/dist/` directory.
 
 ## Module boundaries
 

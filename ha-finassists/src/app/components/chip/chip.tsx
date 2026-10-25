@@ -6,7 +6,7 @@ import type { ButtonHTMLAttributes, ReactElement, ReactNode } from 'react';
 import styles from './chip.module.css';
 
 interface ChipProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-	badge?: number;
+	badge?: number | undefined;
 	children: ReactNode;
 	icon?: IconName;
 }

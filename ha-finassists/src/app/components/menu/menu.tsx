@@ -29,9 +29,9 @@ interface MenuProps {
 }
 
 interface MenuPosition {
-	bottom?: number;
+	bottom?: number | undefined;
 	right: number;
-	top?: number;
+	top?: number | undefined;
 }
 
 /*

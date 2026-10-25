@@ -164,7 +164,10 @@ function useAdministration(): AdministrationState {
 
 	async function checkService(signal?: AbortSignal): Promise<void> {
 		try {
-			const response = await fetch('./health', { headers: { Accept: 'application/json' }, signal });
+			const response = await fetch('./health', {
+				headers: { Accept: 'application/json' },
+				...(signal && { signal }),
+			});
 			if (!response.ok) {
 				throw new Error('Unhealthy response');
 			}
@@ -182,7 +185,10 @@ function useAdministration(): AdministrationState {
 		setListError(false);
 
 		try {
-			const response = await fetch('./api/v1/tokens', { headers: { Accept: 'application/json' }, signal });
+			const response = await fetch('./api/v1/tokens', {
+				headers: { Accept: 'application/json' },
+				...(signal && { signal }),
+			});
 			if (!response.ok) {
 				throw new Error('Token list request failed');
 			}

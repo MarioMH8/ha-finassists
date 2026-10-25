@@ -22,6 +22,10 @@ export class Money {
 		}
 
 		const { fraction = '', sign, whole } = match.groups;
+		if (whole === undefined) {
+			throw new Error('Amount must be a decimal string without grouping separators');
+		}
+
 		const keptFraction = fraction.slice(0, currency.fractionDigits);
 		const excessFraction = fraction.slice(currency.fractionDigits);
 		if (/[1-9]/.test(excessFraction)) {

@@ -6,10 +6,10 @@ import { createHttpApp } from './routes';
 
 export interface ServerOptions {
 	container: HttpContainer;
-	developmentActor?: HomeAssistantActor;
-	developmentMode?: boolean;
+	developmentActor?: HomeAssistantActor | undefined;
+	developmentMode?: boolean | undefined;
 	port: number;
-	shellConfig?: ShellConfig;
+	shellConfig?: ShellConfig | undefined;
 	trustedIngressIp: string;
 }
 
