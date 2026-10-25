@@ -5,7 +5,9 @@ on:
     branches: [main]
 
 concurrency:
-  group: release-prepare
+  # The called workflow serializes on its own `release-prepare` group; sharing
+  # the name here makes GitHub cancel the call.
+  group: release-prepare-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:

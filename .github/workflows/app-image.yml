@@ -52,6 +52,16 @@ jobs:
           DESCRIPTION: ${{ steps.info.outputs.description }}
           VERSION: ${{ steps.info.outputs.version }}
         run: |
+          # The info helper returns JSON values, so strings keep their quotes.
+          IMAGE="${IMAGE#\"}"
+          IMAGE="${IMAGE%\"}"
+          VERSION="${VERSION#\"}"
+          VERSION="${VERSION%\"}"
+          NAME="${NAME#\"}"
+          NAME="${NAME%\"}"
+          DESCRIPTION="${DESCRIPTION#\"}"
+          DESCRIPTION="${DESCRIPTION%\"}"
+
           if [ -z "${IMAGE}" ]; then
             echo "::error::ha-finassists/config.yaml declares no image"
             exit 1
