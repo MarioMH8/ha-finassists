@@ -33,6 +33,23 @@ const config = await hexadrop(
 		settings: {
 			react: { version: '19.3.1' },
 		},
+	},
+	{
+		/*
+		 * `null` is the wire and storage representation of an absent reference
+		 * (`actorId`, `categoryId`): JSON cannot carry `undefined` and SQLite uses
+		 * NULL. Tests and object mothers mirror those payloads, and the HTTP and
+		 * SQL boundaries translate them, so the rule is scoped off there instead
+		 * of repeating a disable comment on every value.
+		 */
+		files: [
+			'**/*.test.ts',
+			'**/*.test.tsx',
+			'**/*.mother.ts',
+			'ha-finassists/src/modules/api/**/*.ts',
+			'ha-finassists/src/modules/ledger/infrastructure/**/*.ts',
+		],
+		rules: { 'unicorn/no-null': 'off' },
 	}
 );
 

@@ -31,7 +31,6 @@ describe('CreateTransaction', () => {
 
 	it('defaults the description to an empty string', async () => {
 		const transaction = await useCase.execute({
-			// eslint-disable-next-line unicorn/no-null
 			actorId: null,
 			amountMinor: 500,
 			kind: 'income',
