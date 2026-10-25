@@ -1,0 +1,38 @@
+.list {
+  display: grid;
+  margin: 0;
+  padding: var(--ha-space-2) 0;
+  list-style: none;
+}
+
+/* One-line rows are 48px tall, two-line rows 72px. */
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ha-space-3) var(--ha-space-4);
+  min-height: 48px;
+  padding: var(--ha-space-2) var(--ha-space-5);
+  border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+}
+
+.item:last-child {
+  border-bottom: 0;
+}
+
+.content {
+  min-width: 0;
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ha-space-1);
+}
+
+@media (max-width: 600px) {
+  .item {
+    flex-wrap: wrap;
+  }
+}

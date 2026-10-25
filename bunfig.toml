@@ -1,0 +1,25 @@
+[test]
+coveragePathIgnorePatterns = [
+
+  # Exclude configuration files
+  "*.config.js",
+  "webpack.config.ts",
+  "vite.config.ts",
+
+  # Exclude specific test patterns
+  "**/*.spec.ts",
+  "**/*.e2e.ts",
+
+  # Exclude build artifacts
+  "dist/**",
+  "build/**",
+  "custom_componentes/**",
+
+  # Exclude generated files
+  "src/generated/**",
+  "**/*.generated.ts",
+
+  # Exclude vendor/third-party code
+  "vendor/**",
+  "third-party/**"
+]

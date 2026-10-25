@@ -1,0 +1,73 @@
+.wrapper {
+  overflow-x: auto;
+  border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  border-radius: var(--ha-border-radius-lg);
+  background: var(--ha-color-surface-default);
+}
+
+.header {
+  padding: var(--ha-space-2);
+  border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ha-font-size-m);
+  font-variant-numeric: tabular-nums;
+}
+
+.caption {
+  padding: var(--ha-space-3) var(--ha-space-4);
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+  text-align: left;
+}
+
+.table th {
+  padding: var(--ha-space-2) var(--ha-space-4);
+  border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+  font-weight: var(--ha-font-weight-medium);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--ha-space-3) var(--ha-space-4);
+  border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover {
+  background: var(--ha-color-fill-primary-quiet-resting);
+}
+
+.table .start {
+  text-align: left;
+}
+
+.table .center {
+  text-align: center;
+}
+
+.table .end {
+  text-align: right;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: var(--ha-space-1);
+}

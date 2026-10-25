@@ -1,0 +1,94 @@
+refresh:
+  name: Refresh
+  description: Request an immediate refresh of this month's income and expense totals.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Optional Fin Assist integration entry to refresh.
+      selector:
+        config_entry:
+          integration: ha_finassists
+add_expense:
+  name: Add expense
+  description: Record an expense in Fin Assist.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that receives the expense.
+      required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    amount:
+      name: Amount
+      description: Amount in major currency units, for example 12.50.
+      required: true
+      example: 12.50
+      selector:
+        number:
+          min: 0.01
+          step: any
+          mode: box
+    date:
+      name: Date
+      description: Transaction date. Defaults to today.
+      required: false
+      selector:
+        date:
+    description:
+      name: Description
+      description: Optional note describing the expense.
+      required: false
+      selector:
+        text:
+add_income:
+  name: Add income
+  description: Record an income in Fin Assist.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that receives the income.
+      required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    amount:
+      name: Amount
+      description: Amount in major currency units, for example 1200.00.
+      required: true
+      example: 1200.00
+      selector:
+        number:
+          min: 0.01
+          step: any
+          mode: box
+    date:
+      name: Date
+      description: Transaction date. Defaults to today.
+      required: false
+      selector:
+        date:
+    description:
+      name: Description
+      description: Optional note describing the income.
+      required: false
+      selector:
+        text:
+delete_transaction:
+  name: Delete transaction
+  description: Delete a recorded transaction in Fin Assist.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that owns the transaction.
+      required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    transaction_id:
+      name: Transaction ID
+      description: Identifier of the transaction to delete.
+      required: true
+      example: 0f8fad5b-d9cb-469f-a165-70867728950e
+      selector:
+        text:

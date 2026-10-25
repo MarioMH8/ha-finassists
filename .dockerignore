@@ -3,4 +3,8 @@
 .impeccable
 node_modules
 coverage
+dist
+.env
+.env.*
 *.log
+bunfig.toml

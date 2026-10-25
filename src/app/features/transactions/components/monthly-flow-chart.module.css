@@ -1,0 +1,89 @@
+.chart {
+  display: grid;
+  gap: var(--ha-space-2);
+  min-width: 0;
+  margin: 0;
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ha-space-4);
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
+.incomeSwatch,
+.expenseSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--ha-border-radius-sm);
+}
+
+.incomeSwatch {
+  background: var(--ha-color-on-success-normal);
+}
+
+.expenseSwatch {
+  background: var(--ha-color-on-danger-normal);
+}
+
+.gridLine {
+  stroke: var(--ha-color-border-neutral-quiet);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  fill: var(--ha-color-text-secondary);
+  font-family: var(--ha-font-family-body);
+  font-size: 11px;
+}
+
+.incomeBar {
+  fill: var(--ha-color-on-success-normal);
+}
+
+.expenseBar {
+  fill: var(--ha-color-on-danger-normal);
+}
+
+.incomeBar:hover,
+.expenseBar:hover {
+  opacity: 0.8;
+}
+
+.srOnly {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .legend {
+    justify-content: flex-start;
+  }
+
+  .axisLabel {
+    font-size: 10px;
+  }
+}

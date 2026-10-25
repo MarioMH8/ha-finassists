@@ -1,0 +1,36 @@
+.app-shell {
+  min-height: 100dvh;
+  background: var(--ha-color-surface-low);
+  color: var(--ha-color-text-primary);
+}
+
+.main-content {
+  display: grid;
+  width: min(100% - 48px, 1120px);
+  gap: var(--ha-space-6);
+  margin: var(--ha-space-4) auto var(--ha-space-12);
+}
+
+.visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.main-content:focus-visible {
+  outline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  .main-content {
+    width: min(100% - 24px, 1120px);
+    gap: var(--ha-space-4);
+    margin: var(--ha-space-2) auto var(--ha-space-8);
+  }
+}

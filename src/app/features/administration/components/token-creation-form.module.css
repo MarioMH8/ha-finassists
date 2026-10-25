@@ -1,0 +1,41 @@
+.form {
+  display: grid;
+  gap: var(--ha-space-3);
+  min-height: 96px;
+}
+
+.primaryAction {
+  min-width: 112px;
+}
+
+.feedback:empty {
+  display: none;
+}
+
+.issued {
+  display: grid;
+  gap: var(--ha-space-3);
+  min-height: 96px;
+  outline: none;
+}
+
+.secret {
+  padding: var(--ha-space-3);
+  border-radius: var(--ha-border-radius-sm);
+  background: var(--ha-color-surface-lower);
+}
+
+.secret code {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--ha-color-text-primary);
+  font-family: var(--ha-font-family-code);
+  font-size: var(--ha-font-size-s);
+  user-select: all;
+}
+
+@media (max-width: 600px) {
+  .secret {
+    padding: var(--ha-space-3);
+  }
+}

@@ -1,0 +1,338 @@
+openapi: 3.1.0
+info:
+  title: Fin Assist REST API
+  version: 1.0.0
+  description: >-
+    Minimal finance API for recording and listing expenses and incomes, using exact integer minor-unit amounts and ISO calendar dates.
+    External finance API clients must send a personal bearer token. Trusted Home
+    Assistant Ingress requests are authenticated by the server boundary and
+    attributed to the resolved Home Assistant actor; Ingress identity is not an
+    HTTP credential clients can forge. The session and personal-token management
+    endpoints are restricted to trusted Ingress. The LAN listener is opt-in; do
+    not expose it to the public Internet. Configure TLS at a trusted reverse
+    proxy if needed.
+servers:
+  - url: http://{host}:{port}/api/v1
+    variables:
+      host:
+        default: homeassistant.local
+      port:
+        default: '8099'
+security:
+  - bearerAuth: []
+paths:
+  /session:
+    get:
+      summary: Get the current Home Assistant Ingress actor
+      description: Available only through a trusted Home Assistant Ingress connection. An actor without a stable Home Assistant user ID is returned as kind `unknown`.
+      security: []
+      responses:
+        '200':
+          description: Resolved Home Assistant actor
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IngressActor' }
+        '403': { description: Request did not come from the trusted Supervisor peer }
+  /tokens:
+    get:
+      summary: List the current actor's personal API tokens
+      description: Available only through trusted Home Assistant Ingress for an actor with a stable user ID. Token secrets are never returned by this operation.
+      security: []
+      responses:
+        '200':
+          description: Token metadata owned by the current actor
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ApiToken' }
+        '401': { description: Trusted Ingress request has no stable actor ID }
+        '403': { description: Request did not come from the trusted Supervisor peer }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+    post:
+      summary: Issue a personal API token
+      description: Available only through trusted Home Assistant Ingress for an actor with a stable user ID. The secret is returned once and cannot be retrieved later.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 80 }
+      responses:
+        '201':
+          description: Issued token; copy the secret now because it will not be shown again
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IssuedApiToken' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { description: Trusted Ingress request has no stable actor ID }
+        '403': { description: Request did not come from the trusted Supervisor peer }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+  /tokens/{tokenId}:
+    delete:
+      summary: Revoke one of the current actor's personal API tokens
+      description: Available only through trusted Home Assistant Ingress for an actor with a stable user ID. Tokens owned by other actors are not visible or revocable.
+      security: []
+      parameters:
+        - { $ref: '#/components/parameters/tokenId' }
+      responses:
+        '204': { description: Token revoked }
+        '401': { description: Trusted Ingress request has no stable actor ID }
+        '403': { description: Request did not come from the trusted Supervisor peer }
+        '404': { description: Token does not exist or is not owned by the current actor }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+  /system-credentials/exchange:
+    post:
+      summary: Exchange a one-time bootstrap capability for the Home Assistant integration credential
+      description: The capability must be configured in the backend as SYSTEM_CREDENTIAL_BOOTSTRAP_CAPABILITY. It expires 15 minutes after server startup and can be redeemed only once. Neither the capability nor the issued credential is stored in plaintext or returned again.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [bootstrapCapability]
+              properties:
+                bootstrapCapability: { type: string, minLength: 32, maxLength: 4096 }
+      responses:
+        '201':
+          description: System credential issued; store it securely because it is returned only once
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IssuedSystemCredential' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { description: Bootstrap capability is invalid, expired, or already redeemed }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '503': { description: No bootstrap capability is configured }
+  /system-credentials/current:
+    put:
+      summary: Rotate the current Home Assistant integration credential
+      description: Requires the current system credential. Personal user API tokens and trusted Ingress identity cannot rotate this credential. Rotation atomically invalidates the old credential and returns the new one only once.
+      security:
+        - systemCredentialAuth: []
+      responses:
+        '200':
+          description: Rotated credential; securely replace the stored credential immediately
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IssuedSystemCredential' }
+        '401': { description: Current system credential is missing or invalid }
+        '404': { description: System credential lifecycle is unavailable }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+    delete:
+      summary: Revoke the current Home Assistant integration credential
+      description: Requires the current system credential. Personal user API tokens and trusted Ingress identity cannot revoke this credential. Revocation is idempotent only for an existing credential; a missing credential returns 404.
+      security:
+        - systemCredentialAuth: []
+      responses:
+        '204': { description: System credential revoked }
+        '401': { description: Current system credential is missing or invalid }
+        '404': { description: No current system credential exists or lifecycle is unavailable }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+  /transactions:
+    get:
+      summary: List transactions, newest first
+      parameters:
+        - { $ref: '#/components/parameters/limit' }
+        - { $ref: '#/components/parameters/offset' }
+        - { name: fromDate, in: query, schema: { type: string, format: date } }
+        - { name: toDate, in: query, schema: { type: string, format: date } }
+        - { name: kind, in: query, schema: { type: string, enum: [expense, income] } }
+        - { name: search, in: query, description: Case-insensitive match against the transaction description., schema: { type: string } }
+      responses:
+        '200': { description: Paginated transactions, content: { application/json: { schema: { $ref: '#/components/schemas/TransactionPage' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+    post:
+      summary: Record an expense or income
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransactionInput' }
+      responses:
+        '201': { description: Created transaction, content: { application/json: { schema: { $ref: '#/components/schemas/Transaction' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+    delete:
+      summary: Delete several transactions at once
+      description: Deletion is permanent and installation-wide; the transactions are removed for every actor. Identifiers that no longer exist are ignored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransactionIdsInput' }
+      responses:
+        '204': { description: The listed transactions are deleted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+  /transactions/{transactionId}:
+    patch:
+      summary: Update a transaction
+      description: Partial update; omitted properties keep their current value. The currency never changes, because every transaction stores the currency in force when it was created.
+      parameters:
+        - { $ref: '#/components/parameters/transactionId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransactionUpdate' }
+      responses:
+        '200': { description: Updated transaction, content: { application/json: { schema: { $ref: '#/components/schemas/Transaction' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { description: Transaction does not exist }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+    delete:
+      summary: Delete a transaction
+      description: Deletion is permanent and installation-wide; the transaction is removed for every actor.
+      parameters:
+        - { $ref: '#/components/parameters/transactionId' }
+      responses:
+        '204': { description: Transaction deleted }
+        '404': { description: Transaction does not exist }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Fin Assist personal API token
+    systemCredentialAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Fin Assist Home Assistant system credential
+  parameters:
+    limit:
+      name: limit
+      in: query
+      description: Page size; defaults to 100 and is capped at 100.
+      schema: { type: integer, minimum: 1, maximum: 100, default: 100 }
+    offset:
+      name: offset
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+    tokenId:
+      name: tokenId
+      in: path
+      required: true
+      schema: { type: string }
+    transactionId:
+      name: transactionId
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    Page:
+      type: object
+      required: [items, limit, offset, total]
+      properties:
+        items: { type: array, items: {} }
+        limit: { type: integer }
+        offset: { type: integer }
+        total: { type: integer }
+    IngressActor:
+      oneOf:
+        - type: object
+          required: [kind]
+          properties:
+            kind: { const: unknown }
+        - type: object
+          required: [id, kind]
+          properties:
+            id: { type: string }
+            kind: { const: home_assistant_user }
+            username: { type: string }
+            displayName: { type: string }
+        - type: object
+          required: [id, kind]
+          properties:
+            id: { type: string }
+            kind: { const: home_assistant_integration }
+    SystemCredential:
+      type: object
+      required: [id, prefix, createdAt]
+      properties:
+        id: { type: string, const: home-assistant-integration }
+        prefix: { type: string, pattern: '^fa_system_' }
+        createdAt: { type: string, format: date-time }
+    IssuedSystemCredential:
+      type: object
+      required: [credential, id]
+      properties:
+        credential: { type: string, pattern: '^fa_system_', description: Bearer secret returned only at exchange or rotation; never retrievable later }
+        id: { type: string, const: home-assistant-integration }
+    ApiToken:
+      type: object
+      required: [createdAt, id, name, prefix]
+      properties:
+        createdAt: { type: string, format: date-time }
+        id: { type: string }
+        name: { type: string }
+        prefix: { type: string }
+    IssuedApiToken:
+      allOf:
+        - $ref: '#/components/schemas/ApiToken'
+        - type: object
+          required: [secret]
+          properties:
+            secret: { type: string, description: Returned once at issuance; cannot be retrieved later }
+    TransactionInput:
+      type: object
+      required: [kind, amountMinor, transactionDate]
+      properties:
+        kind: { type: string, enum: [expense, income] }
+        amountMinor: { type: integer, minimum: 1, description: Amount in minor units of the configured currency }
+        description: { type: string, maxLength: 200, default: '' }
+        transactionDate: { type: string, format: date }
+    TransactionUpdate:
+      type: object
+      description: Partial transaction update; omitted properties keep their current value.
+      properties:
+        kind: { type: string, enum: [expense, income] }
+        amountMinor: { type: integer, minimum: 1, description: Amount in minor units of the configured currency }
+        description: { type: string, maxLength: 200 }
+        transactionDate: { type: string, format: date }
+    TransactionIdsInput:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { type: string }
+    Transaction:
+      type: object
+      required: [id, kind, amountMinor, currencyCode, description, transactionDate, actorId, createdAt]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [expense, income] }
+        amountMinor: { type: integer }
+        currencyCode: { type: string, description: ISO 4217 code configured through the app's currency option }
+        description: { type: string }
+        transactionDate: { type: string, format: date }
+        actorId: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+    TransactionPage:
+      allOf:
+        - { $ref: '#/components/schemas/Page' }
+        - type: object
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Transaction' } }
+  responses:
+    MethodNotAllowed:
+      description: HTTP method is not supported for this route
+      headers:
+        Allow:
+          schema: { type: string }
+    BadRequest:
+      description: Invalid request parameters or body
+      content:
+        application/json:
+          schema: { type: object, properties: { error: { type: string } } }

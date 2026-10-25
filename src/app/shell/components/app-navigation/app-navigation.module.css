@@ -1,0 +1,16 @@
+.band {
+  border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  background: var(--ha-color-surface-default);
+}
+
+.band > nav {
+  width: min(100% - 48px, 1120px);
+  margin: 0 auto;
+  border-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .band > nav {
+    width: min(100% - 24px, 1120px);
+  }
+}

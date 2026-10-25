@@ -1,0 +1,42 @@
+.dialog {
+  width: min(100% - var(--ha-space-8), 320px);
+  max-height: calc(100dvh - 80px);
+  padding: 0;
+  border: none;
+  border-radius: var(--ha-dialog-border-radius);
+  background: var(--ha-color-surface-default);
+  color: var(--ha-color-text-primary);
+  box-shadow: var(--ha-box-shadow-l);
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 32%);
+}
+
+.body {
+  display: grid;
+  gap: var(--ha-space-2);
+  padding: var(--ha-space-6);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--ha-font-size-xl);
+  font-weight: var(--ha-font-weight-medium);
+  line-height: var(--ha-line-height-condensed);
+}
+
+.description {
+  margin: 0;
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-m);
+  line-height: var(--ha-line-height-normal);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ha-space-3);
+  padding: var(--ha-space-3) var(--ha-space-4) var(--ha-space-4);
+}

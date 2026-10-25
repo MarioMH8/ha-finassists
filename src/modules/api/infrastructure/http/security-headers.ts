@@ -1,0 +1,27 @@
+const contentSecurityPolicy = [
+	`default-src \u{27}self\u{27}`,
+	`object-src \u{27}none\u{27}`,
+	`base-uri \u{27}self\u{27}`,
+	`frame-ancestors \u{27}self\u{27}`,
+].join('; ');
+
+const securityHeaders: Record<string, string> = {
+	'Content-Security-Policy': contentSecurityPolicy,
+	'Referrer-Policy': 'no-referrer',
+	'X-Content-Type-Options': 'nosniff',
+	'X-Frame-Options': 'SAMEORIGIN',
+};
+
+export function withSecurityHeaders(response: Response): Response {
+	const headers = new Headers(response.headers);
+
+	for (const [name, value] of Object.entries(securityHeaders)) {
+		headers.set(name, value);
+	}
+
+	return new Response(response.body, {
+		headers,
+		status: response.status,
+		statusText: response.statusText,
+	});
+}

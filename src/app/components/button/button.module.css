@@ -1,0 +1,200 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ha-space-1);
+  border: var(--ha-border-width-sm) solid transparent;
+  border-radius: var(--ha-button-border-radius);
+  cursor: pointer;
+  font-family: var(--ha-font-family-body);
+  font-size: var(--ha-font-size-m);
+  font-weight: var(--ha-font-weight-action);
+  line-height: var(--ha-line-height-condensed);
+  white-space: nowrap;
+  transition:
+    background-color var(--ha-animation-duration-fast) ease-out,
+    border-color var(--ha-animation-duration-fast) ease-out,
+    color var(--ha-animation-duration-fast) ease-out,
+    opacity var(--ha-animation-duration-fast) ease-out;
+}
+
+/* Sizes: 24 / 32 / 40 / 48px tall. */
+.xs {
+  --button-size: var(--ha-button-size-xs);
+  --ha-icon-size: 16px;
+  min-height: var(--button-size);
+  padding: 0 var(--ha-space-2);
+  font-size: var(--ha-font-size-s);
+}
+
+.s {
+  --button-size: var(--ha-button-size-s);
+  --ha-icon-size: 20px;
+  min-height: var(--button-size);
+  padding: 0 var(--ha-space-3);
+}
+
+.m {
+  --button-size: var(--ha-button-size-m);
+  --ha-icon-size: 24px;
+  min-height: var(--button-size);
+  padding: 0 var(--ha-space-4);
+}
+
+.l {
+  --button-size: var(--ha-button-size-l);
+  --ha-icon-size: 24px;
+  min-height: var(--button-size);
+  padding: 0 var(--ha-space-4);
+  font-size: var(--ha-font-size-l);
+}
+
+/* Icons sit closer to the edge than the label does. */
+.button:has(> svg:first-child) {
+  padding-inline-start: var(--ha-space-2);
+}
+
+.button:has(> svg:last-child) {
+  padding-inline-end: var(--ha-space-2);
+}
+
+/* An icon-only button is square, so it stays compact in a row of actions. */
+.button:has(> svg:only-child) {
+  min-width: var(--button-size);
+  padding-inline: 0;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Appearance: how much of the variant color is used. */
+.accent {
+  background: var(--button-fill-loud-resting);
+  color: var(--button-on-loud);
+}
+
+.accent:hover:not(:disabled) {
+  background: var(--button-fill-loud-hover);
+}
+
+.accent:active:not(:disabled) {
+  background: var(--button-fill-loud-active);
+}
+
+.filled {
+  background: var(--button-fill-normal-resting);
+  color: var(--button-on-normal);
+}
+
+.filled:hover:not(:disabled) {
+  background: var(--button-fill-normal-hover);
+}
+
+.filled:active:not(:disabled) {
+  background: var(--button-fill-normal-active);
+}
+
+.outlined {
+  border-color: var(--button-border-loud);
+  background: transparent;
+  color: var(--button-on-quiet);
+}
+
+.outlined:hover:not(:disabled) {
+  background: var(--button-fill-quiet-hover);
+}
+
+.outlined:active:not(:disabled) {
+  background: var(--button-fill-quiet-active);
+}
+
+.plain {
+  background: transparent;
+  color: var(--button-on-normal);
+}
+
+.plain:hover:not(:disabled) {
+  background: var(--button-fill-quiet-hover);
+}
+
+.plain:active:not(:disabled) {
+  background: var(--button-fill-quiet-active);
+}
+
+/* Variant: the color family the appearance draws from. */
+.brand {
+  --button-border-loud: var(--ha-color-border-primary-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-primary-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-primary-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-primary-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-primary-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-primary-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-primary-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-primary-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-primary-quiet-active);
+  --button-on-loud: var(--ha-color-on-primary-loud);
+  --button-on-normal: var(--ha-color-on-primary-normal);
+  --button-on-quiet: var(--ha-color-on-primary-quiet);
+}
+
+.neutral {
+  --button-border-loud: var(--ha-color-border-neutral-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-neutral-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-neutral-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-neutral-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-neutral-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-neutral-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-neutral-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-neutral-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-neutral-quiet-active);
+  --button-on-loud: var(--ha-color-on-neutral-loud);
+  --button-on-normal: var(--ha-color-on-neutral-normal);
+  --button-on-quiet: var(--ha-color-on-neutral-quiet);
+}
+
+.success {
+  --button-border-loud: var(--ha-color-border-success-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-success-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-success-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-success-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-success-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-success-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-success-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-success-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-success-quiet-active);
+  --button-on-loud: var(--ha-color-on-success-loud);
+  --button-on-normal: var(--ha-color-on-success-normal);
+  --button-on-quiet: var(--ha-color-on-success-quiet);
+}
+
+.warning {
+  --button-border-loud: var(--ha-color-border-warning-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-warning-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-warning-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-warning-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-warning-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-warning-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-warning-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-warning-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-warning-quiet-active);
+  --button-on-loud: var(--ha-color-on-warning-loud);
+  --button-on-normal: var(--ha-color-on-warning-normal);
+  --button-on-quiet: var(--ha-color-on-warning-quiet);
+}
+
+.danger {
+  --button-border-loud: var(--ha-color-border-danger-loud);
+  --button-fill-loud-resting: var(--ha-color-fill-danger-loud-resting);
+  --button-fill-loud-hover: var(--ha-color-fill-danger-loud-hover);
+  --button-fill-loud-active: var(--ha-color-fill-danger-loud-active);
+  --button-fill-normal-resting: var(--ha-color-fill-danger-normal-resting);
+  --button-fill-normal-hover: var(--ha-color-fill-danger-normal-hover);
+  --button-fill-normal-active: var(--ha-color-fill-danger-normal-active);
+  --button-fill-quiet-hover: var(--ha-color-fill-danger-quiet-hover);
+  --button-fill-quiet-active: var(--ha-color-fill-danger-quiet-active);
+  --button-on-loud: var(--ha-color-on-danger-loud);
+  --button-on-normal: var(--ha-color-on-danger-normal);
+  --button-on-quiet: var(--ha-color-on-danger-quiet);
+}

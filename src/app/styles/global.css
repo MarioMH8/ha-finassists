@@ -1,0 +1,479 @@
+* {
+  box-sizing: border-box;
+}
+
+/* Design tokens.
+   The panel runs inside the Home Assistant Ingress iframe, so Home Assistant
+   theme variables are not inherited and this file is the single source of
+   truth. Token names and values mirror the Home Assistant frontend theme
+   (`src/resources/theme`) so components can be written against the official
+   design system: https://contributors.home-assistant.io/design/components/ */
+
+:root {
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  /* --- Core: palettes ------------------------------------------------ */
+  --ha-color-black: #000000;
+  --ha-color-white: #ffffff;
+  /* Referenced by the dark fill-neutral-quiet-active token but missing from the
+     Home Assistant core palette. Defined here so the token resolves. */
+  --ha-color-neutral-00: #000000;
+
+  --ha-color-primary-05: #001721;
+  --ha-color-primary-10: #002e3e;
+  --ha-color-primary-20: #004156;
+  --ha-color-primary-30: #006787;
+  --ha-color-primary-40: #009ac7;
+  --ha-color-primary-50: #18bcf2;
+  --ha-color-primary-60: #37c8fd;
+  --ha-color-primary-70: #7bd4fb;
+  --ha-color-primary-80: #b9e6fc;
+  --ha-color-primary-90: #dff3fc;
+  --ha-color-primary-95: #eff9fe;
+
+  --ha-color-neutral-05: #141414;
+  --ha-color-neutral-10: #202020;
+  --ha-color-neutral-20: #363636;
+  --ha-color-neutral-30: #4a4a4a;
+  --ha-color-neutral-40: #5e5e5e;
+  --ha-color-neutral-50: #7a7a7a;
+  --ha-color-neutral-60: #989898;
+  --ha-color-neutral-70: #b1b1b1;
+  --ha-color-neutral-80: #cccccc;
+  --ha-color-neutral-90: #e6e6e6;
+  --ha-color-neutral-95: #f3f3f3;
+
+  --ha-color-orange-05: #280700;
+  --ha-color-orange-10: #3b0f00;
+  --ha-color-orange-20: #5e1c00;
+  --ha-color-orange-30: #7e2900;
+  --ha-color-orange-40: #9d3800;
+  --ha-color-orange-50: #c94e00;
+  --ha-color-orange-60: #f36d00;
+  --ha-color-orange-70: #ff9342;
+  --ha-color-orange-80: #ffbb89;
+  --ha-color-orange-90: #ffe0c8;
+  --ha-color-orange-95: #fff0e4;
+
+  --ha-color-red-05: #2a040b;
+  --ha-color-red-10: #3e0913;
+  --ha-color-red-20: #631323;
+  --ha-color-red-30: #8a132c;
+  --ha-color-red-40: #b30532;
+  --ha-color-red-50: #dc3146;
+  --ha-color-red-60: #f3676c;
+  --ha-color-red-70: #fd8f90;
+  --ha-color-red-80: #ffb8b6;
+  --ha-color-red-90: #ffdedc;
+  --ha-color-red-95: #fff0ef;
+
+  --ha-color-green-05: #031608;
+  --ha-color-green-10: #052310;
+  --ha-color-green-20: #0a3a1d;
+  --ha-color-green-30: #0a5027;
+  --ha-color-green-40: #036730;
+  --ha-color-green-50: #00883c;
+  --ha-color-green-60: #00ac49;
+  --ha-color-green-70: #5dc36f;
+  --ha-color-green-80: #93da98;
+  --ha-color-green-90: #c2f2c1;
+  --ha-color-green-95: #e3f9e3;
+
+  /* --- Core: typography --------------------------------------------- */
+  --ha-font-family-body: Roboto, Noto, sans-serif;
+  --ha-font-family-code: monospace;
+  --ha-font-family-longform: ui-sans-serif, system-ui, sans-serif;
+  --ha-font-family-heading: var(--ha-font-family-body);
+
+  --ha-font-size-scale: 1;
+  --ha-font-size-xs: calc(10px * var(--ha-font-size-scale));
+  --ha-font-size-s: calc(12px * var(--ha-font-size-scale));
+  --ha-font-size-m: calc(14px * var(--ha-font-size-scale));
+  --ha-font-size-l: calc(16px * var(--ha-font-size-scale));
+  --ha-font-size-xl: calc(20px * var(--ha-font-size-scale));
+  --ha-font-size-2xl: calc(24px * var(--ha-font-size-scale));
+  --ha-font-size-3xl: calc(28px * var(--ha-font-size-scale));
+  --ha-font-size-4xl: calc(32px * var(--ha-font-size-scale));
+  --ha-font-size-5xl: calc(40px * var(--ha-font-size-scale));
+
+  --ha-font-weight-light: 300;
+  --ha-font-weight-normal: 400;
+  --ha-font-weight-medium: 500;
+  --ha-font-weight-bold: 700;
+  --ha-font-weight-body: var(--ha-font-weight-normal);
+  --ha-font-weight-heading: var(--ha-font-weight-bold);
+  --ha-font-weight-action: var(--ha-font-weight-medium);
+
+  --ha-line-height-condensed: 1.2;
+  --ha-line-height-normal: 1.6;
+  --ha-line-height-expanded: 2;
+
+  --ha-font-smoothing: antialiased;
+  --ha-moz-osx-font-smoothing: grayscale;
+
+  /* --- Core: shape, space and motion -------------------------------- */
+  --ha-border-width-sm: 1px;
+  --ha-border-width-md: 2px;
+  --ha-border-width-lg: 3px;
+
+  --ha-border-radius-sm: 4px;
+  --ha-border-radius-md: 8px;
+  --ha-border-radius-lg: 12px;
+  --ha-border-radius-xl: 16px;
+  --ha-border-radius-2xl: 20px;
+  --ha-border-radius-3xl: 24px;
+  --ha-border-radius-4xl: 28px;
+  --ha-border-radius-5xl: 32px;
+  --ha-border-radius-6xl: 36px;
+  --ha-border-radius-pill: 9999px;
+  --ha-border-radius-circle: 50%;
+  --ha-border-radius-square: 0;
+
+  --ha-picture-border-radius: var(--ha-border-radius-lg);
+  --ha-picture-border-radius-sm: var(--ha-border-radius-sm);
+
+  --ha-space-1: 4px;
+  --ha-space-2: 8px;
+  --ha-space-3: 12px;
+  --ha-space-4: 16px;
+  --ha-space-5: 20px;
+  --ha-space-6: 24px;
+  --ha-space-7: 28px;
+  --ha-space-8: 32px;
+  --ha-space-9: 36px;
+  --ha-space-10: 40px;
+  --ha-space-11: 44px;
+  --ha-space-12: 48px;
+  --ha-space-13: 52px;
+  --ha-space-14: 56px;
+  --ha-space-15: 60px;
+  --ha-space-16: 64px;
+  --ha-space-17: 68px;
+  --ha-space-18: 72px;
+  --ha-space-19: 76px;
+  --ha-space-20: 80px;
+
+  --ha-animation-duration-none: 1ms;
+  --ha-animation-duration-instant: 75ms;
+  --ha-animation-duration-fast: 150ms;
+  --ha-animation-duration-normal: 250ms;
+  --ha-animation-duration-slow: 350ms;
+
+  /* --- Semantic: color (light) -------------------------------------- */
+  --ha-color-focus: var(--ha-color-neutral-60);
+
+  --ha-color-text-primary: var(--ha-color-neutral-05);
+  --ha-color-text-secondary: var(--ha-color-neutral-40);
+  --ha-color-text-disabled: var(--ha-color-neutral-60);
+  --ha-color-text-link: var(--ha-color-primary-40);
+  --ha-color-text-primary-inverted: var(--ha-color-white);
+  --ha-color-text-secondary-inverted: var(--ha-color-neutral-20);
+
+  --ha-color-border-primary-quiet: var(--ha-color-primary-90);
+  --ha-color-border-primary-normal: var(--ha-color-primary-70);
+  --ha-color-border-primary-loud: var(--ha-color-primary-40);
+  --ha-color-border-neutral-quiet: var(--ha-color-neutral-90);
+  --ha-color-border-neutral-normal: var(--ha-color-neutral-60);
+  --ha-color-border-neutral-loud: var(--ha-color-neutral-40);
+  --ha-color-border-danger-quiet: var(--ha-color-red-90);
+  --ha-color-border-danger-normal: var(--ha-color-red-70);
+  --ha-color-border-danger-loud: var(--ha-color-red-40);
+  --ha-color-border-warning-quiet: var(--ha-color-orange-90);
+  --ha-color-border-warning-normal: var(--ha-color-orange-70);
+  --ha-color-border-warning-loud: var(--ha-color-orange-40);
+  --ha-color-border-success-quiet: var(--ha-color-green-90);
+  --ha-color-border-success-normal: var(--ha-color-green-70);
+  --ha-color-border-success-loud: var(--ha-color-green-40);
+
+  --ha-color-fill-primary-quiet-resting: var(--ha-color-primary-95);
+  --ha-color-fill-primary-quiet-hover: var(--ha-color-primary-90);
+  --ha-color-fill-primary-quiet-active: var(--ha-color-primary-95);
+  --ha-color-fill-primary-normal-resting: var(--ha-color-primary-90);
+  --ha-color-fill-primary-normal-hover: var(--ha-color-primary-80);
+  --ha-color-fill-primary-normal-active: var(--ha-color-primary-90);
+  --ha-color-fill-primary-loud-resting: var(--ha-color-primary-40);
+  --ha-color-fill-primary-loud-hover: var(--ha-color-primary-30);
+  --ha-color-fill-primary-loud-active: var(--ha-color-primary-40);
+
+  --ha-color-fill-neutral-quiet-resting: var(--ha-color-neutral-95);
+  --ha-color-fill-neutral-quiet-hover: var(--ha-color-neutral-90);
+  --ha-color-fill-neutral-quiet-active: var(--ha-color-neutral-95);
+  --ha-color-fill-neutral-normal-resting: var(--ha-color-neutral-90);
+  --ha-color-fill-neutral-normal-hover: var(--ha-color-neutral-80);
+  --ha-color-fill-neutral-normal-active: var(--ha-color-neutral-90);
+  --ha-color-fill-neutral-loud-resting: var(--ha-color-neutral-40);
+  --ha-color-fill-neutral-loud-hover: var(--ha-color-neutral-30);
+  --ha-color-fill-neutral-loud-active: var(--ha-color-neutral-40);
+
+  --ha-color-fill-disabled-quiet-resting: var(--ha-color-neutral-95);
+  --ha-color-fill-disabled-quiet-hover: var(--ha-color-neutral-90);
+  --ha-color-fill-disabled-normal-resting: var(--ha-color-neutral-95);
+  --ha-color-fill-disabled-normal-hover: var(--ha-color-neutral-90);
+  --ha-color-fill-disabled-loud-resting: var(--ha-color-neutral-80);
+  --ha-color-fill-disabled-loud-hover: var(--ha-color-neutral-70);
+
+  --ha-color-fill-danger-quiet-resting: var(--ha-color-red-95);
+  --ha-color-fill-danger-quiet-hover: var(--ha-color-red-90);
+  --ha-color-fill-danger-quiet-active: var(--ha-color-red-95);
+  --ha-color-fill-danger-normal-resting: var(--ha-color-red-90);
+  --ha-color-fill-danger-normal-hover: var(--ha-color-red-80);
+  --ha-color-fill-danger-normal-active: var(--ha-color-red-90);
+  --ha-color-fill-danger-loud-resting: var(--ha-color-red-50);
+  --ha-color-fill-danger-loud-hover: var(--ha-color-red-40);
+  --ha-color-fill-danger-loud-active: var(--ha-color-red-50);
+
+  --ha-color-fill-warning-quiet-resting: var(--ha-color-orange-95);
+  --ha-color-fill-warning-quiet-hover: var(--ha-color-orange-90);
+  --ha-color-fill-warning-quiet-active: var(--ha-color-orange-95);
+  --ha-color-fill-warning-normal-resting: var(--ha-color-orange-90);
+  --ha-color-fill-warning-normal-hover: var(--ha-color-orange-80);
+  --ha-color-fill-warning-normal-active: var(--ha-color-orange-90);
+  --ha-color-fill-warning-loud-resting: var(--ha-color-orange-70);
+  --ha-color-fill-warning-loud-hover: var(--ha-color-orange-50);
+  --ha-color-fill-warning-loud-active: var(--ha-color-orange-70);
+
+  --ha-color-fill-success-quiet-resting: var(--ha-color-green-95);
+  --ha-color-fill-success-quiet-hover: var(--ha-color-green-90);
+  --ha-color-fill-success-quiet-active: var(--ha-color-green-95);
+  --ha-color-fill-success-normal-resting: var(--ha-color-green-90);
+  --ha-color-fill-success-normal-hover: var(--ha-color-green-80);
+  --ha-color-fill-success-normal-active: var(--ha-color-green-90);
+  --ha-color-fill-success-loud-resting: var(--ha-color-green-50);
+  --ha-color-fill-success-loud-hover: var(--ha-color-green-40);
+  --ha-color-fill-success-loud-active: var(--ha-color-green-50);
+
+  --ha-color-on-primary-quiet: var(--ha-color-primary-50);
+  --ha-color-on-primary-normal: var(--ha-color-primary-40);
+  --ha-color-on-primary-loud: var(--ha-color-white);
+  --ha-color-on-neutral-quiet: var(--ha-color-neutral-50);
+  --ha-color-on-neutral-normal: var(--ha-color-neutral-40);
+  --ha-color-on-neutral-loud: var(--ha-color-white);
+  --ha-color-on-disabled-quiet: var(--ha-color-neutral-80);
+  --ha-color-on-disabled-normal: var(--ha-color-neutral-70);
+  --ha-color-on-disabled-loud: var(--ha-color-neutral-95);
+  --ha-color-on-danger-quiet: var(--ha-color-red-50);
+  --ha-color-on-danger-normal: var(--ha-color-red-40);
+  --ha-color-on-danger-loud: var(--ha-color-white);
+  --ha-color-on-warning-quiet: var(--ha-color-orange-50);
+  --ha-color-on-warning-normal: var(--ha-color-orange-40);
+  --ha-color-on-warning-loud: var(--ha-color-white);
+  --ha-color-on-success-quiet: var(--ha-color-green-50);
+  --ha-color-on-success-normal: var(--ha-color-green-40);
+  --ha-color-on-success-loud: var(--ha-color-white);
+
+  --ha-color-surface-default: var(--ha-color-white);
+  --ha-color-surface-low: var(--ha-color-neutral-95);
+  --ha-color-surface-lower: var(--ha-color-neutral-90);
+  --ha-color-surface-default-inverted: var(--ha-color-neutral-10);
+  --ha-color-surface-low-inverted: var(--ha-color-neutral-05);
+  --ha-color-surface-lower-inverted: var(--ha-color-black);
+  --ha-color-on-surface-default: var(--ha-color-neutral-05);
+
+  --ha-color-form-background: var(--ha-color-neutral-95);
+  --ha-color-form-background-hover: var(--ha-color-neutral-90);
+  --ha-color-form-background-disabled: var(--ha-color-neutral-80);
+
+  --ha-color-shadow-scrollable-fade: rgb(0 0 0 / 8%);
+
+  /* --- Semantic: shadows (light) ------------------------------------ */
+  --ha-box-shadow-s: 0 1px 2px 0 rgb(0 0 0 / 8%), 0 1px 3px 0 rgb(0 0 0 / 12%);
+  --ha-box-shadow-m: 0 3px 6px -1px rgb(0 0 0 / 10%), 0 8px 16px -2px rgb(0 0 0 / 15%);
+  --ha-box-shadow-l: 0 6px 12px -3px rgb(0 0 0 / 12%), 0 16px 32px -6px rgb(0 0 0 / 20%);
+
+  /* --- Component defaults ------------------------------------------- */
+  --ha-button-border-radius: var(--ha-border-radius-pill);
+  --ha-button-size-xs: 24px;
+  --ha-button-size-s: 32px;
+  --ha-button-size-m: 40px;
+  --ha-button-size-l: 48px;
+  --ha-input-size-xs: 32px;
+  --ha-input-size-s: 40px;
+  --ha-input-size-m: 56px;
+  --ha-icon-size: 24px;
+  --ha-badge-size: 36px;
+  --ha-badge-icon-size: 18px;
+  --ha-alert-padding: var(--ha-space-2);
+  --ha-alert-icon-size: 24px;
+  --ha-dialog-border-radius: var(--ha-border-radius-3xl);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* --- Semantic: color (dark overrides) --------------------------- */
+    --ha-color-text-primary: var(--ha-color-white);
+    --ha-color-text-secondary: var(--ha-color-neutral-80);
+    --ha-color-text-link: var(--ha-color-primary-60);
+    --ha-color-text-primary-inverted: var(--ha-color-black);
+    --ha-color-text-secondary-inverted: var(--ha-color-neutral-40);
+
+    --ha-color-border-neutral-quiet: var(--ha-color-neutral-40);
+    --ha-color-border-neutral-normal: var(--ha-color-neutral-50);
+    --ha-color-border-neutral-loud: var(--ha-color-neutral-70);
+    --ha-color-border-danger-normal: var(--ha-color-red-50);
+    --ha-color-border-danger-loud: var(--ha-color-red-50);
+    --ha-color-border-warning-normal: var(--ha-color-orange-50);
+    --ha-color-border-warning-loud: var(--ha-color-orange-50);
+
+    --ha-color-fill-primary-quiet-resting: var(--ha-color-primary-05);
+    --ha-color-fill-primary-quiet-hover: var(--ha-color-primary-10);
+    --ha-color-fill-primary-quiet-active: var(--ha-color-primary-05);
+    --ha-color-fill-primary-normal-resting: var(--ha-color-primary-10);
+    --ha-color-fill-primary-normal-hover: var(--ha-color-primary-20);
+    --ha-color-fill-primary-normal-active: var(--ha-color-primary-10);
+
+    --ha-color-fill-neutral-quiet-resting: var(--ha-color-neutral-05);
+    --ha-color-fill-neutral-quiet-hover: var(--ha-color-neutral-10);
+    --ha-color-fill-neutral-quiet-active: var(--ha-color-neutral-00);
+    --ha-color-fill-neutral-normal-resting: var(--ha-color-neutral-10);
+    --ha-color-fill-neutral-normal-hover: var(--ha-color-neutral-20);
+    --ha-color-fill-neutral-normal-active: var(--ha-color-neutral-10);
+    --ha-color-fill-neutral-loud-resting: var(--ha-color-neutral-60);
+    --ha-color-fill-neutral-loud-hover: var(--ha-color-neutral-70);
+    --ha-color-fill-neutral-loud-active: var(--ha-color-neutral-60);
+
+    --ha-color-fill-disabled-quiet-resting: var(--ha-color-neutral-10);
+    --ha-color-fill-disabled-quiet-hover: var(--ha-color-neutral-20);
+    --ha-color-fill-disabled-normal-resting: var(--ha-color-neutral-20);
+    --ha-color-fill-disabled-normal-hover: var(--ha-color-neutral-30);
+    --ha-color-fill-disabled-loud-resting: var(--ha-color-neutral-30);
+    --ha-color-fill-disabled-loud-hover: var(--ha-color-neutral-40);
+
+    --ha-color-fill-danger-quiet-resting: var(--ha-color-red-05);
+    --ha-color-fill-danger-quiet-hover: var(--ha-color-red-10);
+    --ha-color-fill-danger-quiet-active: var(--ha-color-red-05);
+    --ha-color-fill-danger-normal-resting: var(--ha-color-red-10);
+    --ha-color-fill-danger-normal-hover: var(--ha-color-red-20);
+    --ha-color-fill-danger-normal-active: var(--ha-color-red-10);
+    --ha-color-fill-danger-loud-resting: var(--ha-color-red-40);
+    --ha-color-fill-danger-loud-hover: var(--ha-color-red-30);
+    --ha-color-fill-danger-loud-active: var(--ha-color-red-40);
+
+    --ha-color-fill-warning-quiet-resting: var(--ha-color-orange-05);
+    --ha-color-fill-warning-quiet-hover: var(--ha-color-orange-10);
+    --ha-color-fill-warning-quiet-active: var(--ha-color-orange-05);
+    --ha-color-fill-warning-normal-resting: var(--ha-color-orange-10);
+    --ha-color-fill-warning-normal-hover: var(--ha-color-orange-20);
+    --ha-color-fill-warning-normal-active: var(--ha-color-orange-10);
+    --ha-color-fill-warning-loud-resting: var(--ha-color-orange-40);
+    --ha-color-fill-warning-loud-hover: var(--ha-color-orange-30);
+    --ha-color-fill-warning-loud-active: var(--ha-color-orange-40);
+
+    --ha-color-fill-success-quiet-resting: var(--ha-color-green-05);
+    --ha-color-fill-success-quiet-hover: var(--ha-color-green-10);
+    --ha-color-fill-success-quiet-active: var(--ha-color-green-05);
+    --ha-color-fill-success-normal-resting: var(--ha-color-green-10);
+    --ha-color-fill-success-normal-hover: var(--ha-color-green-20);
+    --ha-color-fill-success-normal-active: var(--ha-color-green-10);
+    --ha-color-fill-success-loud-resting: var(--ha-color-green-40);
+    --ha-color-fill-success-loud-hover: var(--ha-color-green-30);
+    --ha-color-fill-success-loud-active: var(--ha-color-green-40);
+
+    --ha-color-on-primary-quiet: var(--ha-color-primary-70);
+    --ha-color-on-primary-normal: var(--ha-color-primary-60);
+    --ha-color-on-neutral-quiet: var(--ha-color-neutral-70);
+    --ha-color-on-neutral-normal: var(--ha-color-neutral-60);
+    --ha-color-on-disabled-quiet: var(--ha-color-neutral-40);
+    --ha-color-on-disabled-normal: var(--ha-color-neutral-50);
+    --ha-color-on-disabled-loud: var(--ha-color-neutral-50);
+    --ha-color-on-danger-quiet: var(--ha-color-red-70);
+    --ha-color-on-danger-normal: var(--ha-color-red-60);
+    --ha-color-on-warning-quiet: var(--ha-color-orange-70);
+    --ha-color-on-warning-normal: var(--ha-color-orange-60);
+    --ha-color-on-success-quiet: var(--ha-color-green-70);
+    --ha-color-on-success-normal: var(--ha-color-green-60);
+
+    --ha-color-surface-default: var(--ha-color-neutral-10);
+    --ha-color-surface-low: var(--ha-color-neutral-05);
+    --ha-color-surface-lower: var(--ha-color-black);
+    --ha-color-surface-default-inverted: var(--ha-color-white);
+    --ha-color-surface-low-inverted: var(--ha-color-neutral-95);
+    --ha-color-surface-lower-inverted: var(--ha-color-neutral-90);
+    --ha-color-on-surface-default: var(--ha-color-neutral-95);
+
+    --ha-color-form-background: var(--ha-color-neutral-20);
+    --ha-color-form-background-hover: var(--ha-color-neutral-30);
+    --ha-color-form-background-disabled: var(--ha-color-neutral-20);
+
+    /* --- Semantic: shadows (dark) ----------------------------------- */
+    --ha-box-shadow-s: 0 1px 2px 0 rgb(0 0 0 / 40%), 0 1px 3px 0 rgb(0 0 0 / 50%);
+    --ha-box-shadow-m: 0 3px 6px -1px rgb(0 0 0 / 35%), 0 8px 16px -2px rgb(0 0 0 / 45%);
+    --ha-box-shadow-l: 0 6px 12px -3px rgb(0 0 0 / 40%), 0 16px 32px -6px rgb(0 0 0 / 55%);
+  }
+}
+
+html {
+  font-family: var(--ha-font-family-body);
+  font-size: 14px;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--ha-color-surface-low);
+  color: var(--ha-color-text-primary);
+  font-family: var(--ha-font-family-body);
+  font-size: var(--ha-font-size-m);
+  font-weight: var(--ha-font-weight-body);
+  line-height: var(--ha-line-height-normal);
+  -webkit-font-smoothing: var(--ha-font-smoothing);
+  -moz-osx-font-smoothing: var(--ha-moz-osx-font-smoothing);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  color: var(--ha-color-text-primary);
+  font-family: var(--ha-font-family-heading);
+  font-weight: var(--ha-font-weight-heading);
+  line-height: var(--ha-line-height-condensed);
+}
+
+h2 {
+  font-size: var(--ha-font-size-2xl);
+}
+
+h3 {
+  font-size: var(--ha-font-size-l);
+}
+
+h4 {
+  font-size: var(--ha-font-size-m);
+}
+
+::selection {
+  background: var(--ha-color-fill-primary-normal-resting);
+  color: var(--ha-color-on-primary-normal);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: var(--ha-border-width-md) solid var(--ha-color-focus);
+  outline-offset: var(--ha-border-width-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ha-animation-duration-none: 1ms;
+    --ha-animation-duration-instant: 1ms;
+    --ha-animation-duration-fast: 1ms;
+    --ha-animation-duration-normal: 1ms;
+    --ha-animation-duration-slow: 1ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

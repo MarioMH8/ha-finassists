@@ -1,4 +1,6 @@
 /node_modules/
+/dist/
+/plans/
 /.eslintcache
 /.idea/
 /.impeccable/
@@ -8,3 +10,7 @@ coverage/
 .env
 .env.*
 !.env.example
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+data/options.json

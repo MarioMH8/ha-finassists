@@ -1,0 +1,34 @@
+{
+	"config": {
+		"step": {
+			"confirm": {
+				"title": "Connect Fin Assist",
+				"description": "A Fin Assist add-on was discovered. Continue to exchange its one-time setup capability and create a dedicated Home Assistant integration identity?"
+			},
+			"reauth_confirm": {
+				"title": "Rotate Fin Assist system identity",
+				"description": "Continue to rotate the credential used by this integration? The current credential will stop working after a successful rotation."
+			}
+		},
+		"error": {
+			"cannot_connect": "Could not connect to Fin Assist. Check that the add-on is running and try again.",
+			"invalid_auth": "Fin Assist rejected the system credential. Check the service and try again."
+		},
+		"abort": {
+			"already_configured": "This Fin Assist add-on is already configured.",
+			"invalid_discovery_data": "The add-on sent invalid setup information.",
+			"reauth_entry_not_found": "The Fin Assist entry to reauthenticate could not be found.",
+			"reauth_successful": "System identity rotated successfully.",
+			"supervisor_discovery_required": "Set up Fin Assist through Supervisor add-on discovery. Manual setup is not supported."
+		}
+	},
+	"options": {
+		"step": {
+			"init": {
+				"title": "Rotate Fin Assist credential",
+				"description": "Rotate the system credential used by this integration? The existing credential will be invalidated.",
+				"data": {}
+			}
+		}
+	}
+}

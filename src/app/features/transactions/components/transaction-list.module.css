@@ -1,0 +1,164 @@
+.section {
+  display: grid;
+  gap: var(--ha-space-4);
+}
+
+.content {
+  display: grid;
+  gap: var(--ha-space-4);
+}
+
+.selectionCell {
+  width: 1%;
+  line-height: 0;
+  white-space: nowrap;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ha-color-fill-primary-loud-resting);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.selectedRow {
+  background: var(--ha-color-fill-primary-quiet-resting);
+}
+
+.selectionBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ha-space-3);
+  min-height: 32px;
+}
+
+.selectionBar p {
+  margin: 0;
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+}
+
+.selectionActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
+.date {
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--ha-color-text-secondary);
+}
+
+.actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.income {
+  color: var(--ha-color-on-success-normal);
+  font-weight: var(--ha-font-weight-medium);
+}
+
+.expense {
+  color: var(--ha-color-on-danger-normal);
+  font-weight: var(--ha-font-weight-medium);
+}
+
+.toolbar {
+  /* Nested radius: the table radius minus the toolbar inset. */
+  --chip-border-radius: calc(var(--ha-border-radius-lg) - var(--ha-space-2));
+  --select-border-radius: calc(var(--ha-border-radius-lg) - var(--ha-space-2));
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ha-space-3);
+}
+
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
+.filterDialog {
+  display: grid;
+  gap: var(--ha-space-4);
+}
+
+.clearDraftFilters {
+  justify-self: start;
+}
+
+.pageSize {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+  white-space: nowrap;
+}
+
+.pageSizeSelect {
+  width: auto;
+  min-width: 76px;
+}
+
+.footer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.count {
+  position: absolute;
+  left: 0;
+  margin: 0;
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
+.pageIndicator {
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--ha-space-3);
+  }
+
+  .count {
+    position: static;
+  }
+
+  .pager {
+    align-self: center;
+  }
+}

@@ -1,0 +1,32 @@
+.card {
+  min-width: 0;
+  padding: var(--ha-space-5);
+  border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  border-radius: var(--ha-border-radius-lg);
+  background: var(--ha-color-surface-default);
+  box-shadow: var(--ha-box-shadow-s);
+}
+
+.subtle {
+  background: var(--ha-color-surface-lower);
+  box-shadow: none;
+}
+
+.large {
+  padding: var(--ha-space-6) var(--ha-space-7);
+}
+
+.bleed {
+  padding: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .card:not(.bleed) {
+    padding: var(--ha-space-4);
+  }
+
+  .large:not(.bleed) {
+    padding: var(--ha-space-5) var(--ha-space-4);
+  }
+}

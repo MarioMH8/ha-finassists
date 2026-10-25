@@ -1,0 +1,23 @@
+.emptyState {
+  display: grid;
+  justify-items: center;
+  gap: var(--ha-space-2);
+  padding: var(--ha-space-8) var(--ha-space-4);
+  border: var(--ha-border-width-sm) dashed var(--ha-color-border-neutral-quiet);
+  border-radius: var(--ha-border-radius-lg);
+  color: var(--ha-color-text-secondary);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  color: var(--ha-color-text-primary);
+  font-size: var(--ha-font-size-l);
+  font-weight: var(--ha-font-weight-medium);
+}
+
+.description {
+  max-width: 48ch;
+  margin: 0;
+  font-size: var(--ha-font-size-m);
+}

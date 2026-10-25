@@ -15,36 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate pull request metadata
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-
-          pr=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")
-          labels=$(jq -r '[.labels[].name] | join("\n")' <<< "$pr")
-          type_labels=$(grep -E '^type:(bug|chore|docs|feature|refactor|breaking-change)$' <<< "$labels" || true)
-          type_count=$(grep -c . <<< "$type_labels" || true)
-
-          if [[ "$type_count" -ne 1 ]]; then
-            echo "Expected exactly one type label; found $type_count." >&2
-            exit 1
-          fi
-
-          body=$(jq -r '.body // ""' <<< "$pr")
-          if [[ ! "$body" =~ [Cc]loses[[:space:]]+#([0-9]+) ]]; then
-            echo 'Add a closing reference such as "Closes #123" to the pull request description.' >&2
-            exit 1
-          fi
-
-          issue=$(gh api "repos/$REPOSITORY/issues/${BASH_REMATCH[1]}")
-          if [[ "$(jq -r '.state' <<< "$issue")" != "open" ]]; then
-            echo "The linked issue must be open and labeled status:approved." >&2
-            exit 1
-          fi
-
-          if ! jq -e '[.labels[].name] | index("status:approved") != null' <<< "$issue" >/dev/null; then
-            echo "The linked issue must have the status:approved label." >&2
-            exit 1
-          fi
+        uses: hexadrop/validate-pr-action@v1.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          skip-validation-labels: release,internal:sync
+          changeset-required-for: ''
+          linked-issue-keywords: closes
