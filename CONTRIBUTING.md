@@ -78,10 +78,10 @@ Git hooks run through Husky: lint-staged before committing, Commitlint on the me
 
 ## Branches, commits and pull requests
 
-- Branch from `develop`, the integration branch and repository default; `main` is the stable branch.
+- `main` is the default and only long-lived branch.
+- Create feature and maintenance branches from `main` and open pull requests back to `main`.
 - Commit messages follow Conventional Commits.
-- Open pull requests against `develop`, link them to an approved issue with `Closes #123`, and add one `type:*` label.
-- Hotfixes branch from `main` and are merged back into `develop` afterwards.
+- Link pull requests to an approved issue with `Closes #123` and add one `type:*` label.
 
 The details are in [branches and commits](docs/agents/branches-and-commits.md) and the [pull request guide](docs/agents/pull-requests.md).
 

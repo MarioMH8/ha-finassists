@@ -2,11 +2,10 @@
 
 ## Branches
 
-- `main` is the stable branch; `develop` is the integration branch and repository default.
-- Create feature and maintenance branches from `develop` and open pull requests back to `develop`.
+- `main` is the default and only long-lived branch.
+- Create feature and maintenance branches from `main` and open pull requests back to `main`.
 - Use `feat/*`, `fix/*`, `docs/*`, `chore/*`, and `refactor/*` prefixes.
-- Create hotfixes from `main` and open pull requests to `main`; merge the fix back into `develop` afterward.
-- Rulesets require pull requests, verified signatures, and successful checks on `main` and `develop`; repository administrators retain an emergency bypass.
+- No branch rulesets are configured for now; CI still runs on pushes and pull requests targeting `main`.
 
 ## Commit convention
 
@@ -20,4 +19,4 @@ Commit messages follow Conventional Commits through `commitlint.config.ts`. Use 
 | `pre-commit` | `bun lint-staged` | Run configured staged-file lint and tests. |
 | `pre-push` | `bun run typecheck`, `bun run test`, `bun run lint:fix` | Validate types and tests, then apply lint fixes. |
 
-Husky is installed by the `prepare` script when Git metadata is present. The current workspace has no `.git` directory, so hook activation cannot be verified here.
+Husky installs these hooks through the `prepare` script; run `bun install` to activate them in a checkout.

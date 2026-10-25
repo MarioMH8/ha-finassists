@@ -1,6 +1,6 @@
-![Fin Assist — household finances, inside Home Assistant](https://raw.githubusercontent.com/MarioMH8/ha-finassists/develop/docs/assets/banner.png)
+![Fin Assist — household finances, inside Home Assistant](https://raw.githubusercontent.com/MarioMH8/ha-finassists/main/docs/assets/banner.png)
 
-[![CI](https://img.shields.io/github/actions/workflow/status/MarioMH8/ha-finassists/ci.yml?branch=develop&label=CI&style=flat-square)](https://github.com/MarioMH8/ha-finassists/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/MarioMH8/ha-finassists/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/MarioMH8/ha-finassists/actions/workflows/ci.yml)
 ![Home Assistant add-on](https://img.shields.io/badge/Home%20Assistant-add--on-18bcf2?style=flat-square&logo=homeassistant&logoColor=white)
 ![HACS integration](https://img.shields.io/badge/HACS-integration-41bdf5?style=flat-square)
 ![Self-hosted](https://img.shields.io/badge/data-stays%20home-4ecb71?style=flat-square)
@@ -25,11 +25,11 @@ Log an expense from the dashboard, from an automation, or with the help of an AI
 
 ## A look inside
 
-![Fin Assist transactions view with the month summary and recent transactions](https://raw.githubusercontent.com/MarioMH8/ha-finassists/develop/docs/assets/screenshots/transactions-light.png)
+![Fin Assist transactions view with the month summary and recent transactions](https://raw.githubusercontent.com/MarioMH8/ha-finassists/main/docs/assets/screenshots/transactions-light.png)
 
 ### Administration
 
-![Fin Assist administration view with the personal API tokens](https://raw.githubusercontent.com/MarioMH8/ha-finassists/develop/docs/assets/screenshots/administration-light.png)
+![Fin Assist administration view with the personal API tokens](https://raw.githubusercontent.com/MarioMH8/ha-finassists/main/docs/assets/screenshots/administration-light.png)
 
 ## Get started
 
@@ -68,6 +68,6 @@ Fin Assist starts with the essentials — recording expenses and incomes and see
 
 ## Contributing
 
-Development, architecture and packaging notes live in [CONTRIBUTING.md](https://github.com/MarioMH8/ha-finassists/blob/develop/CONTRIBUTING.md). Bug reports and ideas are welcome in [the issue tracker](https://github.com/MarioMH8/ha-finassists/issues). Fin Assist is released under the [MIT license](https://github.com/MarioMH8/ha-finassists/blob/develop/LICENSE).
+Development, architecture and packaging notes live in [CONTRIBUTING.md](https://github.com/MarioMH8/ha-finassists/blob/main/CONTRIBUTING.md). Bug reports and ideas are welcome in [the issue tracker](https://github.com/MarioMH8/ha-finassists/issues). Fin Assist is released under the [MIT license](https://github.com/MarioMH8/ha-finassists/blob/main/LICENSE).
 
 *Built for Home Assistant. Runs entirely on your own hardware.*
