@@ -11,6 +11,10 @@
 
 Commit messages follow Conventional Commits through `commitlint.config.ts`. Use the configured `commitlint` package script or the commit-message hook in a Git-enabled checkout.
 
+## Changesets
+
+`package.json` is the single source of the product version; `config.yaml` and `custom_components/ha_finassists/manifest.json` repeat it because the Supervisor and HACS read it from their own file. Add a changeset with `bun changeset add` for every pull request that changes what users get; the release tooling calculates the version and runs `bun sync-version.ts` for you. Run `bun run check:version` to verify the three files agree. See [the release process](release-process.md).
+
 ## Husky / git hooks
 
 | Hook | Command | Purpose |

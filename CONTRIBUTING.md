@@ -69,7 +69,7 @@ The custom integration under `custom_components/ha_finassists` is installed thro
 CI runs lint, type-check and tests as separate jobs. Before opening a pull request:
 
 ```sh
-bun run lint:ci && bun run typecheck && bun run test
+bun run lint:ci && bun run typecheck && bun run test && bun run check:version
 ```
 
 Tests use Bun's built-in runner and live next to the source as `*.test.ts` files; React components are tested through server rendering. The JavaScript commands do not exercise the Python integration, which has its own offline tests for discovery handling and credential lifecycle, plus syntax and metadata checks. Live Supervisor discovery, config entry setup and removal, HACS installation and card rendering still need validation against a supported Home Assistant/Supervisor installation.
@@ -82,6 +82,7 @@ Git hooks run through Husky: lint-staged before committing, Commitlint on the me
 - Create feature and maintenance branches from `main` and open pull requests back to `main`.
 - Commit messages follow Conventional Commits.
 - Link pull requests to an approved issue with `Closes #123` and add one `type:*` label.
+- Add a changeset with `bun changeset add` when the pull request changes what users get. Tooling, CI and documentation changes do not need one.
 
 The details are in [branches and commits](docs/agents/branches-and-commits.md) and the [pull request guide](docs/agents/pull-requests.md).
 

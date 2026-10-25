@@ -16,12 +16,15 @@ Use the narrowest command that validates the changed behavior. CI runs lint, typ
 | Fix lint findings | `bun run lint:fix` |
 | Type-check | `bun run typecheck` |
 | Run tests | `bun run test` |
+| Add a changeset for the pull request | `bun changeset add` |
+| Bump the version and sync every manifest | `bun run version` |
+| Verify the manifests match `package.json` | `bun run check:version` |
 
 Copy `.env.example` to `.env` to configure a local mock actor. `bun run dev` uses that actor and bypasses the Supervisor peer check; production rejects development identity variables and validates the trusted peer. Tests use Bun's built-in test runner and are colocated with the source as `*.test.ts` files.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs `lint:ci`, `typecheck`, and `test` independently on pushes and pull requests. ESLint's content-based cache is restored for the lint job.
+`.github/workflows/ci.yml` runs `lint:ci`, `typecheck`, `test`, and `check:version` independently on pushes and pull requests. ESLint's content-based cache is restored for the lint job.
 
 ## Git hooks
 

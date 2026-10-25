@@ -1,3 +1,5 @@
+import { APP_VERSION } from '@modules/version';
+
 import type { FinanceUseCases } from '../finance/finance-routes';
 import type { SystemCredentialUseCases, TokenManagementUseCases } from '../shared/request-context';
 import { invokeTool } from './mcp-tool-execution';
@@ -8,7 +10,7 @@ const MCP_PROTOCOL_VERSION = {
 } as const;
 const MCP_MAX_BODY_BYTES = 6 * 1024 * 1024;
 const JSON_RPC_NULL = JSON.parse('null') as null;
-const MCP_SERVER_INFO = { name: 'fin-assist', version: '0.1.1' };
+const MCP_SERVER_INFO = { name: 'fin-assist', version: APP_VERSION };
 
 interface JsonRpcRequest {
 	id?: number | string;

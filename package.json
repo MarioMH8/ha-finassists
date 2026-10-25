@@ -11,6 +11,7 @@
 		"build:web": "bun run build:web:client && bun run build:web:renderer && cp dist/server-renderer.css dist/styles.css",
 		"build:web:client": "mkdir -p dist && bun build --target=browser --format=esm --minify --outdir=dist src/app/client.tsx",
 		"build:web:renderer": "mkdir -p dist && bun build --target=bun --format=esm --packages=bundle --outdir=dist src/app/shell/server-renderer.tsx",
+		"check:version": "bun sync-version.ts --check",
 		"commitlint": "commitlint --edit",
 		"dev": "NODE_ENV=development bun --watch src/server.ts",
 		"lint": "eslint --cache .",
@@ -19,7 +20,8 @@
 		"prepare": "husky",
 		"start": "NODE_ENV=production bun run dist/server.js",
 		"test": "bun test",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"version": "changeset version && bun sync-version.ts"
 	},
 	"dependencies": {
 		"@inferdi/hono": "^6.1.0",
@@ -30,6 +32,7 @@
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
+		"@changesets/cli": "3.0.3",
 		"@commitlint/cli": "21.2.2",
 		"@commitlint/config-conventional": "21.2.2",
 		"@eslint/compat": "2.1.1",
