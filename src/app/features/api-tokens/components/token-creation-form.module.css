@@ -14,26 +14,22 @@
 }
 
 .secret {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ha-space-3);
   padding: var(--ha-space-3);
   border-radius: var(--ha-border-radius-md);
   background: var(--ha-color-surface-lower);
 }
 
 .secret code {
-  min-width: 0;
+  display: block;
   overflow-wrap: anywhere;
   color: var(--ha-color-text-primary);
   font-family: var(--ha-font-family-code);
   font-size: var(--ha-font-size-s);
+  user-select: all;
 }
 
 @media (max-width: 600px) {
   .secret {
-    align-items: flex-start;
-    flex-direction: column;
+    padding: var(--ha-space-3);
   }
 }

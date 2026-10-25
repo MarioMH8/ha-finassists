@@ -39,11 +39,21 @@ function TokenCreationForm({
 	tokenNameReference,
 }: TokenCreationFormProps): ReactElement {
 	const dialogFooter = issuedSecret ? (
-		<Button
-			onClick={closeCreate}
-			type='button'>
-			{copy.close}
-		</Button>
+		<>
+			<Button
+				onClick={closeCreate}
+				type='button'>
+				{copy.close}
+			</Button>
+			<Button
+				appearance={BUTTON_APPEARANCE.ACCENT}
+				aria-label={copy.copyToken}
+				onClick={() => void copyToken()}
+				type='button'
+				variant={BUTTON_VARIANT.BRAND}>
+				{copy.copyAction}
+			</Button>
+		</>
 	) : (
 		<>
 			<Button
@@ -80,13 +90,6 @@ function TokenCreationForm({
 					tabIndex={-1}>
 					<div className={styles.secret}>
 						<code>{issuedSecret}</code>
-						<Button
-							appearance={BUTTON_APPEARANCE.FILLED}
-							onClick={() => void copyToken()}
-							type='button'
-							variant={BUTTON_VARIANT.BRAND}>
-							{copy.copyToken}
-						</Button>
 					</div>
 					{copyFeedback.message ? (
 						<Notice tone={copyFeedback.state === 'error' ? NOTICE_TONE.ERROR : NOTICE_TONE.SUCCESS}>
