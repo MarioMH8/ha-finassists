@@ -1,6 +1,6 @@
 name: Release
 
-# Publishing is driven by the version in config.yaml: a push that changes it
+# Publishing is driven by the version in ha-finassists/config.yaml: a push that changes it
 # builds and publishes the app image first, and only then creates the tag and
 # the GitHub release that HACS, the Marketplace and the Supervisor consume.
 on:
@@ -37,7 +37,7 @@ jobs:
             exit 0
           fi
 
-          if ! changes="$(git diff --unified=0 "${BEFORE}" "${GITHUB_SHA}" -- config.yaml)"; then
+          if ! changes="$(git diff --unified=0 "${BEFORE}" "${GITHUB_SHA}" -- ha-finassists/config.yaml)"; then
             echo "::warning::Cannot compare with ${BEFORE}: releasing anyway."
             echo "changed=true" >> "$GITHUB_OUTPUT"
             exit 0

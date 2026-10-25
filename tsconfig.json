@@ -6,8 +6,8 @@
 		"module": "Preserve",
 		"moduleResolution": "Bundler",
 		"paths": {
-			"@app/*": ["./src/app/*"],
-			"@modules/*": ["./src/modules/*"]
+			"@app/*": ["./ha-finassists/src/app/*"],
+			"@modules/*": ["./ha-finassists/src/modules/*"]
 		},
 		"resolveJsonModule": true,
 		"types": ["bun"],
@@ -15,5 +15,11 @@
 		"noEmit": true,
 		"skipLibCheck": true
 	},
-	"include": ["src/**/*.ts", "src/**/*.tsx", "types/**/*.d.ts", "commitlint.config.ts", "sync-version.ts"]
+	"include": [
+		"commitlint.config.ts",
+		"sync-release.ts",
+		"ha-finassists/src/**/*.ts",
+		"ha-finassists/src/**/*.tsx",
+		"ha-finassists/types/**/*.d.ts"
+	]
 }

@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"jsx": "react-jsx",
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"module": "Preserve",
+		"moduleResolution": "Bundler",
+		"paths": {
+			"@app/*": ["./src/app/*"],
+			"@modules/*": ["./src/modules/*"]
+		},
+		"resolveJsonModule": true,
+		"types": ["bun"],
+		"strict": true,
+		"noEmit": true,
+		"skipLibCheck": true
+	},
+	"include": ["src/**/*.ts", "src/**/*.tsx", "types/**/*.d.ts"]
+}

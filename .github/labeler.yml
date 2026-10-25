@@ -1,15 +1,18 @@
 scope:app:
   - changed-files:
-      - any-glob-to-any-file: "src/app/**"
+      - any-glob-to-any-file: "ha-finassists/src/app/**"
+scope:addon:
+  - changed-files:
+      - any-glob-to-any-file: "ha-finassists/**"
 scope:ingress:
   - changed-files:
-      - any-glob-to-any-file: "src/platform/ingress/**"
+      - any-glob-to-any-file: "ha-finassists/src/modules/home-assistant/infrastructure/ingress/**"
 scope:integration:
   - changed-files:
       - any-glob-to-any-file: "custom_components/**"
 scope:docs:
   - changed-files:
-      - any-glob-to-any-file: ["*.md", "docs/**"]
+      - any-glob-to-any-file: ["*.md", "docs/**", "ha-finassists/*.md"]
 scope:ci:
   - changed-files:
       - any-glob-to-any-file: [".github/**", "package.json", "bun.lock", "*.config.*"]

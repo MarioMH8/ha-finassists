@@ -2,14 +2,21 @@ import { fixupPluginRules } from '@eslint/compat';
 import hexadrop from '@hexadrop/eslint-config';
 
 const config = await hexadrop(
-	{ ignores: ['.impeccable/**', 'custom_components/**', 'hacs.json'] },
+	{
+		ignores: ['.impeccable/**', 'custom_components/**', 'hacs.json'],
+		/*
+		 * React lives in the app workspace, so enable its rules here instead of
+		 * relying on detection from the repository root.
+		 */
+		react: true,
+	},
 	{
 		rules: {
 			'import/prefer-default-export': 'off',
 		},
 	},
 	{
-		files: ['src/app/**/*.tsx'],
+		files: ['ha-finassists/src/app/**/*.tsx'],
 		settings: {
 			react: { version: '19.3.1' },
 		},

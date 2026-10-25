@@ -9,9 +9,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - .dockerignore
-      - config.yaml
-      - Dockerfile
+      - ha-finassists/**
       - bun.lock
       - package.json
       - src/**
@@ -44,7 +42,7 @@ jobs:
         id: info
         uses: home-assistant/actions/helpers/info@cd6f3635a740c84d8a14f6121a90068b8ece6bf6
         with:
-          path: .
+          path: ha-finassists
 
       - name: Normalize the app configuration
         id: normalize
@@ -55,7 +53,7 @@ jobs:
           VERSION: ${{ steps.info.outputs.version }}
         run: |
           if [ -z "${IMAGE}" ]; then
-            echo "::error::config.yaml declares no image"
+            echo "::error::ha-finassists/config.yaml declares no image"
             exit 1
           fi
 
@@ -96,7 +94,7 @@ jobs:
           arch: ${{ matrix.arch }}
           container-registry-password: ${{ github.token }}
           context: .
-          file: Dockerfile
+          file: ha-finassists/Dockerfile
           image: ${{ matrix.image }}
           image-tags: |
             ${{ needs.prepare.outputs.version }}

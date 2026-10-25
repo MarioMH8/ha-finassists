@@ -1,10 +1,9 @@
-import { readFile, writeFile } from 'node:fs/promises';
 import process from 'node:process';
 
 /*
- * `package.json` owns the version. The Home Assistant app and the integration
+ * The app package owns the version. The Home Assistant app and the integration
  * manifest repeat it because each tool reads it from its own file, so this
- * script writes both from the package version. `--check` verifies them in CI.
+ * script writes both from the package version and `--check` verifies them in CI.
  */
 interface VersionTarget {
 	file: string;
@@ -20,29 +19,34 @@ interface TargetState {
 }
 
 const CHECK_FLAG = '--check';
+const PACKAGE_FILE = 'ha-finassists/package.json';
 const TARGETS: VersionTarget[] = [
-	{ file: 'config.yaml', prefix: 'version: "' },
+	{ file: 'ha-finassists/config.yaml', prefix: 'version: "' },
 	{ file: 'custom_components/ha_finassists/manifest.json', prefix: '\t"version": "' },
 ];
 
+function resolve(file: string): URL {
+	return new URL(file, import.meta.url);
+}
+
 async function readPackageVersion(): Promise<string> {
-	const packageJson: unknown = JSON.parse(await readFile(new URL('package.json', import.meta.url), 'utf8'));
+	const packageJson: unknown = await Bun.file(resolve(PACKAGE_FILE)).json();
 
 	if (typeof packageJson !== 'object' || packageJson === null || !('version' in packageJson)) {
-		throw new TypeError('package.json declares no version');
+		throw new TypeError(`${PACKAGE_FILE} declares no version`);
 	}
 
 	const { version } = packageJson;
 
 	if (typeof version !== 'string') {
-		throw new TypeError('package.json declares no version');
+		throw new TypeError(`${PACKAGE_FILE} declares no version`);
 	}
 
 	return version;
 }
 
 async function inspectTarget(target: VersionTarget): Promise<TargetState> {
-	const contents = await readFile(new URL(target.file, import.meta.url), 'utf8');
+	const contents = await Bun.file(resolve(target.file)).text();
 	const anchor = contents.indexOf(target.prefix);
 	const start = anchor + target.prefix.length;
 	const end = contents.indexOf('"', start);
@@ -57,7 +61,7 @@ async function inspectTarget(target: VersionTarget): Promise<TargetState> {
 async function writeTarget(state: TargetState, version: string): Promise<void> {
 	const updated = `${state.contents.slice(0, state.start)}${version}${state.contents.slice(state.end)}`;
 
-	await writeFile(new URL(state.target.file, import.meta.url), updated);
+	await Bun.write(resolve(state.target.file), updated);
 }
 
 async function main(): Promise<number> {
@@ -82,14 +86,12 @@ async function main(): Promise<number> {
 
 	await Promise.all(stale.map(state => writeTarget(state, version)));
 
-	if (stale.length === 0) {
-		process.stdout.write(`Version ${version} is already in sync\n`);
-
-		return 0;
-	}
-
 	for (const state of stale) {
 		process.stdout.write(`${state.target.file}: ${state.current} -> ${version}\n`);
+	}
+
+	if (stale.length === 0) {
+		process.stdout.write(`Version ${version} is already in sync\n`);
 	}
 
 	return 0;

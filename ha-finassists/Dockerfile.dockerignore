@@ -1,0 +1,14 @@
+# BuildKit reads this file because it sits next to the Dockerfile; patterns are
+# still matched against the build context, which is the repository root.
+.git
+.idea
+.impeccable
+node_modules
+coverage
+dist
+data
+docs
+.env
+.env.example
+*.log
+bunfig.toml

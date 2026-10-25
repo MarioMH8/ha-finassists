@@ -4,6 +4,22 @@
   "workspaces": {
     "": {
       "name": "ha-finassists",
+      "devDependencies": {
+        "@changesets/cli": "3.0.3",
+        "@commitlint/cli": "21.2.2",
+        "@commitlint/config-conventional": "21.2.2",
+        "@eslint/compat": "2.1.1",
+        "@hexadrop/eslint-config": "1.0.11",
+        "@types/bun": "1.4.3",
+        "eslint": "10.10.0",
+        "husky": "9.1.7",
+        "lint-staged": "17.5.1",
+        "typescript": "6.0.3",
+      },
+    },
+    "ha-finassists": {
+      "name": "ha-finassists",
+      "version": "0.1.1",
       "dependencies": {
         "@inferdi/hono": "^6.1.0",
         "@inferdi/inferdi": "^6.1.0",
@@ -13,18 +29,9 @@
         "zod": "^4.6.7",
       },
       "devDependencies": {
-        "@changesets/cli": "3.0.3",
-        "@commitlint/cli": "21.2.2",
-        "@commitlint/config-conventional": "21.2.2",
-        "@eslint/compat": "2.1.1",
-        "@hexadrop/eslint-config": "1.0.11",
         "@types/bun": "1.4.3",
         "@types/react": "19.3.0",
         "@types/react-dom": "19.3.0",
-        "eslint": "10.10.0",
-        "husky": "9.1.7",
-        "lint-staged": "17.5.1",
-        "typescript": "6.0.3",
       },
     },
   },
@@ -672,6 +679,8 @@
     "gopd": ["gopd@1.2.0", "", {}, "sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg=="],
 
     "graceful-fs": ["graceful-fs@4.2.11", "", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
+
+    "ha-finassists": ["ha-finassists@workspace:ha-finassists"],
 
     "has-bigints": ["has-bigints@1.1.0", "", {}, "sha512-R3pbpkcIqv2Pm3dUwgjclDRVmWpTJW2DcMzcIhEXEx1oh/CEMObMm3KLmRJOdvhM7o4uQBnwr8pzRK2sJWIqfg=="],
 

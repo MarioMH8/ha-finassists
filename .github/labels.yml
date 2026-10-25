@@ -55,6 +55,9 @@
 - name: scope:app
   color: c5def5
   description: Application server or web interface
+- name: scope:addon
+  color: c5def5
+  description: Home Assistant app packaging
 - name: scope:ingress
   color: c5def5
   description: Home Assistant Ingress identity boundary

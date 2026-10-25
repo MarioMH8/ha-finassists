@@ -3,6 +3,7 @@
 Fin Assist provides household financial management through Home Assistant.
 
 - **Package manager:** Bun (`bun`)
+- **App source:** `ha-finassists/` (workspace package and Home Assistant app)
 - **Test:** `bun run test`
 - **Type-check:** `bun run typecheck`
 - **Lint:** `bun run lint:fix`

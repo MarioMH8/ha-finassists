@@ -16,11 +16,13 @@ Requirements: Bun 1.4 or later. React 19 and React DOM provide server rendering 
 
 ```sh
 bun install --frozen-lockfile
-cp .env.example .env
+cp ha-finassists/.env.example ha-finassists/.env
 bun run dev       # Watch server files; use a local mock Ingress identity
-bun run build     # Build the production server and browser assets into dist/
+bun run build     # Build the production server and browser assets into ha-finassists/dist/
 bun run start     # Start the production build on port 8099
 ```
+
+The commands run from the repository root and delegate to the `ha-finassists` workspace package. Development loads `ha-finassists/.env` and keeps its SQLite file in `ha-finassists/data/`; both are ignored by Git.
 
 | Task | Command |
 | --- | --- |
@@ -39,10 +41,10 @@ Development reads `DEV_INGRESS_USER_ID`, `DEV_INGRESS_USERNAME` and `DEV_INGRESS
 
 | Surface | Location | Responsibility |
 | --- | --- | --- |
-| Home Assistant app | `config.yaml`, `Dockerfile` | Add-on metadata, runtime image, Ingress entry point and persistent data mapping. |
-| Bun service | `src/server.ts`, `src/app-bootstrap.ts`, `src/app-container.ts` | Startup, configuration and the InferDI container that composes repositories and use cases. |
-| HTTP API | `src/modules/api/infrastructure/http/` | Hono routes with Zod validation, security headers and web asset delivery. |
-| Web interface | `src/app/` | React 19 UI with JSON translations and CSS Modules, rendered with Bun SSR and hydrated from a client bundle. |
+| Home Assistant app | `ha-finassists/` | Add-on metadata, runtime image, Ingress entry point and persistent data mapping. |
+| Bun service | `ha-finassists/src/server.ts`, `ha-finassists/src/app-bootstrap.ts`, `ha-finassists/src/app-container.ts` | Startup, configuration and the InferDI container that composes repositories and use cases. |
+| HTTP API | `ha-finassists/src/modules/api/infrastructure/http/` | Hono routes with Zod validation, security headers and web asset delivery. |
+| Web interface | `ha-finassists/src/app/` | React 19 UI with JSON translations and CSS Modules, rendered with Bun SSR and hydrated from a client bundle. |
 | Native integration | `custom_components/ha_finassists/` | Config flow, REST client, sensors, services and the bundled Lovelace card. |
 
 Runtime surfaces:
@@ -56,11 +58,11 @@ Runtime surfaces:
   token.
 - `/api/v1/system-credentials/*` carries the integration's system identity, separate from personal tokens.
 
-The browser UI is implemented with React 19 and CSS under `src/app`. Development compiles the client bundle in memory; production builds the browser bundle and server into `dist/`. The page language follows `Accept-Language` and the CSS follows the system light/dark preference; Home Assistant theme synchronization is future work. The service listens on `PORT` (default `8099`) and stores API tokens and transactions in `/data/fin-assist.sqlite`; set `DATABASE_PATH` to override that location locally.
+The browser UI is implemented with React 19 and CSS under `ha-finassists/src/app`. Development compiles the client bundle in memory; production builds the browser bundle and server into `ha-finassists/dist/`. The page language follows `Accept-Language` and the CSS follows the system light/dark preference; Home Assistant theme synchronization is future work. The service listens on `PORT` (default `8099`) and stores API tokens and transactions in `/data/fin-assist.sqlite`; set `DATABASE_PATH` to override that location locally.
 
 ## Home Assistant packaging
 
-The repository root contains the app `config.yaml` and `Dockerfile`. The app targets `amd64` and `aarch64`, enables Ingress, does not publish a host port and reserves `/data` for persistent app data. It ships as a prebuilt multi-architecture image (`ghcr.io/mariomh8/ha-finassists`) that CI publishes, so Home Assistant pulls it instead of building on the device; `docker build -t ha-finassists .` reproduces it locally. The Supervisor mounts `/data` as root, so the container entrypoint prepares that folder and drops to the unprivileged `bun` user; the pre-backup hook runs with the same user. The add-on's `supervisor_ip` option defaults to Home Assistant's standard Supervisor address; override it for non-standard networks. `SUPERVISOR_IP` can override the option when running the container directly, and an invalid address fails startup.
+The `ha-finassists` folder is the Bun workspace package and the Home Assistant app: it holds `config.yaml`, the `Dockerfile`, the app source under `src/`, its `package.json` and the store documentation. The repository root keeps the workspace manifest, the release tooling and the integration, so the image is built from the repository root with `-f ha-finassists/Dockerfile`. The app targets `amd64` and `aarch64`, enables Ingress, does not publish a host port and reserves `/data` for persistent app data. It ships as a prebuilt multi-architecture image (`ghcr.io/mariomh8/ha-finassists`) that CI publishes, so Home Assistant pulls it instead of building on the device; `docker build -f ha-finassists/Dockerfile -t ha-finassists .` reproduces it locally. The Supervisor mounts `/data` as root, so the container entrypoint prepares that folder and drops to the unprivileged `bun` user; the pre-backup hook runs with the same user. The add-on's `supervisor_ip` option defaults to Home Assistant's standard Supervisor address; override it for non-standard networks. `SUPERVISOR_IP` can override the option when running the container directly, and an invalid address fails startup.
 
 The custom integration under `custom_components/ha_finassists` is installed through HACS or by copying it into Home Assistant's `custom_components` directory. Its config flow accepts only Supervisor `hassio` discovery: the app publishes a one-time bootstrap capability with a 15-minute expiry, Home Assistant asks the user to confirm, and the integration exchanges that capability for a dedicated long-lived system credential. The credential can be rotated from the integration options and is revoked when the entry is removed. Manual setup and pasted capabilities are intentionally unsupported. The details are in [the system credential ADR](docs/adr/0006-home-assistant-system-credential.md), [the identity and token ADR](docs/adr/0004-home-assistant-identity-and-tokens.md) and [the credential lifecycle notes](docs/system-credential-lifecycle.md).
 
