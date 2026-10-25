@@ -5,8 +5,6 @@ on:
     branches: [main]
 
 concurrency:
-  # The called workflow serializes on its own `release-prepare` group; sharing
-  # the name here makes GitHub cancel the call.
   group: release-prepare-${{ github.ref }}
   cancel-in-progress: false
 
@@ -21,13 +19,74 @@ jobs:
       commands: '["lint:ci", "typecheck", "test", "check:version"]'
       cache-commands: '["lint:ci"]'
 
+  # The shared prepare workflow fetches the base branch into a local branch, so it
+  # only works off the integration branch of a two-branch model. This repository
+  # releases from main, where that fetch fails, so the steps live here.
   prepare:
     name: Prepare
     needs: [check]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-    uses: hexadrop/github-workflows/.github/workflows/release-prepare.yml@v1.0.0
-    with:
-      base-branch: main
-      version-command: bun run version
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Capture the pending release version
+        id: release-version
+        shell: bash
+        run: |
+          if ! find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' | grep -q .; then
+            echo "No pending changesets."
+            echo "has-release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          bun changeset status --output=release.json
+          version="$(jq -r '.releases[0].newVersion // empty' release.json)"
+          rm release.json
+
+          if [[ -z "${version}" ]]; then
+            echo "has-release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has-release=true" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update the release pull request
+        if: steps.release-version.outputs.has-release == 'true'
+        uses: changesets/action@v2.1.1
+        with:
+          version-script: bun run version
+          pr-base-branch: main
+          pr-draft: always
+          commit-message: 'chore: release v${{ steps.release-version.outputs.version }}'
+          pr-title: 'chore: release v${{ steps.release-version.outputs.version }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Label the release pull request
+        if: steps.release-version.outputs.has-release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_number="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --head changeset-release/main --state open --json number --jq '.[0].number // empty')"
+
+          if [[ -z "${pr_number}" ]]; then
+            echo "Release pull request not found. Skipping."
+            exit 0
+          fi
+
+          gh pr edit "$pr_number" --add-label release
