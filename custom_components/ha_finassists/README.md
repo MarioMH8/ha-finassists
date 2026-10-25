@@ -5,7 +5,7 @@ Connect your [Fin Assist](../../README.md) ledger to Home Assistant: keep this m
 ## What you get
 
 - **Two sensors** that follow the current month: *Income this month* and *Expenses this month*.
-- **Four services** to record expenses, record incomes, delete a transaction and refresh on demand.
+- **Four services** to record expenses, record incomes, delete a transaction and refresh on demand, with an optional category by name.
 - **A Lovelace card** bundled with the integration, so there is nothing extra to download.
 
 ## Install
@@ -33,7 +33,7 @@ lovelace:
 
 In a storage-mode dashboard, add that path as a **JavaScript module** resource under **Settings → Dashboards → Resources**. Automatic registration is intentionally not implemented: it would require private frontend APIs.
 
-The card shows this month's income and expenses and offers a refresh action. Pass `entry_id` to pin it to one integration entry:
+The card shows this month's income and expenses, breaks them down by category and offers a refresh action. Pass `entry_id` to pin it to one integration entry:
 
 ```yaml
 type: custom:fin-assist-card
@@ -49,7 +49,7 @@ Without `entry_id` the card totals every entry and refreshes the entry when only
 | Income this month | Monetary sensor (state class `total`) summing the transactions dated in the current calendar month. |
 | Expenses this month | The same for money spent. |
 
-Both belong to one Fin Assist device per config entry and expose `kind`, `month` and `integration_entry_id` attributes. Amounts are converted with the currency's real fraction digits, and the unit is the currency reported by the app. Until the month has its first transaction the currency is unknown, so the sensors assume `EUR`.
+Both belong to one Fin Assist device per config entry and expose `kind`, `month`, `integration_entry_id`, `by_category` and `uncategorized` attributes. `by_category` maps each category name to its total for the current month, in major units, and `uncategorized` sums the movements that have no category. Amounts are converted with the currency's real fraction digits, and the unit is the currency reported by the app. Until the month has its first transaction the currency is unknown, so the sensors assume `EUR`.
 
 The integration polls every five minutes; the `refresh` service asks for an immediate update.
 
@@ -57,19 +57,20 @@ The integration polls every five minutes; the `refresh` service asks for an imme
 
 | Service | Fields |
 | --- | --- |
-| `ha_finassists.add_expense` | `entry_id`, `amount`, `date` (optional), `description` (optional) |
-| `ha_finassists.add_income` | `entry_id`, `amount`, `date` (optional), `description` (optional) |
+| `ha_finassists.add_expense` | `entry_id`, `amount`, `date` (optional), `description` (optional), `category` (optional) |
+| `ha_finassists.add_income` | `entry_id`, `amount`, `date` (optional), `description` (optional), `category` (optional) |
 | `ha_finassists.delete_transaction` | `entry_id`, `transaction_id` |
 | `ha_finassists.refresh` | `entry_id` (optional) |
 
-`amount` is expressed in major units (`12.50`) and must be greater than zero; extra decimal places are rejected. `date` defaults to today. Deletion is permanent and installation-wide.
+`amount` is expressed in major units (`12.50`) and must be greater than zero; extra decimal places are rejected. `date` defaults to today. `category` is a category name that must already exist in Fin Assist and belong to the same kind as the transaction; an unknown name fails without recording the movement. Deletion is permanent and installation-wide.
 
 ```yaml
 service: ha_finassists.add_expense
 data:
   entry_id: YOUR_CONFIG_ENTRY_ID
   amount: 12.50
-  description: Groceries
+  description: Mercadona
+  category: Groceries
 ```
 
 ## How it connects

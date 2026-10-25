@@ -61,8 +61,17 @@ class FinAssistMonthlyTotalSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
+        scale = Decimal(10) ** get_currency_precision(self.native_unit_of_measurement)
+        raw_breakdown = self.coordinator.data.get(f"{self._kind}_by_category") or {}
+        raw_uncategorized = self.coordinator.data.get(f"uncategorized_{self._kind}_minor") or 0
+
         return {
             "integration_entry_id": self._entry_id,
             "kind": self._kind,
             "month": self.coordinator.data.get("month"),
+            "by_category": {
+                str(name): float(Decimal(str(amount)) / scale)
+                for name, amount in raw_breakdown.items()
+            },
+            "uncategorized": float(Decimal(str(raw_uncategorized)) / scale),
         }

@@ -416,8 +416,15 @@ class SensorTests(unittest.TestCase):
         coordinator = SimpleNamespace(
             data={"currencyCode": "EUR", "month": "2026-10", "income_minor": 0, "expense_minor": 0, **data}
         )
+        key = "expenses" if data_key.startswith("expense") else "income"
+
         return FinAssistMonthlyTotalSensor(
-            coordinator, SimpleNamespace(entry_id="entry-1"), "income", "Income this month", data_key, "mdi:cash"
+            coordinator,
+            SimpleNamespace(entry_id="entry-1"),
+            key,
+            "Income this month",
+            data_key,
+            "mdi:cash",
         )
 
     def test_sensor_converts_minor_units_and_uses_api_currency(self) -> None:
@@ -428,6 +435,22 @@ class SensorTests(unittest.TestCase):
         self.assertEqual(sensor.extra_state_attributes["integration_entry_id"], "entry-1")
         self.assertEqual(sensor.extra_state_attributes["month"], "2026-10")
         self.assertEqual(sensor.extra_state_attributes["kind"], "income")
+        self.assertEqual(sensor.extra_state_attributes["by_category"], {})
+        self.assertEqual(sensor.extra_state_attributes["uncategorized"], 0.0)
+
+    def test_sensor_exposes_the_category_breakdown_in_major_units(self) -> None:
+        sensor = self._sensor(
+            "expense_minor",
+            expense_minor=12345,
+            expense_by_category={"Food": 10000, "Transport": 2345},
+            uncategorized_expense_minor=500,
+        )
+
+        self.assertEqual(
+            sensor.extra_state_attributes["by_category"],
+            {"Food": 100.0, "Transport": 23.45},
+        )
+        self.assertEqual(sensor.extra_state_attributes["uncategorized"], 5.0)
 
 
 class _Response:
@@ -517,8 +540,13 @@ class CredentialLifecycleTests(unittest.IsolatedAsyncioTestCase):
 
 
 class _PagedSession:
-    def __init__(self, pages: list[dict[str, Any]]) -> None:
+    def __init__(
+        self, pages: list[dict[str, Any]], categories: list[dict[str, Any]] | None = None,
+        categories_error: bool = False,
+    ) -> None:
         self.pages = pages
+        self.categories = categories or []
+        self.categories_error = categories_error
         self.calls: list[dict[str, Any]] = []
 
     def request(self, method: str, url: str, **kwargs: Any) -> _RequestContext:
@@ -527,19 +555,30 @@ class _PagedSession:
             return _RequestContext(_Response(201, {"id": "transaction-1"}))
         if method == "DELETE":
             return _RequestContext(_Response(204))
+        if "categories" in url:
+            if self.categories_error:
+                return _RequestContext(_Response(500, {"error": "boom"}))
+            return _RequestContext(_Response(200, {"items": self.categories}))
         return _RequestContext(_Response(200, self.pages[len(self.calls) - 1]))
 
 
 class TransactionApiTests(unittest.IsolatedAsyncioTestCase):
     async def test_summary_pages_current_month_and_totals_by_kind(self) -> None:
-        def item(kind: str, amount: int) -> dict[str, Any]:
-            return {"kind": kind, "amountMinor": amount, "currencyCode": "USD"}
+        def item(kind: str, amount: int, category_id: str | None = None) -> dict[str, Any]:
+            body: dict[str, Any] = {"kind": kind, "amountMinor": amount, "currencyCode": "USD"}
+            if category_id:
+                body["categoryId"] = category_id
+            return body
 
         session = _PagedSession(
             [
-                {"items": [item("income", 1000), item("expense", 250)], "total": 3},
-                {"items": [item("expense", 50)], "total": 3},
-            ]
+                {"items": [item("income", 1000, "cat-salary"), item("expense", 250, "cat-food")], "total": 3},
+                {"items": [item("expense", 50, "cat-food")], "total": 3},
+            ],
+            categories=[
+                {"id": "cat-food", "name": "Food", "kind": "expense"},
+                {"id": "cat-salary", "name": "Salary", "kind": "income"},
+            ],
         )
         with patch.object(importlib.import_module("custom_components.ha_finassists.api"), "date") as fake_date:
             fake_date.today.return_value = date(2026, 2, 10)
@@ -547,13 +586,41 @@ class TransactionApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(
             summary,
-            {"currencyCode": "USD", "income_minor": 1000, "expense_minor": 300, "month": "2026-02"},
+            {
+                "currencyCode": "USD",
+                "income_minor": 1000,
+                "expense_minor": 300,
+                "month": "2026-02",
+                "income_by_category": {"Salary": 1000},
+                "expense_by_category": {"Food": 300},
+                "uncategorized_income_minor": 0,
+                "uncategorized_expense_minor": 0,
+            },
         )
-        first, second = session.calls
+        first, second = session.calls[:2]
         self.assertEqual(first["params"]["fromDate"], "2026-02-01")
         self.assertEqual(first["params"]["toDate"], "2026-02-28")
         self.assertEqual(first["params"]["offset"], 0)
         self.assertEqual(second["params"]["offset"], 2)
+
+    async def test_summary_keeps_totals_when_the_category_request_fails(self) -> None:
+        session = _PagedSession(
+            [{"items": [{"kind": "expense", "amountMinor": 500, "currencyCode": "EUR"}], "total": 1}],
+            categories_error=True,
+        )
+        summary = await FinAssistApi("http://fin-assist/api/v1", "token", session).async_fetch_summary()
+
+        self.assertEqual((summary["expense_minor"], summary["income_minor"]), (500, 0))
+        self.assertNotIn("expense_by_category", summary)
+
+    async def test_list_categories_filters_by_kind(self) -> None:
+        session = _PagedSession([], categories=[{"id": "cat-food", "name": "Food", "kind": "expense"}])
+        categories = await FinAssistApi("http://fin-assist/api/v1", "token", session).async_list_categories(
+            "expense"
+        )
+
+        self.assertEqual(categories, [{"id": "cat-food", "name": "Food", "kind": "expense"}])
+        self.assertEqual(session.calls[0]["params"], {"kind": "expense"})
 
     async def test_summary_falls_back_to_default_currency_without_transactions(self) -> None:
         session = _PagedSession([{"items": [], "total": 0}])
@@ -565,16 +632,23 @@ class TransactionApiTests(unittest.IsolatedAsyncioTestCase):
     async def test_create_transaction_posts_contract_body(self) -> None:
         session = _PagedSession([])
         api = FinAssistApi("http://fin-assist/api/v1", "token", session)
-        await api.async_create_transaction("expense", 1250, date(2026, 10, 24), "Lunch")
+        await api.async_create_transaction("expense", 1250, date(2026, 10, 24), "Lunch", "cat-food")
         await api.async_create_transaction("income", 500, date(2026, 10, 24), None)
 
         self.assertEqual(session.calls[0]["method"], "POST")
         self.assertTrue(session.calls[0]["url"].endswith("/transactions"))
         self.assertEqual(
             session.calls[0]["json"],
-            {"kind": "expense", "amountMinor": 1250, "transactionDate": "2026-10-24", "description": "Lunch"},
+            {
+                "kind": "expense",
+                "amountMinor": 1250,
+                "transactionDate": "2026-10-24",
+                "description": "Lunch",
+                "categoryId": "cat-food",
+            },
         )
         self.assertNotIn("description", session.calls[1]["json"])
+        self.assertNotIn("categoryId", session.calls[1]["json"])
 
     async def test_delete_transaction_uses_contract_path(self) -> None:
         session = _PagedSession([])
@@ -595,7 +669,11 @@ class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
                 async_register=lambda domain, service, handler, schema: handlers.__setitem__(service, handler),
             ),
         )
-        api = SimpleNamespace(async_create_transaction=AsyncMock(), async_delete_transaction=AsyncMock())
+        api = SimpleNamespace(
+            async_create_transaction=AsyncMock(),
+            async_delete_transaction=AsyncMock(),
+            async_list_categories=AsyncMock(return_value=[]),
+        )
         coordinator = SimpleNamespace(
             data={"currencyCode": "EUR"}, async_request_refresh=AsyncMock()
         )
@@ -611,7 +689,7 @@ class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
         await handlers["add_expense"](call)
 
         api.async_create_transaction.assert_awaited_once_with(
-            "expense", 1250, date(2026, 10, 1), "Lunch"
+            "expense", 1250, date(2026, 10, 1), "Lunch", None
         )
         coordinator.async_request_refresh.assert_awaited_once()
 
@@ -619,7 +697,41 @@ class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
         handlers, api, _ = self._register()
         await handlers["add_income"](SimpleNamespace(data={"entry_id": "entry-1", "amount": "100"}))
 
-        api.async_create_transaction.assert_awaited_once_with("income", 10000, date.today(), None)
+        api.async_create_transaction.assert_awaited_once_with("income", 10000, date.today(), None, None)
+
+    async def test_add_expense_resolves_the_category_name(self) -> None:
+        handlers, api, _ = self._register()
+        api.async_list_categories.return_value = [
+            {"id": "cat-food", "name": "Food", "kind": "expense"}
+        ]
+
+        await handlers["add_expense"](
+            SimpleNamespace(data={"entry_id": "entry-1", "amount": "12.5", "category": " food "})
+        )
+
+        api.async_list_categories.assert_awaited_once_with("expense")
+        api.async_create_transaction.assert_awaited_once_with(
+            "expense", 1250, date.today(), None, "cat-food"
+        )
+
+    async def test_add_expense_rejects_an_unknown_category(self) -> None:
+        handlers, api, _ = self._register()
+
+        with self.assertRaises(ValueError):
+            await handlers["add_expense"](
+                SimpleNamespace(data={"entry_id": "entry-1", "amount": "12.5", "category": "Missing"})
+            )
+        api.async_create_transaction.assert_not_awaited()
+
+    async def test_add_expense_reports_a_failed_category_lookup(self) -> None:
+        handlers, api, _ = self._register()
+        api.async_list_categories.side_effect = FinAssistApiError("unavailable")
+
+        with self.assertRaises(ValueError):
+            await handlers["add_expense"](
+                SimpleNamespace(data={"entry_id": "entry-1", "amount": "12.5", "category": "Food"})
+            )
+        api.async_create_transaction.assert_not_awaited()
 
     async def test_excess_precision_and_unknown_entry_are_rejected(self) -> None:
         handlers, api, _ = self._register()

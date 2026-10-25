@@ -120,6 +120,27 @@ def _to_minor_units(amount: Any, currency_code: str) -> int:
     return int(minor)
 
 
+async def _async_resolve_category(api: FinAssistApi, kind: str, name: str) -> str:
+    """Resolve a category name of the given kind to its identifier."""
+    wanted = name.strip().casefold()
+    if not wanted:
+        raise ValueError("Category must be a non-empty name")
+    try:
+        categories = await api.async_list_categories(kind)
+    except FinAssistApiError as err:
+        raise ValueError(str(err)) from err
+    for category in categories:
+        category_name = category.get("name")
+        category_id = category.get("id")
+        if (
+            isinstance(category_name, str)
+            and isinstance(category_id, str)
+            and category_name.strip().casefold() == wanted
+        ):
+            return category_id
+    raise ValueError(f"Unknown Fin Assist category: {name}")
+
+
 def _async_register_services(hass: HomeAssistant) -> None:
     """Register the refresh, add-expense, add-income, and delete-transaction services once."""
     import voluptuous as vol
@@ -142,12 +163,17 @@ def _async_register_services(hass: HomeAssistant) -> None:
                 raise ValueError("Unknown Fin Assist config entry")
             coordinator = runtime["coordinator"]
             amount_minor = _to_minor_units(call.data["amount"], coordinator.data["currencyCode"])
+            category = call.data.get("category")
+            category_id = None
+            if isinstance(category, str) and category.strip():
+                category_id = await _async_resolve_category(runtime["api"], kind, category)
             try:
                 await runtime["api"].async_create_transaction(
                     kind,
                     amount_minor,
                     call.data.get("date") or date.today(),
                     call.data.get("description"),
+                    category_id,
                 )
             except FinAssistApiError as err:
                 raise ValueError(str(err)) from err
@@ -161,6 +187,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
             vol.Required("amount"): vol.All(vol.Any(int, float, str), vol.Coerce(str)),
             vol.Optional("date"): vol.Coerce(date.fromisoformat),
             vol.Optional("description"): str,
+            vol.Optional("category"): str,
         }
     )
     for service, kind in ((SERVICE_ADD_EXPENSE, "expense"), (SERVICE_ADD_INCOME, "income")):

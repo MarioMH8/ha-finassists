@@ -39,6 +39,43 @@ class FinAssistCard extends HTMLElement {
 				/[&<>"']/g,
 				char => ({ '"': '&quot;', '&': '&amp;', "'": '&#39;', '<': '&lt;', '>': '&gt;' })[char]
 			);
+		const formatAmount = value => {
+			const number = Number(value);
+
+			return Number.isFinite(number)
+				? new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(number)
+				: esc(value);
+		};
+		const breakdownFor = state => {
+			const attributes = state.attributes || {};
+			const entries = Object.entries(attributes.by_category || {});
+			const uncategorized = Number(attributes.uncategorized || 0);
+			if (entries.length === 0 && !(uncategorized > 0)) {
+				return '';
+			}
+			const label =
+				attributes.kind === 'income' ? 'Income this month' : 'Expenses this month';
+			const unit = esc(attributes.unit_of_measurement || '');
+			const body = entries
+				.sort(([, first], [, second]) => Number(second) - Number(first))
+				.map(
+					([name, value]) =>
+						`<tr><th scope="row">${esc(name)}</th><td>${formatAmount(value)} ${unit}</td></tr>`
+				)
+				.join('');
+			const uncategorizedRow =
+				uncategorized > 0
+					? `<tr><th scope="row">Uncategorized</th><td>${formatAmount(uncategorized)} ${unit}</td></tr>`
+					: '';
+
+			return `<details class="breakdown"><summary>${label} by category</summary>
+            <table><caption class="visually-hidden">${label} by category</caption>
+            <tbody>${body}${uncategorizedRow}</tbody></table></details>`;
+		};
+		const breakdowns = sensors
+			.filter(state => available(state))
+			.map(state => breakdownFor(state))
+			.join('');
 		const rows = sensors
 			.map(state => {
 				const label = state.attributes.kind === 'income' ? 'Income this month' : 'Expenses this month';
@@ -58,6 +95,7 @@ class FinAssistCard extends HTMLElement {
 					: `<table><caption class="visually-hidden">Fin Assist totals for the current month</caption>
             <tbody>${rows}</tbody></table>`
 			}
+          ${breakdowns}
           <button class="refresh" type="button" ${this._busy.has('refresh') ? 'disabled aria-busy="true"' : ''}>${this._busy.has('refresh') ? 'Refreshing…' : 'Refresh'}</button>
           <p class="feedback${this._feedbackIsError ? ' error' : ''}" role="status" aria-live="polite" aria-atomic="true" tabindex="-1">${esc(this._errorMessage)}</p>
         </div>
@@ -70,6 +108,9 @@ class FinAssistCard extends HTMLElement {
         td { text-align: right; font-variant-numeric: tabular-nums; }
         small { display: block; color: var(--secondary-text-color); margin-top: 4px; font-weight: normal; }
         caption.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        .breakdown { margin-top: 12px; }
+        .breakdown summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
+        .breakdown td { font-variant-numeric: tabular-nums; }
         button { font: inherit; color: var(--primary-color); background: transparent; border: 1px solid var(--divider-color); border-radius: 6px; padding: 7px 10px; cursor: pointer; }
         button:hover { background: var(--secondary-background-color); }
         button:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }

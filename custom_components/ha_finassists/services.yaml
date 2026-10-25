@@ -41,6 +41,13 @@ add_expense:
       required: false
       selector:
         text:
+    category:
+      name: Category
+      description: Optional category name. It must already exist and belong to expenses.
+      required: false
+      example: Groceries
+      selector:
+        text:
 add_income:
   name: Add income
   description: Record an income in Fin Assist.
@@ -72,6 +79,13 @@ add_income:
       name: Description
       description: Optional note describing the income.
       required: false
+      selector:
+        text:
+    category:
+      name: Category
+      description: Optional category name. It must already exist and belong to incomes.
+      required: false
+      example: Salary
       selector:
         text:
 delete_transaction:
