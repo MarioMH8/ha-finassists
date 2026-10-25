@@ -3,13 +3,13 @@ import { Dialog, DIALOG_TYPE } from '@app/components/dialog';
 import { Field, fieldDescriptionIds } from '@app/components/field';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
-import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
+import type { AdministrationState } from '@app/features/administration/use-administration.hook';
 import type { ReactElement } from 'react';
 
 import styles from './token-creation-form.module.css';
 
 type TokenCreationFormProps = Pick<
-	ApiTokenManagementState,
+	AdministrationState,
 	| 'closeCreate'
 	| 'copy'
 	| 'copyFeedback'

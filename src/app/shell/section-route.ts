@@ -1,13 +1,13 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
 const SECTION = {
-	TOKENS: 'tokens',
+	ADMINISTRATION: 'administration',
 	TRANSACTIONS: 'transactions',
 } as const;
 
 type Section = (typeof SECTION)[keyof typeof SECTION];
 
-const SECTIONS: readonly Section[] = [SECTION.TRANSACTIONS, SECTION.TOKENS];
+const SECTIONS: readonly Section[] = [SECTION.TRANSACTIONS, SECTION.ADMINISTRATION];
 const DEFAULT_SECTION: Section = SECTION.TRANSACTIONS;
 
 function parseSectionHash(hash: string): Section {

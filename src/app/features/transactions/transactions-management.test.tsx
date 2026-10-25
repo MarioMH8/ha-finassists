@@ -244,7 +244,7 @@ describe('MonthSummary', () => {
 });
 
 describe('App', () => {
-	test('renders transactions first and the API tokens navigation', () => {
+	test('renders transactions first and the administration navigation', () => {
 		const markup = renderToStaticMarkup(
 			<App
 				language='es'
@@ -254,7 +254,7 @@ describe('App', () => {
 
 		expect(markup).toContain('Nueva transacción');
 		expect(markup).toContain('Transacciones');
-		expect(markup).toContain('Tokens API');
+		expect(markup).toContain('Administración');
 		expect(markup).not.toContain('Resumen');
 	});
 

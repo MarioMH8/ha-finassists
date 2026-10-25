@@ -32,7 +32,7 @@
 	"monthSummaryTitle": "Este mes",
 	"monthSummaryVsPrevious": "vs. mes anterior",
 	"navigationAriaLabel": "Navegación de la aplicación",
-	"navigationTokens": "Tokens API",
+	"navigationAdministration": "Administración",
 	"navigationTransactions": "Transacciones",
 	"noTokens": "Todavía no hay tokens activos. Crea uno para conectar una aplicación o servicio.",
 	"ready": "En línea",

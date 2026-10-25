@@ -20,7 +20,7 @@ Explicitly out of scope for now: accounts and balances, transfers, categories an
 
 | Surface | Responsibility |
 | --- | --- |
-| Home Assistant Ingress app | Add-transaction form, monthly summary, recent transactions with per-row deletion, and personal-token management. |
+| Home Assistant Ingress app | Add-transaction form, monthly summary, recent transactions with per-row deletion, and the Administration page for personal-token management. |
 | Bun service | Transaction rules, persistent data, REST API, MCP tools (`create_transaction`, `list_transactions`, `delete_transaction`), token management, and audit attribution. |
 | REST API | New contract for the native integration and external local-network clients. |
 | MCP | Read and write tools over Streamable HTTP, authenticated with the same personal-token model as REST. |

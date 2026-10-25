@@ -1,4 +1,4 @@
-import { TokenManagement } from '@app/features/api-tokens';
+import { AdministrationManagement } from '@app/features/administration';
 import { TransactionsManagement } from '@app/features/transactions';
 import { getCopy } from '@app/i18n';
 import type { Language } from '@app/i18n/language';
@@ -20,7 +20,7 @@ function App({ language, settings }: AppProps): ReactElement {
 	const [section, setSection] = useSectionRoute();
 	const copy = getCopy(language);
 	const labels: Record<Section, string> = {
-		[SECTION.TOKENS]: copy.navigationTokens,
+		[SECTION.ADMINISTRATION]: copy.navigationAdministration,
 		[SECTION.TRANSACTIONS]: copy.navigationTransactions,
 	};
 
@@ -41,7 +41,7 @@ function App({ language, settings }: AppProps): ReactElement {
 					{section === SECTION.TRANSACTIONS && (
 						<TransactionsManagement currencyCode={settings.currencyCode} />
 					)}
-					{section === SECTION.TOKENS && <TokenManagement />}
+					{section === SECTION.ADMINISTRATION && <AdministrationManagement />}
 				</main>
 			</div>
 		</LocaleProvider>

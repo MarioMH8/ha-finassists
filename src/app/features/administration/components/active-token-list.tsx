@@ -7,8 +7,8 @@ import { List, ListItem } from '@app/components/list';
 import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
-import type { ApiTokenManagementState } from '@app/features/api-tokens/use-api-tokens.hook';
-import { formatTokenDate } from '@app/features/api-tokens/use-api-tokens.hook';
+import type { AdministrationState } from '@app/features/administration/use-administration.hook';
+import { formatTokenDate } from '@app/features/administration/use-administration.hook';
 import { formatTokenCount, interpolate } from '@app/i18n';
 import { useLocale } from '@app/i18n/locale-context';
 import type { ReactElement } from 'react';
@@ -16,7 +16,7 @@ import type { ReactElement } from 'react';
 import styles from './active-token-list.module.css';
 
 type ActiveTokenListProps = Pick<
-	ApiTokenManagementState,
+	AdministrationState,
 	| 'cancelRevoke'
 	| 'confirmingTokenId'
 	| 'copy'

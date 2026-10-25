@@ -36,7 +36,7 @@ interface Feedback {
 	state: FeedbackState;
 }
 
-interface ApiTokenManagementState {
+interface AdministrationState {
 	cancelRevoke: (tokenId: string) => void;
 	closeCreate: () => void;
 	confirmingTokenId: string | undefined;
@@ -110,7 +110,7 @@ function isTokenList(value: unknown): value is TokenMetadata[] {
 	);
 }
 
-function useApiTokens(): ApiTokenManagementState {
+function useAdministration(): AdministrationState {
 	const { copy } = useLocale();
 	const [tokens, setTokens] = useState<TokenMetadata[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -349,4 +349,4 @@ function useApiTokens(): ApiTokenManagementState {
 	};
 }
 
-export { type ApiTokenManagementState, formatTokenDate, useApiTokens };
+export { type AdministrationState, formatTokenDate, useAdministration };

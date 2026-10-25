@@ -32,7 +32,7 @@
 	"monthSummaryTitle": "This month",
 	"monthSummaryVsPrevious": "vs. previous month",
 	"navigationAriaLabel": "Application navigation",
-	"navigationTokens": "API tokens",
+	"navigationAdministration": "Administration",
 	"navigationTransactions": "Transactions",
 	"noTokens": "No active tokens yet. Create one to connect an app or service.",
 	"ready": "Online",

@@ -4,9 +4,9 @@ import { DEFAULT_SECTION, formatSectionHash, parseSectionHash, SECTION } from '.
 
 describe('section route', () => {
 	test('parses known section hashes', () => {
-		expect(parseSectionHash('#/tokens')).toBe(SECTION.TOKENS);
+		expect(parseSectionHash('#/administration')).toBe(SECTION.ADMINISTRATION);
 		expect(parseSectionHash('#/transactions')).toBe(SECTION.TRANSACTIONS);
-		expect(parseSectionHash('#tokens')).toBe(SECTION.TOKENS);
+		expect(parseSectionHash('#administration')).toBe(SECTION.ADMINISTRATION);
 	});
 
 	test('falls back to the default section for empty or unknown hashes', () => {
@@ -15,7 +15,7 @@ describe('section route', () => {
 	});
 
 	test('formats a section as a hash that parses back to it', () => {
-		expect(formatSectionHash(SECTION.TOKENS)).toBe('#/tokens');
-		expect(parseSectionHash(formatSectionHash(SECTION.TOKENS))).toBe(SECTION.TOKENS);
+		expect(formatSectionHash(SECTION.ADMINISTRATION)).toBe('#/administration');
+		expect(parseSectionHash(formatSectionHash(SECTION.ADMINISTRATION))).toBe(SECTION.ADMINISTRATION);
 	});
 });

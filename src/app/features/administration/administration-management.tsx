@@ -1,11 +1,11 @@
 import type { ReactElement } from 'react';
 
+import styles from './administration-management.module.css';
 import { ActiveTokenList, TokenCreationForm } from './components';
-import styles from './token-management.module.css';
-import { useApiTokens } from './use-api-tokens.hook';
+import { useAdministration } from './use-administration.hook';
 
-function TokenManagement(): ReactElement {
-	const state = useApiTokens();
+function AdministrationManagement(): ReactElement {
+	const state = useAdministration();
 
 	return (
 		<>
@@ -45,4 +45,4 @@ function TokenManagement(): ReactElement {
 	);
 }
 
-export { TokenManagement };
+export { AdministrationManagement };
