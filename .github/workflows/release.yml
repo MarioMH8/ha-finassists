@@ -67,6 +67,9 @@ jobs:
     if: ${{ !cancelled() && needs.detect.outputs.changed == 'true' && needs.image.result == 'success' }}
     permissions:
       contents: write
+      id-token: write
+      issues: write
+      pull-requests: write
     uses: hexadrop/github-workflows/.github/workflows/release.yml@v1.0.0
     with:
       target: tags
