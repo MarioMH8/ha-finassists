@@ -21,6 +21,7 @@ const DEFAULT_PAGE_SIZE = 20;
 type PageSize = (typeof PAGE_SIZES)[number];
 
 interface TransactionFilters {
+	categoryId: string;
 	fromDate: string;
 	kind: FilterKind;
 	search: string;

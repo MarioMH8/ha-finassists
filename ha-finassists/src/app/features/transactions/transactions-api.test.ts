@@ -24,6 +24,7 @@ function transaction(overrides: Partial<Transaction> = {}): Transaction {
 	return {
 		actorId: 'actor',
 		amountMinor: 1000,
+		categoryId: null,
 		createdAt: '2024-03-05T10:00:00.000Z',
 		currencyCode: 'EUR',
 		description: 'Coffee',
@@ -107,6 +108,7 @@ describe('transactions api', () => {
 		mockFetch(() => jsonResponse(transaction({ id: 'created' }), 201));
 		const input = {
 			amountMinor: 1000,
+			categoryId: null,
 			description: 'Coffee',
 			kind: 'expense',
 			transactionDate: '2024-03-05',
@@ -124,7 +126,13 @@ describe('transactions api', () => {
 		mockFetch(() => jsonResponse({ error: 'invalid' }, 400));
 
 		const result = await outcome(
-			createTransaction({ amountMinor: 1, description: '', kind: 'income', transactionDate: '2024-03-05' })
+			createTransaction({
+				amountMinor: 1,
+				categoryId: null,
+				description: '',
+				kind: 'income',
+				transactionDate: '2024-03-05',
+			})
 		);
 
 		expect(result).toBe('rejected');

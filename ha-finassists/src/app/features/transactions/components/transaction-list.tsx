@@ -28,6 +28,7 @@ type TransactionListProps = Pick<
 	| 'cancelDelete'
 	| 'canGoNext'
 	| 'canGoPrevious'
+	| 'categories'
 	| 'clearFilters'
 	| 'confirmingTransactionId'
 	| 'copy'
@@ -55,6 +56,7 @@ type TransactionListProps = Pick<
 >;
 
 const EMPTY_FILTERS: TransactionFilters = {
+	categoryId: '',
 	fromDate: '',
 	kind: FILTER_KIND.ALL,
 	search: '',
@@ -66,6 +68,7 @@ function TransactionList({
 	cancelDelete,
 	canGoNext,
 	canGoPrevious,
+	categories,
 	clearFilters,
 	confirmingTransactionId,
 	copy,
@@ -92,6 +95,10 @@ function TransactionList({
 	transactions,
 }: TransactionListProps): ReactElement {
 	const [filtersOpen, setFiltersOpen] = useState(false);
+	const categoryNames = new Map(categories.map(category => [category.id, category.name]));
+	const filterCategories = categories.filter(
+		category => filters.kind === FILTER_KIND.ALL || category.kind === filters.kind
+	);
 	const [draftFilters, setDraftFilters] = useState<TransactionFilters>(filters);
 	const [selectedIds, setSelectedIds] = useState<string[]>([]);
 	const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
@@ -104,11 +111,13 @@ function TransactionList({
 	const isListBusy = listState === LOAD_STATE.LOADING;
 	const activeFilterCount =
 		(filters.kind === FILTER_KIND.ALL ? 0 : 1) +
+		(filters.categoryId === '' ? 0 : 1) +
 		(filters.fromDate === '' ? 0 : 1) +
 		(filters.search === '' ? 0 : 1) +
 		(filters.toDate === '' ? 0 : 1);
 	const isDraftFiltered =
 		draftFilters.kind !== FILTER_KIND.ALL ||
+		draftFilters.categoryId !== '' ||
 		draftFilters.fromDate !== '' ||
 		draftFilters.search !== '' ||
 		draftFilters.toDate !== '';
@@ -333,6 +342,7 @@ function TransactionList({
 									</DataHeaderCell>
 									<DataHeaderCell>{copy.transactionColumnDate}</DataHeaderCell>
 									<DataHeaderCell>{copy.transactionColumnDescription}</DataHeaderCell>
+									<DataHeaderCell>{copy.transactionColumnCategory}</DataHeaderCell>
 									<DataHeaderCell align={DATA_ALIGN.END}>
 										{copy.transactionColumnAmount}
 									</DataHeaderCell>
@@ -376,6 +386,17 @@ function TransactionList({
 													<span className={styles.muted}>
 														{copy.transactionNoDescription}
 													</span>
+												)}
+											</DataCell>
+											<DataCell>
+												{transaction.categoryId === null ? (
+													<span className={styles.muted}>{copy.transactionCategoryNone}</span>
+												) : (
+													(categoryNames.get(transaction.categoryId) ?? (
+														<span className={styles.muted}>
+															{copy.transactionCategoryUnknown}
+														</span>
+													))
 												)}
 											</DataCell>
 											<DataCell
@@ -509,6 +530,30 @@ function TransactionList({
 							<option value={FILTER_KIND.ALL}>{copy.transactionFilterAll}</option>
 							<option value={TRANSACTION_KIND.EXPENSE}>{copy.transactionKindExpense}</option>
 							<option value={TRANSACTION_KIND.INCOME}>{copy.transactionKindIncome}</option>
+						</Select>
+					</Field>
+					<Field
+						htmlFor='transaction-filter-category'
+						label={copy.transactionFilterCategory}>
+						<Select
+							id='transaction-filter-category'
+							onChange={event => {
+								const categoryId = event.currentTarget.value;
+								setDraftFilters(current => ({
+									...current,
+									categoryId,
+								}));
+							}}
+							size={SELECT_SIZE.SMALL}
+							value={draftFilters.categoryId}>
+							<option value=''>{copy.transactionFilterAll}</option>
+							{filterCategories.map(category => (
+								<option
+									key={category.id}
+									value={category.id}>
+									{category.name}
+								</option>
+							))}
 						</Select>
 					</Field>
 					<Field

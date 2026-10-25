@@ -1,3 +1,4 @@
+import type { Category } from '@app/features/categories/categories-api';
 import { getCopy } from '@app/i18n';
 import { LocaleProvider } from '@app/i18n/locale-context';
 import { App } from '@app/shell/app';
@@ -19,12 +20,24 @@ function expense(overrides: Partial<Transaction> = {}): Transaction {
 	return {
 		actorId: 'actor',
 		amountMinor: 1250,
+		categoryId: null,
 		createdAt: '2024-03-05T10:00:00.000Z',
 		currencyCode: 'EUR',
 		description: 'Lunch',
 		id: 'transaction-1',
 		kind: 'expense',
 		transactionDate: '2024-03-05',
+		...overrides,
+	};
+}
+
+function category(overrides: Partial<Category> = {}): Category {
+	return {
+		createdAt: '2024-03-05T10:00:00.000Z',
+		id: 'category-1',
+		kind: 'expense',
+		name: 'Food',
+		transactionCount: 0,
 		...overrides,
 	};
 }
@@ -37,6 +50,8 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 		cancelDelete: noop,
 		canGoNext: false,
 		canGoPrevious: false,
+		categories: [],
+		categoryId: '',
 		clearFilters: noop,
 		closeEditor: noop,
 		confirmingTransactionId: undefined,
@@ -50,7 +65,7 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 		editingTransactionId: undefined,
 		errors: {},
 		feedback: undefined,
-		filters: { fromDate: '', kind: 'all', search: '', toDate: '' },
+		filters: { categoryId: '', fromDate: '', kind: 'all', search: '', toDate: '' },
 		goToNextPage: noop,
 		goToPreviousPage: noop,
 		hasFilters: false,
@@ -66,6 +81,7 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 		pageIndex: 0,
 		pageSize: 20,
 		setAmount: noop,
+		setCategoryId: noop,
 		setConfirmingTransactionId: noop,
 		setDate: noop,
 		setDescription: noop,
@@ -115,6 +131,25 @@ describe('TransactionForm', () => {
 
 		expect(markup).toContain('Transaction added.');
 	});
+
+	test('offers only the categories of the selected kind', () => {
+		const markup = render(
+			'en',
+			<TransactionForm
+				{...state('en', {
+					categories: [
+						category({ id: 'category-1', kind: 'expense', name: 'Food' }),
+						category({ id: 'category-2', kind: 'income', name: 'Salary' }),
+					],
+				})}
+			/>
+		);
+
+		expect(markup).toContain('Category (optional)');
+		expect(markup).toContain('No category');
+		expect(markup).toContain('>Food</option>');
+		expect(markup).not.toContain('>Salary</option>');
+	});
 });
 
 describe('TransactionList', () => {
@@ -137,7 +172,7 @@ describe('TransactionList', () => {
 			<TransactionList
 				{...state('en', {
 					canGoNext: true,
-					filters: { fromDate: '2024-03-01', kind: 'all', search: '', toDate: '2024-03-31' },
+					filters: { categoryId: '', fromDate: '2024-03-01', kind: 'all', search: '', toDate: '2024-03-31' },
 					hasFilters: true,
 					pageCount: 3,
 					pageSize: 10,
@@ -172,6 +207,42 @@ describe('TransactionList', () => {
 		expect(markup).toContain('New transaction');
 	});
 
+	test('shows the category of each transaction and a fallback when missing', () => {
+		const markup = render(
+			'en',
+			<TransactionList
+				{...state('en', {
+					categories: [category({ id: 'category-1', name: 'Food' })],
+					total: 2,
+					transactions: [
+						expense({ categoryId: 'category-1' }),
+						expense({ categoryId: 'missing', id: 'transaction-2' }),
+					],
+				})}
+			/>
+		);
+
+		expect(markup).toContain('>Category</th>');
+		expect(markup).toContain('>Food</td>');
+		expect(markup).toContain('Unknown category');
+	});
+
+	test('offers a category filter', () => {
+		const markup = render(
+			'en',
+			<TransactionList
+				{...state('en', {
+					categories: [category({ id: 'category-1', name: 'Food' })],
+					total: 1,
+					transactions: [expense()],
+				})}
+			/>
+		);
+
+		expect(markup).toContain('transaction-filter-category');
+		expect(markup).toContain('>Food</option>');
+	});
+
 	test('offers per-row and select-all checkboxes for bulk deletion', () => {
 		const markup = render('en', <TransactionList {...state('en', { total: 1, transactions: [expense()] })} />);
 
@@ -200,7 +271,7 @@ describe('TransactionList', () => {
 			'en',
 			<TransactionList
 				{...state('en', {
-					filters: { fromDate: '2024-03-01', kind: 'income', search: '', toDate: '' },
+					filters: { categoryId: '', fromDate: '2024-03-01', kind: 'income', search: '', toDate: '' },
 					hasFilters: true,
 				})}
 			/>
@@ -254,6 +325,7 @@ describe('App', () => {
 
 		expect(markup).toContain('Nueva transacción');
 		expect(markup).toContain('Transacciones');
+		expect(markup).toContain('Categorías');
 		expect(markup).toContain('Administración');
 		expect(markup).not.toContain('Resumen');
 	});

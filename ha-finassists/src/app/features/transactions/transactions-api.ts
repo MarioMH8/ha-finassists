@@ -8,6 +8,7 @@ type TransactionKind = (typeof TRANSACTION_KIND)[keyof typeof TRANSACTION_KIND];
 interface Transaction {
 	actorId: string;
 	amountMinor: number;
+	categoryId: null | string;
 	createdAt: string;
 	currencyCode: string;
 	description: string;
@@ -24,6 +25,7 @@ interface TransactionPage {
 }
 
 interface TransactionQuery {
+	categoryId?: string;
 	fromDate?: string;
 	kind?: TransactionKind;
 	limit?: number;
@@ -34,6 +36,7 @@ interface TransactionQuery {
 
 interface NewTransaction {
 	amountMinor: number;
+	categoryId: null | string;
 	description: string;
 	kind: TransactionKind;
 	transactionDate: string;
@@ -57,6 +60,8 @@ function isTransaction(value: unknown): value is Transaction {
 		isTransactionKind(value.kind) &&
 		'amountMinor' in value &&
 		typeof value.amountMinor === 'number' &&
+		'categoryId' in value &&
+		(value.categoryId === null || typeof value.categoryId === 'string') &&
 		'currencyCode' in value &&
 		typeof value.currencyCode === 'string' &&
 		'description' in value &&
