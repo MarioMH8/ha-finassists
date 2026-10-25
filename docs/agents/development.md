@@ -19,6 +19,7 @@ Use the narrowest command that validates the changed behavior. CI runs lint, typ
 | Add a changeset for the pull request | `bun changeset add` |
 | Bump the version and sync every manifest | `bun run version` |
 | Verify the manifests match `package.json` | `bun run check:version` |
+| Build the app image locally | `docker build -t ha-finassists .` |
 
 Copy `.env.example` to `.env` to configure a local mock actor. `bun run dev` uses that actor and bypasses the Supervisor peer check; production rejects development identity variables and validates the trusted peer. Tests use Bun's built-in test runner and are colocated with the source as `*.test.ts` files.
 

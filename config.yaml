@@ -5,6 +5,7 @@ description: Financial tools for Home Assistant
 arch:
   - amd64
   - aarch64
+image: "ghcr.io/mariomh8/ha-finassists"
 startup: application
 boot: auto
 stage: experimental
