@@ -4,12 +4,10 @@
 	"cancel": "Cancel",
 	"checking": "Checking service status…",
 	"close": "Close",
-	"confirmRevoke": "Revoke token",
 	"copyFailed": "Could not copy automatically. Select and copy the token manually.",
 	"copyToken": "Copy token",
 	"createToken": "Create token",
 	"creatingToken": "Creating token…",
-	"description": "Create personal API tokens to connect trusted tools to your Fin Assist account.",
 	"error": "The service could not be reached",
 	"errorCreatingToken": "Could not create a token. Please try again.",
 	"errorLoadingTokens": "Could not load tokens. Check your connection and try again.",
@@ -53,7 +51,6 @@
 	"tokenNameRequired": "Enter a name for this token.",
 	"tokenNameTooLong": "Token names can be up to 80 characters.",
 	"tokenOptions": "Options: {name}",
-	"tokensDescription": "Tokens act as your account when connecting apps and services.",
 	"tokensEmptyTitle": "No active tokens",
 	"tokensTitle": "Personal API tokens",
 	"transactionAmountHint": "Amount in {currency}, with up to {digits} decimal places.",
@@ -126,6 +123,5 @@
 	"transactionSubmit": "Add transaction",
 	"transactionSubmitting": "Saving…",
 	"transactionUpdated": "Transaction updated.",
-	"transactionUpdateError": "Could not update this transaction. Please try again.",
-	"welcome": "Connect your tools securely"
+	"transactionUpdateError": "Could not update this transaction. Please try again."
 }

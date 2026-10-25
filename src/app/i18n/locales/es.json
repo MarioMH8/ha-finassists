@@ -4,12 +4,10 @@
 	"cancel": "Cancelar",
 	"checking": "Comprobando el estado del servicio…",
 	"close": "Cerrar",
-	"confirmRevoke": "Revocar token",
 	"copyFailed": "No se pudo copiar automáticamente. Selecciona y copia el token manualmente.",
 	"copyToken": "Copiar token",
 	"createToken": "Crear token",
 	"creatingToken": "Creando token…",
-	"description": "Crea tokens de API personales para conectar aplicaciones de confianza con Fin Assist.",
 	"error": "No se pudo conectar con el servicio",
 	"errorCreatingToken": "No se pudo crear el token. Inténtalo de nuevo.",
 	"errorLoadingTokens": "No se pudieron cargar los tokens. Comprueba la conexión e inténtalo de nuevo.",
@@ -53,7 +51,6 @@
 	"tokenNameRequired": "Escribe un nombre para este token.",
 	"tokenNameTooLong": "El nombre del token puede tener hasta 80 caracteres.",
 	"tokenOptions": "Opciones: {name}",
-	"tokensDescription": "Los tokens actúan como tu cuenta al conectar aplicaciones y servicios.",
 	"tokensEmptyTitle": "No hay tokens activos",
 	"tokensTitle": "Tokens de API personales",
 	"transactionAmountHint": "Importe en {currency}, con hasta {digits} decimales.",
@@ -126,6 +123,5 @@
 	"transactionSubmit": "Añadir transacción",
 	"transactionSubmitting": "Guardando…",
 	"transactionUpdated": "Transacción actualizada.",
-	"transactionUpdateError": "No se pudo actualizar esta transacción. Inténtalo de nuevo.",
-	"welcome": "Conecta tus herramientas de forma segura"
+	"transactionUpdateError": "No se pudo actualizar esta transacción. Inténtalo de nuevo."
 }

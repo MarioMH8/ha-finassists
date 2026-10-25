@@ -49,7 +49,7 @@ interface ApiTokenManagementState {
 	isCreating: boolean;
 	isLoading: boolean;
 	issuedSecret: string | undefined;
-	issuedTokenReference: RefObject<HTMLElement | null>;
+	issuedTokenReference: RefObject<HTMLDivElement | null>;
 	listError: boolean;
 	loadTokens: (signal?: AbortSignal) => Promise<void>;
 	openCreate: () => void;
@@ -128,7 +128,7 @@ function useApiTokens(): ApiTokenManagementState {
 	const tokenNameReference = useRef<HTMLInputElement>(null);
 	const tokenListReference = useRef<HTMLUListElement>(null);
 	const tokenHeadingReference = useRef<HTMLHeadingElement>(null);
-	const issuedTokenReference = useRef<HTMLElement>(null);
+	const issuedTokenReference = useRef<HTMLDivElement>(null);
 	const loadGeneration = useRef(0);
 
 	useEffect(() => {
@@ -241,7 +241,6 @@ function useApiTokens(): ApiTokenManagementState {
 			setIssuedSecret(secret);
 			setCopyFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
 			setConfirmingTokenId(undefined);
-			setIsCreateOpen(false);
 			setFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
 			if (tokenNameReference.current) {
 				tokenNameReference.current.value = '';
@@ -281,13 +280,23 @@ function useApiTokens(): ApiTokenManagementState {
 	}
 
 	function openCreate(): void {
+		setIssuedSecret(undefined);
+		setCopyFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
 		setFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
+		if (tokenNameReference.current) {
+			tokenNameReference.current.value = '';
+		}
 		setIsCreateOpen(true);
 	}
 
 	function closeCreate(): void {
 		setIsCreateOpen(false);
+		setIssuedSecret(undefined);
+		setCopyFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
 		setFeedback({ message: '', state: FEEDBACK_STATE.EMPTY });
+		if (tokenNameReference.current) {
+			tokenNameReference.current.value = '';
+		}
 	}
 
 	async function copyToken(): Promise<void> {

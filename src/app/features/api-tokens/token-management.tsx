@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 
-import { ActiveTokenList, IssuedTokenPanel, ServiceStatusCard, TokenCreationForm } from './components';
+import { ActiveTokenList, TokenCreationForm } from './components';
 import styles from './token-management.module.css';
 import { useApiTokens } from './use-api-tokens.hook';
 
@@ -9,20 +9,6 @@ function TokenManagement(): ReactElement {
 
 	return (
 		<>
-			<ServiceStatusCard
-				copy={state.copy}
-				openCreate={state.openCreate}
-				serviceMessage={state.serviceMessage}
-				serviceState={state.serviceState}
-				tokenCount={state.tokenCount}
-			/>
-			<IssuedTokenPanel
-				copy={state.copy}
-				copyFeedback={state.copyFeedback}
-				copyToken={state.copyToken}
-				issuedSecret={state.issuedSecret}
-				issuedTokenReference={state.issuedTokenReference}
-			/>
 			<ActiveTokenList
 				cancelRevoke={state.cancelRevoke}
 				confirmingTokenId={state.confirmingTokenId}
@@ -30,8 +16,11 @@ function TokenManagement(): ReactElement {
 				feedback={state.feedback}
 				isLoading={state.isLoading}
 				listError={state.listError}
+				openCreate={state.openCreate}
 				revokeToken={state.revokeToken}
 				revokingTokenId={state.revokingTokenId}
+				serviceMessage={state.serviceMessage}
+				serviceState={state.serviceState}
 				setConfirmingTokenId={state.setConfirmingTokenId}
 				tokenCount={state.tokenCount}
 				tokenHeadingReference={state.tokenHeadingReference}
@@ -41,10 +30,14 @@ function TokenManagement(): ReactElement {
 			<TokenCreationForm
 				closeCreate={state.closeCreate}
 				copy={state.copy}
+				copyFeedback={state.copyFeedback}
+				copyToken={state.copyToken}
 				createToken={state.createToken}
 				feedback={state.feedback}
 				isCreateOpen={state.isCreateOpen}
 				isCreating={state.isCreating}
+				issuedSecret={state.issuedSecret}
+				issuedTokenReference={state.issuedTokenReference}
 				tokenNameReference={state.tokenNameReference}
 			/>
 			<footer className={styles.footer}>{state.copy.footer}</footer>

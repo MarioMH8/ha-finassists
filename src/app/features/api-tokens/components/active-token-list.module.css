@@ -2,6 +2,14 @@
   padding: var(--ha-space-5) var(--ha-space-5) 0;
 }
 
+.headingActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ha-space-3);
+}
+
 .body {
   display: grid;
   gap: var(--ha-space-3);
