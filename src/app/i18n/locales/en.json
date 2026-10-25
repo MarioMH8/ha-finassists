@@ -46,7 +46,6 @@
 		"one": "{count} token",
 		"other": "{count} tokens"
 	},
-	"tokenCreateDescription": "Name the app or service that will use this token.",
 	"tokenNameHint": "Choose a name that helps you recognize where you use it.",
 	"tokenNameLabel": "Token name",
 	"tokenNameRequired": "Enter a name for this token.",

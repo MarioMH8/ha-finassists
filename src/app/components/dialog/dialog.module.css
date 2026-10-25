@@ -93,7 +93,7 @@
 
 .body {
   overflow-y: auto;
-  padding: 0 var(--ha-space-6) var(--ha-space-4);
+  padding: var(--ha-space-2) var(--ha-space-6) var(--ha-space-4);
 }
 
 .footer {

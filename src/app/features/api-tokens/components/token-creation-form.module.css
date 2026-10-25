@@ -1,6 +1,11 @@
 .form {
   display: grid;
   gap: var(--ha-space-3);
+  min-height: 96px;
+}
+
+.primaryAction {
+  min-width: 112px;
 }
 
 .feedback:empty {
@@ -10,6 +15,7 @@
 .issued {
   display: grid;
   gap: var(--ha-space-3);
+  min-height: 96px;
   outline: none;
 }
 

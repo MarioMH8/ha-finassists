@@ -48,6 +48,7 @@ function TokenCreationForm({
 			<Button
 				appearance={BUTTON_APPEARANCE.ACCENT}
 				aria-label={copy.copyToken}
+				className={styles.primaryAction}
 				onClick={() => void copyToken()}
 				type='button'
 				variant={BUTTON_VARIANT.BRAND}>
@@ -64,6 +65,7 @@ function TokenCreationForm({
 			<Button
 				appearance={BUTTON_APPEARANCE.ACCENT}
 				aria-busy={isCreating}
+				className={styles.primaryAction}
 				disabled={isCreating}
 				form={FORM_ID}
 				type='submit'
@@ -76,7 +78,6 @@ function TokenCreationForm({
 	return (
 		<Dialog
 			closeLabel={copy.close}
-			description={issuedSecret ? copy.issuedTokenWarning : copy.tokenCreateDescription}
 			footer={dialogFooter}
 			id='token-create-dialog'
 			onClose={closeCreate}
@@ -88,6 +89,7 @@ function TokenCreationForm({
 					className={styles.issued}
 					ref={issuedTokenReference}
 					tabIndex={-1}>
+					<Notice tone={NOTICE_TONE.WARNING}>{copy.issuedTokenWarning}</Notice>
 					<div className={styles.secret}>
 						<code>{issuedSecret}</code>
 					</div>
