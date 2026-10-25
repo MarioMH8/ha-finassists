@@ -33,8 +33,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/transactions-en-dark.png">
-    <img alt="Fin Assist transactions view with the month summary and recent transactions" src="docs/assets/screenshots/transactions-en-light.png" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/transactions-dark.png">
+    <img alt="Fin Assist transactions view with the month summary and recent transactions" src="docs/assets/screenshots/transactions-light.png" width="100%">
   </picture>
 </p>
 
@@ -45,8 +45,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/administration-en-dark.png">
-    <img alt="Fin Assist administration view with the personal API tokens" src="docs/assets/screenshots/administration-en-light.png" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/administration-dark.png">
+    <img alt="Fin Assist administration view with the personal API tokens" src="docs/assets/screenshots/administration-light.png" width="100%">
   </picture>
 </p>
 
