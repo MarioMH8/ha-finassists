@@ -1,14 +1,24 @@
 import { jsonResponse } from '@modules/api/infrastructure/http/shared/http-responses';
 import type {
+	CreateCategory,
 	CreateTransaction,
+	DeleteCategory,
 	DeleteTransaction,
 	DeleteTransactions,
+	ListCategories,
 	ListTransactions,
+	UpdateCategory,
 	UpdateTransaction,
 } from '@modules/ledger/application';
 
 interface FinanceUseCases {
 	ledger: {
+		categories: {
+			create: CreateCategory;
+			delete: DeleteCategory;
+			list: ListCategories;
+			update: UpdateCategory;
+		};
 		create: CreateTransaction;
 		delete: DeleteTransaction;
 		deleteMany: DeleteTransactions;

@@ -2,10 +2,14 @@ import { handleMcpRequest, MCP_MAX_BODY_BYTES } from '@modules/api/infrastructur
 import { handleRequest } from '@modules/api/infrastructure/http/routes';
 import { createHttpContainer } from '@modules/api/infrastructure/http/shared/http-container';
 import {
+	CreateCategory,
 	CreateTransaction,
+	DeleteCategory,
 	DeleteTransaction,
 	DeleteTransactions,
+	ListCategories,
 	ListTransactions,
+	UpdateCategory,
 	UpdateTransaction,
 } from '@modules/ledger/application';
 import { SqliteCategoryRepository, SqliteLedgerRepository } from '@modules/ledger/infrastructure';
@@ -20,9 +24,17 @@ import { handleFinanceRequest } from './finance-routes';
 
 const databases: Database[] = [];
 
+interface CategoryJson {
+	createdAt: string;
+	id: string;
+	kind: string;
+	name: string;
+	transactionCount?: number;
+}
 interface TransactionJson {
 	actorId: null | string;
 	amountMinor: number;
+	categoryId: null | string;
 	currencyCode: string;
 	description: string;
 	id: string;
@@ -61,6 +73,12 @@ function setup(): { useCases: FinanceUseCases } {
 	return {
 		useCases: {
 			ledger: {
+				categories: {
+					create: new CreateCategory(categoryRepository),
+					delete: new DeleteCategory(categoryRepository),
+					list: new ListCategories(categoryRepository),
+					update: new UpdateCategory(categoryRepository),
+				},
 				create: new CreateTransaction(repository, categoryRepository, 'EUR'),
 				delete: new DeleteTransaction(repository),
 				deleteMany: new DeleteTransactions(repository),
@@ -433,8 +451,11 @@ describe('transactions REST routes', () => {
 		expect(initializedBody.result.serverInfo.name).toBe('fin-assist');
 		expect(initialized.headers.get('mcp-session-id')).toBeNull();
 		expect(listed.result.tools.map(tool => tool.name)).toEqual([
+			'create_category',
 			'create_transaction',
+			'delete_category',
 			'delete_transaction',
+			'list_categories',
 			'list_transactions',
 		]);
 		expect(created.result.isError).toBe(false);
@@ -489,5 +510,208 @@ describe('transactions REST routes', () => {
 		const malformedBody = await readJson<MCPJson>(malformed);
 		expect(malformedBody.error.code).toBe(-32_700);
 		expect(tooLarge.status).toBe(413);
+	});
+});
+
+describe('categories REST routes', () => {
+	it('creates, lists and filters categories with their usage', async () => {
+		const { useCases } = setup();
+		const created = await send(useCases, '/api/v1/categories', 'POST', { kind: 'expense', name: '  Food ' });
+		const income = await send(useCases, '/api/v1/categories', 'POST', { kind: 'income', name: 'Salary' });
+		const createdBody = await readJson<CategoryJson>(created);
+		const list = await sendJson<{ items: CategoryJson[] }>(useCases, '/api/v1/categories');
+		const expenses = await sendJson<{ items: CategoryJson[] }>(useCases, '/api/v1/categories?kind=expense');
+
+		expect(created.status).toBe(201);
+		expect(createdBody).toMatchObject({ kind: 'expense', name: 'Food' });
+		expect(income.status).toBe(201);
+		expect(list.items).toHaveLength(2);
+		expect(list.items.every(item => item.transactionCount === 0)).toBe(true);
+		expect(expenses.items.map(item => item.name)).toEqual(['Food']);
+	});
+
+	it('reports the usage of a category and refuses to delete it', async () => {
+		const { useCases } = setup();
+		const category = await sendJson<CategoryJson>(useCases, '/api/v1/categories', 'POST', {
+			kind: 'expense',
+			name: 'Food',
+		});
+		await send(useCases, '/api/v1/transactions', 'POST', {
+			amountMinor: 500,
+			categoryId: category.id,
+			kind: 'expense',
+			transactionDate: '2026-05-10',
+		});
+
+		const list = await sendJson<{ items: CategoryJson[] }>(useCases, '/api/v1/categories');
+		const deleted = await send(useCases, `/api/v1/categories/${category.id}`, 'DELETE');
+		const body = await readJson<{ error: string }>(deleted);
+
+		expect(list.items[0]?.transactionCount).toBe(1);
+		expect(deleted.status).toBe(409);
+		expect(body.error).toContain('cannot');
+	});
+
+	it('renames a category and rejects duplicates within a kind', async () => {
+		const { useCases } = setup();
+		const first = await sendJson<CategoryJson>(useCases, '/api/v1/categories', 'POST', {
+			kind: 'expense',
+			name: 'Food',
+		});
+		await send(useCases, '/api/v1/categories', 'POST', { kind: 'expense', name: 'Travel' });
+
+		const renamed = await send(useCases, `/api/v1/categories/${first.id}`, 'PATCH', { name: 'Groceries' });
+		const duplicate = await send(useCases, `/api/v1/categories/${first.id}`, 'PATCH', { name: 'travel' });
+		const renamedBody = await readJson<CategoryJson>(renamed);
+
+		expect(renamedBody.name).toBe('Groceries');
+		expect(duplicate.status).toBe(409);
+	});
+
+	it('deletes an unused category and reports missing ones', async () => {
+		const { useCases } = setup();
+		const category = await sendJson<CategoryJson>(useCases, '/api/v1/categories', 'POST', {
+			kind: 'income',
+			name: 'Salary',
+		});
+
+		const deleted = await send(useCases, `/api/v1/categories/${category.id}`, 'DELETE');
+		const missing = await send(useCases, '/api/v1/categories/missing', 'DELETE');
+		const unsupported = await send(useCases, '/api/v1/categories', 'PUT');
+
+		expect(deleted.status).toBe(204);
+		expect(missing.status).toBe(404);
+		expect(unsupported.status).toBe(405);
+	});
+
+	it('rejects an invalid category without leaking internals', async () => {
+		const { useCases } = setup();
+		const invalidKind = await send(useCases, '/api/v1/categories', 'POST', { kind: 'transfer', name: 'Food' });
+		const emptyName = await send(useCases, '/api/v1/categories', 'POST', { kind: 'expense', name: '  ' });
+
+		expect(invalidKind.status).toBe(400);
+		expect(emptyName.status).toBe(400);
+	});
+});
+
+describe('category assignments in transactions', () => {
+	it('assigns, filters and clears a category', async () => {
+		const { useCases } = setup();
+		const category = await sendJson<CategoryJson>(useCases, '/api/v1/categories', 'POST', {
+			kind: 'expense',
+			name: 'Food',
+		});
+		const other = await sendJson<CategoryJson>(useCases, '/api/v1/categories', 'POST', {
+			kind: 'expense',
+			name: 'Travel',
+		});
+		const categorized = await sendJson<TransactionJson>(useCases, '/api/v1/transactions', 'POST', {
+			amountMinor: 500,
+			categoryId: category.id,
+			kind: 'expense',
+			transactionDate: '2026-05-10',
+		});
+		await send(useCases, '/api/v1/transactions', 'POST', {
+			amountMinor: 900,
+			categoryId: other.id,
+			kind: 'expense',
+			transactionDate: '2026-05-11',
+		});
+
+		const filtered = await sendJson<PaginatedJson<TransactionJson>>(
+			useCases,
+			`/api/v1/transactions?categoryId=${category.id}`
+		);
+		const cleared = await sendJson<TransactionJson>(useCases, `/api/v1/transactions/${categorized.id}`, 'PATCH', {
+			categoryId: null,
+		});
+
+		expect(categorized.categoryId).toBe(category.id);
+		expect(filtered.total).toBe(1);
+		expect(cleared.categoryId).toBeNull();
+	});
+
+	it('rejects a category of another kind', async () => {
+		const { useCases } = setup();
+		const category = await sendJson<CategoryJson>(useCases, '/api/v1/categories', 'POST', {
+			kind: 'income',
+			name: 'Salary',
+		});
+
+		const rejected = await send(useCases, '/api/v1/transactions', 'POST', {
+			amountMinor: 500,
+			categoryId: category.id,
+			kind: 'expense',
+			transactionDate: '2026-05-10',
+		});
+
+		expect(rejected.status).toBe(400);
+	});
+});
+
+describe('categories over MCP', () => {
+	it('creates a category and records a transaction with it', async () => {
+		const { useCases } = setup();
+		const tokenUseCases = setupTokens();
+		const issued = await tokenUseCases.issue.execute({ name: 'Client', ownerId: 'mcp-owner' });
+		const call = async (message: unknown) =>
+			handleMcpRequest(
+				new Request('http://localhost/mcp', {
+					body: JSON.stringify(message),
+					headers: {
+						Accept: 'application/json, text/event-stream',
+						Authorization: `Bearer ${issued.secret}`,
+						'Content-Type': 'application/json',
+					},
+					method: 'POST',
+				}),
+				tokenUseCases,
+				useCases
+			);
+		const category = await readJson<MCPJson>(
+			await call({
+				id: 1,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: { arguments: { kind: 'expense', name: 'Food' }, name: 'create_category' },
+			})
+		);
+		const listed = await readJson<MCPJson>(
+			await call({
+				id: 2,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: { arguments: { kind: 'expense' }, name: 'list_categories' },
+			})
+		);
+		const transaction = await readJson<MCPJson>(
+			await call({
+				id: 3,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: {
+					arguments: {
+						amountMinor: 500,
+						categoryId: category.result.structuredContent.id,
+						kind: 'expense',
+						transactionDate: '2026-05-10',
+					},
+					name: 'create_transaction',
+				},
+			})
+		);
+		const removed = await readJson<MCPJson>(
+			await call({
+				id: 4,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: { arguments: { id: category.result.structuredContent.id }, name: 'delete_category' },
+			})
+		);
+
+		expect(category.result.isError).toBe(false);
+		expect(listed.result.structuredContent.items).toHaveLength(1);
+		expect(transaction.result.structuredContent.categoryId).toBe(category.result.structuredContent.id);
+		expect(removed.result.isError).toBe(true);
 	});
 });
