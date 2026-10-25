@@ -1,25 +1,4 @@
 {
-	"compilerOptions": {
-		"target": "ESNext",
-		"jsx": "react-jsx",
-		"lib": ["ESNext", "DOM", "DOM.Iterable"],
-		"module": "Preserve",
-		"moduleResolution": "Bundler",
-		"paths": {
-			"@app/*": ["./ha-finassists/src/app/*"],
-			"@modules/*": ["./ha-finassists/src/modules/*"]
-		},
-		"resolveJsonModule": true,
-		"types": ["bun"],
-		"strict": true,
-		"noEmit": true,
-		"skipLibCheck": true
-	},
-	"include": [
-		"commitlint.config.ts",
-		"sync-release.ts",
-		"ha-finassists/src/**/*.ts",
-		"ha-finassists/src/**/*.tsx",
-		"ha-finassists/types/**/*.d.ts"
-	]
+	"extends": "./ha-finassists/tsconfig.json",
+	"include": ["commitlint.config.ts", "sync-release.ts"]
 }

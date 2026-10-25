@@ -16,6 +16,19 @@ const config = await hexadrop(
 		},
 	},
 	{
+		/*
+		 * Typed linting resolves the project from the repository root, so point it
+		 * at both configs: the app package owns its own, and the root one covers
+		 * the release tooling.
+		 */
+		files: ['**/*.ts', '**/*.tsx'],
+		languageOptions: {
+			parserOptions: {
+				project: ['./tsconfig.json', './ha-finassists/tsconfig.json'],
+			},
+		},
+	},
+	{
 		files: ['ha-finassists/src/app/**/*.tsx'],
 		settings: {
 			react: { version: '19.3.1' },
