@@ -159,12 +159,14 @@ function MonthSummary({ copy, currencyCode, language, summary, summaryState }: M
 							<h4 id='month-summary-chart-title'>{copy.monthSummaryChartTitle}</h4>
 							<p>{copy.monthSummaryChartDescription}</p>
 						</div>
-						<MonthlyFlowChart
-							copy={copy}
-							currencyCode={currencyCode}
-							language={language}
-							months={summary.months}
-						/>
+						{isChartOpen ? (
+							<MonthlyFlowChart
+								copy={copy}
+								currencyCode={currencyCode}
+								language={language}
+								months={summary.months}
+							/>
+						) : undefined}
 					</section>
 				</>
 			) : (

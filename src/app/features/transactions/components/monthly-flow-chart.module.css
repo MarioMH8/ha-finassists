@@ -50,7 +50,8 @@
 .axisLabel {
   fill: var(--ha-color-text-secondary);
   font-family: var(--ha-font-family-body);
-  font-size: 11px;
+  font-size: var(--ha-font-size-s);
+  font-variant-numeric: tabular-nums;
 }
 
 .incomeBar {
@@ -84,6 +85,6 @@
   }
 
   .axisLabel {
-    font-size: 10px;
+    font-size: var(--ha-font-size-xs);
   }
 }
