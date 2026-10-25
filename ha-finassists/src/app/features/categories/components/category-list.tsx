@@ -9,13 +9,13 @@ import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
 import { Select, SELECT_SIZE } from '@app/components/select';
+import { CATEGORY_KIND } from '@app/features/categories/categories-api';
+import type { CategoryFilter } from '@app/features/categories/categories-constants';
+import { CATEGORY_FILTER, LOAD_STATE } from '@app/features/categories/categories-constants';
+import type { CategoriesState } from '@app/features/categories/use-categories.hook';
 import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
 
-import { CATEGORY_KIND } from '../categories-api';
-import type { CategoryFilter } from '../categories-constants';
-import { CATEGORY_FILTER, LOAD_STATE } from '../categories-constants';
-import type { CategoriesState } from '../use-categories.hook';
 import styles from './category-list.module.css';
 
 type CategoryListProps = Pick<
@@ -28,6 +28,7 @@ type CategoryListProps = Pick<
 	| 'deletingCategoryId'
 	| 'feedback'
 	| 'filterKind'
+	| 'isEditorOpen'
 	| 'listState'
 	| 'openCreate'
 	| 'openEdit'
@@ -44,6 +45,7 @@ function CategoryList({
 	deletingCategoryId,
 	feedback,
 	filterKind,
+	isEditorOpen,
 	listState,
 	openCreate,
 	openEdit,
@@ -94,7 +96,7 @@ function CategoryList({
 				title={copy.categoryListTitle}
 				titleId='category-list-title'
 			/>
-			{feedback ? (
+			{feedback && !isEditorOpen ? (
 				<Notice tone={feedback.tone === 'error' ? NOTICE_TONE.ERROR : NOTICE_TONE.SUCCESS}>
 					{feedback.message}
 				</Notice>

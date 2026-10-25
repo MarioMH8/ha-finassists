@@ -17,6 +17,7 @@ function CategoriesManagement(): ReactElement {
 				deletingCategoryId={state.deletingCategoryId}
 				feedback={state.feedback}
 				filterKind={state.filterKind}
+				isEditorOpen={state.isEditorOpen}
 				listState={state.listState}
 				openCreate={state.openCreate}
 				openEdit={state.openEdit}

@@ -3,12 +3,12 @@ import { Dialog, DIALOG_TYPE } from '@app/components/dialog';
 import { Field, fieldDescriptionIds } from '@app/components/field';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
+import type { CategoryKind } from '@app/features/categories/categories-api';
+import { CATEGORY_KIND } from '@app/features/categories/categories-api';
+import { CATEGORY_NAME_MAX_LENGTH } from '@app/features/categories/categories-constants';
+import type { CategoriesState } from '@app/features/categories/use-categories.hook';
 import type { ReactElement } from 'react';
 
-import type { CategoryKind } from '../categories-api';
-import { CATEGORY_KIND } from '../categories-api';
-import { CATEGORY_NAME_MAX_LENGTH } from '../categories-constants';
-import type { CategoriesState } from '../use-categories.hook';
 import styles from './category-form.module.css';
 
 type CategoryFormProps = Pick<
