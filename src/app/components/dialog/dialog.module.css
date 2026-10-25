@@ -23,6 +23,37 @@
   width: min(100% - var(--ha-space-8), 320px);
 }
 
+.closeButton {
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  border-radius: var(--ha-border-radius-circle);
+}
+
+.closeButton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--ha-border-radius-circle);
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.closeButton.closeButton:hover:not(:disabled),
+.closeButton.closeButton:active:not(:disabled) {
+  background: transparent;
+}
+
+.closeButton:hover:not(:disabled)::after {
+  opacity: 0.1;
+}
+
+.closeButton:active:not(:disabled)::after {
+  opacity: 0.15;
+}
+
 .header {
   display: flex;
   align-items: flex-start;

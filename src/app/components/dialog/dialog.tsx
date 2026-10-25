@@ -79,6 +79,7 @@ function Dialog({
 					<Button
 						appearance={BUTTON_APPEARANCE.PLAIN}
 						aria-label={closeLabel}
+						className={styles.closeButton}
 						onClick={onClose}
 						size={BUTTON_SIZE.LARGE}
 						title={closeLabel}

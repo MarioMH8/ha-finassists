@@ -1,5 +1,3 @@
-import type { BadgeTone } from '@app/components/badge';
-import { Badge, BADGE_TONE } from '@app/components/badge';
 import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/button';
 import { Card } from '@app/components/card';
 import { Dialog, DIALOG_TYPE } from '@app/components/dialog';
@@ -36,11 +34,6 @@ type ActiveTokenListProps = Pick<
 	| 'tokenListReference'
 	| 'tokens'
 >;
-
-const SERVICE_TONE: Record<string, BadgeTone> = {
-	error: BADGE_TONE.DANGER,
-	ready: BADGE_TONE.SUCCESS,
-};
 
 function ActiveTokenList({
 	cancelRevoke,
@@ -91,21 +84,24 @@ function ActiveTokenList({
 		</>
 	);
 
+	const headingDescription = (
+		<span className={styles.description}>
+			<span
+				aria-hidden='true'
+				className={styles.status}
+				data-state={serviceState}
+			/>
+			{serviceMessage} · {formatTokenCount(tokenCount, language)}
+		</span>
+	);
 	const headingActions = (
-		<div className={styles.headingActions}>
-			<div
-				aria-live='polite'
-				role='status'>
-				<Badge tone={SERVICE_TONE[serviceState] ?? BADGE_TONE.NEUTRAL}>{serviceMessage}</Badge>
-			</div>
-			<Button
-				appearance={BUTTON_APPEARANCE.ACCENT}
-				onClick={openCreate}
-				type='button'
-				variant={BUTTON_VARIANT.BRAND}>
-				{copy.createToken}
-			</Button>
-		</div>
+		<Button
+			appearance={BUTTON_APPEARANCE.ACCENT}
+			onClick={openCreate}
+			type='button'
+			variant={BUTTON_VARIANT.BRAND}>
+			{copy.createToken}
+		</Button>
 	);
 
 	return (
@@ -116,7 +112,7 @@ function ActiveTokenList({
 				<div className={styles.heading}>
 					<SectionHeading
 						actions={headingActions}
-						description={formatTokenCount(tokenCount, language)}
+						description={headingDescription}
 						level={3}
 						title={copy.activeTokens}
 						titleId='active-tokens-title'

@@ -10,6 +10,28 @@
   gap: var(--ha-space-3);
 }
 
+.description {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
+.status {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: var(--ha-border-radius-circle);
+  background: var(--ha-color-fill-neutral-normal-resting);
+}
+
+.status[data-state='ready'] {
+  background: var(--ha-color-on-success-normal);
+}
+
+.status[data-state='error'] {
+  background: var(--ha-color-on-danger-normal);
+}
+
 .body {
   display: grid;
   gap: var(--ha-space-3);
