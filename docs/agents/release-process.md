@@ -13,7 +13,7 @@
 
 ## Release pull request
 
-1. `release-prepare.yml` runs after every push to `main`. While changesets are pending it opens or updates the draft `changeset-release/main` pull request against `main`, labeled `release`.
+1. `release-prepare.yml` runs after every push to `main`. While changesets are pending it opens or updates the draft `changeset-release/main` pull request against `main`, labeled `release`. The job itself is the shared `hexadrop/github-workflows` workflow; pin `v1.0.1` or newer, because older versions try to fetch the base branch into a local branch and fail when the release runs from `main`.
 2. The pull request carries the calculated version, the `ha-finassists/CHANGELOG.md` entry, and the synchronized `ha-finassists/config.yaml` and integration manifest, all produced by `bun run version`.
 3. Review it, mark it ready, and merge it. It is exempt from the issue and changeset checks.
 
