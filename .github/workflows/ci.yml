@@ -4,12 +4,15 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
-    types: [opened, synchronize]
+    # `edited` re-runs the checks when a stacked pull request is retargeted to
+    # another base branch; title and body edits are filtered out below.
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
   check:
     name: Check
+    # Retargeting fires `edited` with `changes.base`; ignore every other edit.
+    if: github.event_name != 'pull_request' || github.event.action != 'edited' || github.event.changes.base != null
     uses: hexadrop/github-workflows/.github/workflows/check.yml@v1.0.1
     with:
       commands: '["lint:ci", "typecheck", "test", "check:version"]'
