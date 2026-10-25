@@ -4,4 +4,4 @@ The repository currently defines no automated release, package publication, or v
 
 ## Home Assistant app release
 
-The Home Assistant app repository layout and version are described by `config.yaml`. No GitHub release workflow or release branch policy is configured yet. Document additional release steps here when the repository adopts them.
+The Home Assistant app repository layout and version are described by `repository.yaml` (repository identity, required by the Supervisor) and `config.yaml` (add-on metadata and version). No GitHub release workflow or release branch policy is configured yet. Document additional release steps here when the repository adopts them.

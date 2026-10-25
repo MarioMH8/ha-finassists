@@ -4,7 +4,7 @@
 
 | Surface | Location | Responsibility |
 | --- | --- | --- |
-| Home Assistant app | `config.yaml`, `Dockerfile` | Add-on metadata, runtime image, Ingress entry point, and persistent data mapping. |
+| Home Assistant app | `repository.yaml`, `config.yaml`, `Dockerfile` | App repository identity, add-on metadata, runtime image, Ingress entry point, and persistent data mapping. |
 | Bun application | `src/server.ts`, `src/app-bootstrap.ts`, `src/app-container.ts`, `src/config.ts` | Runtime entry point, startup glue, the InferDI container that composes repositories and use cases, and validated environment/add-on configuration. |
 | HTTP API | `src/modules/api/infrastructure/http/` | Inbound HTTP adapter (declarative Hono routes with Zod request validation; use cases are resolved from the InferDI scope exposed as `c.var.di`), security headers, and web asset delivery; application behavior is delegated to the owning modules. |
 | Home Assistant identity | `src/modules/home-assistant/` | Domain actor types plus the Ingress infrastructure adapter that resolves actors only from a trusted Supervisor peer. |
