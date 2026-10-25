@@ -8,7 +8,7 @@ const MCP_PROTOCOL_VERSION = {
 } as const;
 const MCP_MAX_BODY_BYTES = 6 * 1024 * 1024;
 const JSON_RPC_NULL = JSON.parse('null') as null;
-const MCP_SERVER_INFO = { name: 'fin-assist', version: '0.1.0' };
+const MCP_SERVER_INFO = { name: 'fin-assist', version: '0.1.1' };
 
 interface JsonRpcRequest {
 	id?: number | string;
