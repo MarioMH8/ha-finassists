@@ -19,5 +19,5 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           skip-validation-labels: release
-          changeset-required-for: ''
+          changeset-required-for: 'type:bug,type:feature,type:refactor'
           linked-issue-keywords: closes

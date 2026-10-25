@@ -1,0 +1,31 @@
+name: "Release: prepare"
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-prepare
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check
+    uses: hexadrop/github-workflows/.github/workflows/check.yml@v1.0.0
+    with:
+      commands: '["lint:ci", "typecheck", "test", "check:version"]'
+      cache-commands: '["lint:ci"]'
+
+  prepare:
+    name: Prepare
+    needs: [check]
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: hexadrop/github-workflows/.github/workflows/release-prepare.yml@v1.0.0
+    with:
+      base-branch: main
+      version-command: bun run version
