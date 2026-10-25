@@ -1,4 +1,4 @@
-FROM oven/bun:1.4.0-alpine AS build
+FROM oven/bun:1.4.4-alpine AS build
 
 WORKDIR /app
 COPY package.json bun.lock ./
@@ -7,7 +7,7 @@ COPY src ./src
 COPY tsconfig.json ./
 RUN bun run build
 
-FROM oven/bun:1.4.0-alpine
+FROM oven/bun:1.4.4-alpine
 
 WORKDIR /app
 COPY package.json bun.lock ./
