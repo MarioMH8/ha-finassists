@@ -8,4 +8,4 @@
 
 ## Validation
 
-The shared [`hexadrop/validate-pr-action@v1.0.1`](https://github.com/hexadrop/validate-pr-action/releases/tag/v1.0.1) checks issue approval, open state, and type labeling. [PR #53](https://github.com/hexadrop/validate-pr-action/pull/53) added linked-issue open-state validation to the shared action, keeping this policy centralized. CI calls the shared `hexadrop/github-workflows` check workflow to run `lint:ci`, `typecheck`, and `test` on `main`. No branch ruleset currently requires these checks.
+The shared [`hexadrop/validate-pr-action@v1.0.1`](https://github.com/hexadrop/validate-pr-action/releases/tag/v1.0.1) checks issue approval, open state, and type labeling. [PR #53](https://github.com/hexadrop/validate-pr-action/pull/53) added linked-issue open-state validation to the shared action, keeping this policy centralized. CI calls the shared `hexadrop/github-workflows` check workflow to run `lint:ci`, `typecheck`, and `test` on `main`. The `Protected branches` ruleset requires these checks before merging.

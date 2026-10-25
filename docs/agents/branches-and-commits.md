@@ -5,7 +5,7 @@
 - `main` is the default and only long-lived branch.
 - Create feature and maintenance branches from `main` and open pull requests back to `main`.
 - Use `feat/*`, `fix/*`, `docs/*`, `chore/*`, and `refactor/*` prefixes.
-- No branch rulesets are configured for now; CI still runs on pushes and pull requests targeting `main`.
+- The `Protected branches` ruleset protects `main`: pull requests, verified signatures, and the CI checks are required. Repository administrators retain an emergency bypass.
 
 ## Commit convention
 
