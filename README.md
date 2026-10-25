@@ -51,9 +51,6 @@
 
 ## Get started
 
-> [!NOTE]
-> Fin Assist is an early preview (`0.1.0`) and is growing fast. It targets `amd64` and `aarch64`.
-
 <p align="center">
   <a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMarioMH8%2Fha-finassists"><img height="40" alt="Add the Fin Assist repository to your Home Assistant" src="https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg"></a>
   <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=MarioMH8&repository=ha-finassists&category=integration"><img height="40" alt="Open the Fin Assist integration in HACS" src="https://my.home-assistant.io/badges/hacs_repository.svg"></a>
