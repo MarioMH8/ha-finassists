@@ -21,7 +21,7 @@
 
 .secret {
   padding: var(--ha-space-3);
-  border-radius: var(--ha-border-radius-md);
+  border-radius: var(--ha-border-radius-sm);
   background: var(--ha-color-surface-lower);
 }
 
