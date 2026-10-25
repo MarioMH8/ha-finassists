@@ -12,6 +12,7 @@ import { Transaction } from '../../domain';
 interface TransactionRow {
 	actor_id: null | string;
 	amount_minor: number;
+	category_id: null | string;
 	created_at: string;
 	currency_code: string;
 	description: string;
@@ -37,6 +38,10 @@ function where(criteria: TransactionCriteria): { parameters: SQLQueryBindings[];
 		clauses.push('kind = ?');
 		parameters.push(criteria.kind);
 	}
+	if (criteria.categoryId !== undefined) {
+		clauses.push('category_id = ?');
+		parameters.push(criteria.categoryId);
+	}
 	if (criteria.fromDate !== undefined) {
 		clauses.push('transaction_date >= ?');
 		parameters.push(criteria.fromDate);
@@ -58,6 +63,7 @@ function toTransaction(row: TransactionRow): Transaction {
 	return Transaction.create({
 		actorId: row.actor_id,
 		amountMinor: row.amount_minor,
+		categoryId: row.category_id,
 		createdAt: row.created_at,
 		currencyCode: row.currency_code,
 		description: row.description,
@@ -91,7 +97,7 @@ export class SqliteLedgerRepository implements TransactionRepository {
 	async findById(id: string): Promise<Transaction | undefined> {
 		const row = this.database
 			.query<TransactionRow, [string]>(
-				`SELECT id, kind, amount_minor, currency_code, description, transaction_date, actor_id, created_at
+				`SELECT id, kind, amount_minor, currency_code, description, transaction_date, category_id, actor_id, created_at
 				 FROM transactions WHERE id = ?`
 			)
 			.get(id);
@@ -104,8 +110,8 @@ export class SqliteLedgerRepository implements TransactionRepository {
 		this.database
 			.query(
 				`INSERT INTO transactions
-					(id, kind, amount_minor, currency_code, description, transaction_date, actor_id, created_at)
-				 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+					(id, kind, amount_minor, currency_code, description, transaction_date, category_id, actor_id, created_at)
+				 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 			)
 			.run(
 				transaction.id,
@@ -114,6 +120,7 @@ export class SqliteLedgerRepository implements TransactionRepository {
 				transaction.currencyCode,
 				transaction.description,
 				transaction.transactionDate,
+				transaction.categoryId,
 				transaction.actorId,
 				transaction.createdAt
 			);
@@ -127,7 +134,7 @@ export class SqliteLedgerRepository implements TransactionRepository {
 			.get(...parameters) ?? { total: 0 };
 		const rows = this.database
 			.query<TransactionRow, SQLQueryBindings[]>(
-				`SELECT id, kind, amount_minor, currency_code, description, transaction_date, actor_id, created_at
+				`SELECT id, kind, amount_minor, currency_code, description, transaction_date, category_id, actor_id, created_at
 				 FROM transactions${sql}
 				 ORDER BY transaction_date DESC, created_at DESC, id DESC
 				 LIMIT ? OFFSET ?`
@@ -142,7 +149,7 @@ export class SqliteLedgerRepository implements TransactionRepository {
 		const result = this.database
 			.query(
 				`UPDATE transactions
-				 SET kind = ?, amount_minor = ?, currency_code = ?, description = ?, transaction_date = ?, actor_id = ?, created_at = ?
+				 SET kind = ?, amount_minor = ?, currency_code = ?, description = ?, transaction_date = ?, category_id = ?, actor_id = ?, created_at = ?
 				 WHERE id = ?`
 			)
 			.run(
@@ -151,6 +158,7 @@ export class SqliteLedgerRepository implements TransactionRepository {
 				transaction.currencyCode,
 				transaction.description,
 				transaction.transactionDate,
+				transaction.categoryId,
 				transaction.actorId,
 				transaction.createdAt,
 				transaction.id

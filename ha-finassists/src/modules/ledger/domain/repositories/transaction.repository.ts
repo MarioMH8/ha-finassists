@@ -1,6 +1,7 @@
 import type { Transaction, TransactionKind } from '../transaction';
 
 interface TransactionCriteria {
+	categoryId?: string;
 	fromDate?: string;
 	kind?: TransactionKind;
 	limit?: number;

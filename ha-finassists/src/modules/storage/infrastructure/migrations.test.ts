@@ -15,6 +15,7 @@ describe('migrateDatabase', () => {
 			{ version: 3 },
 			{ version: 4 },
 			{ version: 5 },
+			{ version: 6 },
 		]);
 		expect(
 			database.query(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'api_tokens'`).get()
@@ -53,11 +54,38 @@ describe('migrateDatabase', () => {
 				.map(row => row.name)
 		).toEqual([
 			'api_tokens',
+			'categories',
 			'schema_migrations',
 			'system_credential_bootstrap',
 			'system_credentials',
 			'transactions',
 		]);
+		database.close();
+	});
+
+	it('adds an optional category to transactions and enforces the reference', () => {
+		const database = new Database(':memory:');
+		migrateDatabase(database);
+
+		const columns = database
+			.query<{ name: string }, []>('PRAGMA table_info(transactions)')
+			.all()
+			.map(row => row.name);
+		database.run(
+			`INSERT INTO transactions (id, kind, amount_minor, currency_code, description, transaction_date, actor_id, created_at)
+			 VALUES ('a', 'expense', 100, 'EUR', '', '2026-05-15', NULL, '2026-05-15T10:00:00.000Z')`
+		);
+
+		expect(columns).toContain('category_id');
+		expect(database.query('SELECT category_id FROM transactions WHERE id = ?').get('a')).toEqual({
+			category_id: null,
+		});
+		expect(() =>
+			database.run(
+				`INSERT INTO transactions (id, kind, amount_minor, currency_code, description, transaction_date, category_id, actor_id, created_at)
+				 VALUES ('b', 'expense', 100, 'EUR', '', '2026-05-15', 'missing', NULL, '2026-05-15T10:00:00.000Z')`
+			)
+		).toThrow('FOREIGN KEY');
 		database.close();
 	});
 

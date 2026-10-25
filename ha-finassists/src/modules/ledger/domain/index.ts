@@ -1,3 +1,21 @@
+export {
+	Category,
+	CATEGORY_KIND,
+	CATEGORY_KINDS,
+	CATEGORY_NAME_MAX_LENGTH,
+	type CategoryKind,
+	type CategoryProperties,
+} from './category';
+export {
+	CategoryInUseError,
+	CategoryKindInvalidError,
+	CategoryKindMismatchError,
+	CategoryNameAlreadyExistsError,
+	CategoryNameInvalidError,
+	CategoryNameTooLongError,
+	CategoryNotFoundError,
+} from './category.error';
+export type { CategoryCriteria, CategoryRepository, CategorySummary } from './repositories/category.repository';
 export type {
 	TransactionCriteria,
 	TransactionDeleteCriteria,

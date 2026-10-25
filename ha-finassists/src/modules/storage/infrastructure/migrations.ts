@@ -98,6 +98,24 @@ const MIGRATIONS: Migration[] = [
 		},
 		version: 5,
 	},
+	{
+		up(database) {
+			database.run(`
+				CREATE TABLE categories (
+					id TEXT PRIMARY KEY,
+					name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 40),
+					kind TEXT NOT NULL CHECK (kind IN ('expense', 'income')),
+					created_at TEXT NOT NULL
+				)
+			`);
+			database.run('CREATE UNIQUE INDEX categories_kind_name_unique ON categories(kind, name COLLATE NOCASE)');
+			database.run(
+				'ALTER TABLE transactions ADD COLUMN category_id TEXT REFERENCES categories(id) ON DELETE RESTRICT'
+			);
+			database.run('CREATE INDEX transactions_category_index ON transactions(category_id)');
+		},
+		version: 6,
+	},
 ];
 
 function migrateDatabase(database: Database): void {

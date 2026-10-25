@@ -17,6 +17,7 @@ const DESCRIPTION_MAX_LENGTH = 200;
 interface TransactionProperties {
 	actorId: null | string;
 	amountMinor: number;
+	categoryId: null | string | undefined;
 	createdAt: string;
 	currencyCode: string;
 	description: string;
@@ -39,6 +40,7 @@ class Transaction {
 		readonly currencyCode: string,
 		readonly description: string,
 		readonly transactionDate: string,
+		readonly categoryId: null | string,
 		readonly actorId: null | string,
 		readonly createdAt: string
 	) {}
@@ -60,6 +62,9 @@ class Transaction {
 		if (description.length > DESCRIPTION_MAX_LENGTH) {
 			throw new TransactionDescriptionTooLongError(DESCRIPTION_MAX_LENGTH);
 		}
+		// The ledger stores an absent category as JSON and SQL null, not as undefined.
+		// eslint-disable-next-line unicorn/no-null
+		const categoryId = properties.categoryId ?? null;
 
 		return new Transaction(
 			properties.id,
@@ -68,6 +73,7 @@ class Transaction {
 			properties.currencyCode,
 			description,
 			properties.transactionDate,
+			categoryId,
 			properties.actorId,
 			properties.createdAt
 		);

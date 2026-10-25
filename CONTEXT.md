@@ -1,6 +1,6 @@
 # Fin Assist
 
-This context describes the concepts managed by a Home Assistant household installation. The product is deliberately minimal: it records expenses and incomes only.
+This context describes the concepts managed by a Home Assistant household installation. The product is deliberately minimal: it records expenses and incomes, optionally grouped by category.
 
 ## People
 
@@ -19,11 +19,14 @@ _Avoid_: Operator (when the action came from an automation or reusable credentia
 ## Financial records
 
 **Transaction**:
-A dated record of money spent or received, with a kind, a positive amount, and an optional description. Transactions are immutable: they cannot be edited, but they can be deleted, which removes them permanently.
-_Avoid_: Operation, entry
+A dated record of money spent or received, with a kind, a positive amount, an optional category and an optional description. A transaction can be corrected or deleted; deleting removes it permanently.
+
+**Category**:
+A named grouping of transactions of one kind, for example **Groceries** or **Salary**. Categories are flat (there is no hierarchy), their names are unique within their kind, and a transaction may only use a category of its own kind. A category with transactions cannot be renamed to another kind or deleted, so history is never rewritten silently.
+_Avoid_: Tag, label, bucket
 
 **Kind**:
-Whether a transaction is an **expense** (money out) or an **income** (money in).
+Whether a transaction is an **expense** (money out) or an **income** (money in). A category belongs to exactly one kind.
 _Avoid_: Type, direction
 
 **Amount**:

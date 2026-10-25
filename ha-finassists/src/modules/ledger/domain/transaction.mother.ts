@@ -6,6 +6,7 @@ export class TransactionMother {
 		return Transaction.create({
 			actorId: 'user-1',
 			amountMinor: 1250,
+			categoryId: null,
 			createdAt: '2026-05-15T10:00:00.000Z',
 			currencyCode: 'EUR',
 			description: 'Groceries',
