@@ -1,0 +1,3 @@
+{
+	"extends": ["github>hexadrop/renovate-config"]
+}
