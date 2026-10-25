@@ -144,6 +144,7 @@ paths:
         - { name: fromDate, in: query, schema: { type: string, format: date } }
         - { name: toDate, in: query, schema: { type: string, format: date } }
         - { name: kind, in: query, schema: { type: string, enum: [expense, income] } }
+        - { name: search, in: query, description: Case-insensitive match against the transaction description., schema: { type: string } }
       responses:
         '200': { description: Paginated transactions, content: { application/json: { schema: { $ref: '#/components/schemas/TransactionPage' } } } }
         '400': { $ref: '#/components/responses/BadRequest' }
@@ -159,7 +160,34 @@ paths:
         '201': { description: Created transaction, content: { application/json: { schema: { $ref: '#/components/schemas/Transaction' } } } }
         '400': { $ref: '#/components/responses/BadRequest' }
         '405': { $ref: '#/components/responses/MethodNotAllowed' }
+    delete:
+      summary: Delete several transactions at once
+      description: Deletion is permanent and installation-wide; the transactions are removed for every actor. Identifiers that no longer exist are ignored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransactionIdsInput' }
+      responses:
+        '204': { description: The listed transactions are deleted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
   /transactions/{transactionId}:
+    patch:
+      summary: Update a transaction
+      description: Partial update; omitted properties keep their current value. The currency never changes, because every transaction stores the currency in force when it was created.
+      parameters:
+        - { $ref: '#/components/parameters/transactionId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransactionUpdate' }
+      responses:
+        '200': { description: Updated transaction, content: { application/json: { schema: { $ref: '#/components/schemas/Transaction' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { description: Transaction does not exist }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
     delete:
       summary: Delete a transaction
       description: Deletion is permanent and installation-wide; the transaction is removed for every actor.
@@ -262,6 +290,23 @@ components:
         amountMinor: { type: integer, minimum: 1, description: Amount in minor units of the configured currency }
         description: { type: string, maxLength: 200, default: '' }
         transactionDate: { type: string, format: date }
+    TransactionUpdate:
+      type: object
+      description: Partial transaction update; omitted properties keep their current value.
+      properties:
+        kind: { type: string, enum: [expense, income] }
+        amountMinor: { type: integer, minimum: 1, description: Amount in minor units of the configured currency }
+        description: { type: string, maxLength: 200 }
+        transactionDate: { type: string, format: date }
+    TransactionIdsInput:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { type: string }
     Transaction:
       type: object
       required: [id, kind, amountMinor, currencyCode, description, transactionDate, actorId, createdAt]
