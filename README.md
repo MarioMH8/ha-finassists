@@ -1,41 +1,96 @@
-# Fin Assist
+<p align="center">
+  <img alt="Fin Assist — household finances, inside Home Assistant" src="docs/assets/banner.svg" width="100%">
+</p>
 
-A self-hosted financial app for Home Assistant, distributed as a Home Assistant app and HACS integration from one repository. The product and domain are documented in the [project brief](docs/PROJECT-BRIEF.md), [glossary](CONTEXT.md), and [ADRs](docs/adr/).
+<p align="center">
+  <a href="https://github.com/MarioMH8/ha-finassists/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/MarioMH8/ha-finassists/ci.yml?branch=develop&label=CI&style=flat-square"></a>
+  <img alt="Home Assistant add-on" src="https://img.shields.io/badge/Home%20Assistant-add--on-18bcf2?style=flat-square&logo=homeassistant&logoColor=white">
+  <img alt="HACS integration" src="https://img.shields.io/badge/HACS-integration-41bdf5?style=flat-square">
+  <img alt="Self-hosted" src="https://img.shields.io/badge/data-stays%20home-4ecb71?style=flat-square">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-4ecb71?style=flat-square"></a>
+</p>
 
-## Current scope
+<h3 align="center">The expense tracker that lives where your home already lives.</h3>
 
-Fin Assist is intentionally minimal: it records **expenses and incomes** and nothing else. There are no accounts, categories, budgets, schedules, imports, or shared expenses; the product will grow from this base iteratively.
+<p align="center">
+  Log an expense from the dashboard, from an automation, or with the help of an AI assistant. Fin Assist keeps one private household ledger — no spreadsheets, no cloud, no subscription.
+</p>
 
-- **Ingress UI:** a form to add an expense or income, a monthly summary, a recent-transactions list with per-row deletion, and personal API-token management.
-- **REST API:** `GET`/`POST /api/v1/transactions` and `DELETE /api/v1/transactions/{transactionId}` (see [the OpenAPI contract](docs/api-v1.openapi.yaml)).
-- **MCP:** `create_transaction`, `list_transactions`, and `delete_transaction` tools at `/mcp` (Streamable HTTP, bearer token).
-- **Home Assistant integration:** monthly income/expense sensors and `add_expense`, `add_income`, `delete_transaction`, and `refresh` services; see [its README](custom_components/ha_finassists/README.md).
-- **Currency:** one currency for the whole installation, set with the app's `currency` option (ISO 4217, default `EUR`).
+---
 
-Upgrading from a build with the full financial model drops the old financial tables (books, accounts, transactions, ...) on first start; API tokens and the Home Assistant system credential are preserved.
+## Why Fin Assist
 
-## Development
+| | |
+| :-- | :-- |
+| 🧾 **Record in seconds**<br>An amount, a date, an optional note. That is the whole form. | 📊 **See the month**<br>Income, expenses and net, compared with last month, plus a six-month chart. |
+| 🔎 **Find anything**<br>Search, filter by type and date range, edit a transaction, or delete in bulk. | 🤖 **Automate it**<br>Services and sensors let any automation record spending and read the totals. |
+| 🧠 **Ask your AI**<br>A built-in MCP server lets assistants read and write transactions with a token you control. | 🔒 **Private by design**<br>One SQLite file in your instance, included in Home Assistant backups. Nothing leaves your home. |
 
-Requires Bun 1.4 or later. React 19 and React DOM provide server rendering and client hydration; the remaining application runtime uses Bun APIs. TypeScript, React types, and Bun types are development-only.
+## A look inside
 
-```sh
-bun install --frozen-lockfile
-cp .env.example .env
-bun run dev       # Watch server files; use a local mock Ingress identity
-bun run build     # Build production server and browser assets into dist/
-bun run start     # Start the production build on port 8099
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/transactions-en-dark.png">
+    <img alt="Fin Assist transactions view with the month summary and recent transactions" src="docs/assets/screenshots/transactions-en-light.png" width="100%">
+  </picture>
+</p>
+
+<details>
+<summary>More screenshots</summary>
+
+<br>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/administration-en-dark.png">
+    <img alt="Fin Assist administration view with the personal API tokens" src="docs/assets/screenshots/administration-en-light.png" width="100%">
+  </picture>
+</p>
+
+</details>
+
+## Get started
+
+> [!NOTE]
+> Fin Assist is an early preview (`0.1.0`) and is growing fast. It targets `amd64` and `aarch64`.
+
+<p align="center">
+  <a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMarioMH8%2Fha-finassists"><img height="40" alt="Add the Fin Assist repository to your Home Assistant" src="https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg"></a>
+  <a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=MarioMH8&repository=ha-finassists&category=integration"><img height="40" alt="Open the Fin Assist integration in HACS" src="https://my.home-assistant.io/badges/hacs_repository.svg"></a>
+</p>
+
+Both buttons open **your own** Home Assistant, not this website: the first adds this repository to the add-on store, the second opens the integration in HACS.
+
+### 1. Install the app
+
+In Home Assistant, open **Settings → Add-ons → Add-on Store**, select **⋮ → Repositories**, add `https://github.com/MarioMH8/ha-finassists`, then install and start **Fin Assist**. Pick your currency during installation — every amount in the ledger uses it.
+
+### 2. Add the integration
+
+Open **HACS → Integrations → ⋮ → Custom repositories**, add the same URL as an **Integration**, install **Fin Assist** and restart Home Assistant. The integration discovers the running app and asks you to confirm — no tokens to copy, no URLs to type.
+
+### 3. Pin the card to a dashboard
+
+```yaml
+type: custom:fin-assist-card
 ```
 
-Development reads `DEV_INGRESS_USER_ID`, `DEV_INGRESS_USERNAME`, and `DEV_INGRESS_DISPLAY_NAME` from `.env`, bypasses the Ingress peer check, and reloads open pages when Bun restarts the server. Production rejects these mock identity settings and enforces the configured Supervisor peer address. `/health` returns a JSON health status, `/api/v1/session` reports the current actor, and `/api/v1/tokens` lets that actor issue, list, and revoke only their own tokens. Newly issued secrets are returned once. `/mcp` exposes the transaction tools to bearer-token clients, and `/api/v1/transactions` lists and records transactions.
+The card ships with the integration. In a storage-mode dashboard, add `/ha_finassists/fin-assist-card.js` as a **JavaScript module** resource under **Settings → Dashboards → Resources** first.
 
-The browser UI is implemented with React 19 and CSS under `src/app`. During development, Bun compiles the client bundle in memory; production builds the browser bundle and server into `dist/`. The page language is selected from `Accept-Language`, and the CSS follows the system light/dark preference; Home Assistant theme synchronization remains future work. The service listens on `PORT` (default `8099`) and stores API tokens and transactions in `/data/fin-assist.sqlite`; set `DATABASE_PATH` to override that location for local development.
+## What you get
 
-The add-on's `supervisor_ip` option defaults to Home Assistant's standard Supervisor address. Override it for non-standard network setups. `SUPERVISOR_IP` can override the option when running the container directly; invalid addresses fail startup.
+- **A dashboard that opens in one click.** The app runs behind Home Assistant Ingress and follows your light or dark theme, in Spanish or English.
+- **Sensors for your dashboard:** *Income this month* and *Expenses this month*.
+- **Services for automations:** `ha_finassists.add_expense`, `add_income`, `delete_transaction` and `refresh`.
+- **A REST API and an MCP server** (`/api/v1` and `/mcp`) for scripts, local tools and assistants. Each person manages their own revocable tokens from the **Administration** page.
+- **Your data, in your backups.** Everything lives in `/data/fin-assist.sqlite` inside the add-on.
 
-## Home Assistant packaging
+## Where it is going
 
-The repository root contains the app `config.yaml` and `Dockerfile`; it targets `amd64` and `aarch64`, enables Ingress, does not publish a host port, and reserves `/data` for persistent app data. The custom integration lives under `custom_components/ha_finassists`.
+Fin Assist starts with the essentials — recording expenses and incomes and seeing the month at a glance — because a ledger you can trust is the foundation for everything else. Household finance deserves more than one screen: categories, recurring payments, budgets and reports are on the roadmap, each landing as a deliberate, well-tested step.
 
-## Direction
+## Contributing
 
-The product starts from this minimal base and adds capabilities one at a time (for example categories, accounts, or scheduled payments). Earlier designs for those features were removed from the code; see [the project brief](docs/PROJECT-BRIEF.md). The final product targets both `amd64` and `aarch64`. API/MCP authentication and the Supervisor trust boundary are described in the [identity and token ADR](docs/adr/0004-home-assistant-identity-and-tokens.md) and [MCP transport ADR](docs/adr/0005-mcp-streamable-http.md).
+Development, architecture and packaging notes live in [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports and ideas are welcome in [the issue tracker](https://github.com/MarioMH8/ha-finassists/issues). Fin Assist is released under the [MIT license](LICENSE).
+
+<p align="center"><sub>Built for Home Assistant. Runs entirely on your own hardware.</sub></p>

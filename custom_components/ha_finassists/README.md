@@ -1,24 +1,68 @@
-# Fin Assist Home Assistant integration
+# Fin Assist · Home Assistant integration
 
-This custom integration records expenses and incomes in Fin Assist. It provides two monthly total sensors, `refresh`, `add_expense`, `add_income` and `delete_transaction` services, and a bundled Lovelace card. The implementation is provided for Phase 4, but this repository has not been validated against a live Home Assistant/Supervisor installation; treat the topology and lifecycle acceptance checks below as pending.
+Connect your [Fin Assist](../../README.md) ledger to Home Assistant: keep this month's totals on a dashboard, log an expense from an automation, and pin the household summary to any Lovelace view.
 
-## Installation and setup
+## What you get
 
-Install this repository as a HACS **Integration** custom repository, or copy `custom_components/ha_finassists` into Home Assistant's `custom_components/ha_finassists` directory and restart Home Assistant. The root `hacs.json` and integration manifest provide HACS metadata; no release artifact is required for custom-repository installation.
+- **Two sensors** that follow the current month: *Income this month* and *Expenses this month*.
+- **Four services** to record expenses, record incomes, delete a transaction and refresh on demand.
+- **A Lovelace card** bundled with the integration, so there is nothing extra to download.
 
-The config flow accepts only Supervisor `hassio` discovery. The add-on must declare the `ha_finassists` discovery domain and send a one-time `bootstrapCapability` in its discovery config. Home Assistant presents a confirmation step before the integration exchanges that capability at `POST /api/v1/system-credentials/exchange`. The integration derives its API host from the validated Supervisor add-on slug on port 8099 and ignores any `baseUrl` supplied through discovery, keeping bootstrap credentials on the internal add-on network. Manual user setup and manually pasted capabilities are intentionally unsupported.
+## Install
 
-Only the returned long-lived system credential and credential ID are stored in the config entry; neither is placed in discovery data. The adapter uses the authenticated `PUT /api/v1/system-credentials/current` route to rotate the credential when the user reauthenticates or requests rotation in the integration options. Removing an entry makes a best-effort authenticated DELETE to revoke it. Unloading or reloading does not revoke it. The integration does not request Home Assistant administrative API access or elevated Supervisor permissions.
+1. **Install and start the Fin Assist app.** In Home Assistant, open **Settings → Add-ons → Add-on Store**, select **⋮ → Repositories**, add `https://github.com/MarioMH8/ha-finassists`, then install and start **Fin Assist**. Pick your currency while installing.
+2. **Add the integration.** In **HACS → Integrations → ⋮ → Custom repositories**, add the same URL as an **Integration**, install **Fin Assist** and restart Home Assistant.
+3. **Confirm the discovery.** The running app announces itself through Supervisor. Home Assistant opens a confirmation step — accept it and the integration is ready.
 
-At startup, the add-on generates a random, one-use bootstrap capability, stores only its hash with a 15-minute expiry, and publishes the capability using Supervisor's documented `/discovery` endpoint for the `ha_finassists` domain. It uses only Supervisor's injected token for that endpoint; it does not request elevated Supervisor or Home Assistant API permissions. If publication fails, add-on startup aborts rather than silently leaving the integration undiscoverable. The discovery message omits `baseUrl`, allowing the integration to resolve the add-on from Supervisor's slug, including repository-prefixed local IDs. The long-lived credential is created only after the user confirms setup and is never published through discovery. This end-to-end handoff still requires validation on a live Home Assistant/Supervisor installation.
+The integration only accepts Supervisor discovery: there is no manual setup, no URL to type and no token to paste.
 
-## Entities and services
+## The card
 
-- **Income this month** and **Expenses this month**: monetary sensors (state class `total`) grouped under one Fin Assist device per config entry. They sum the transactions dated in the current calendar month, read from `GET /api/v1/transactions`. Integer minor units are converted using the currency's actual fraction-digit precision, and the unit is the currency code reported by the API. When the month has no transactions yet, the currency is unknown, so the sensors assume `EUR` until the first transaction arrives. Both sensors expose `kind`, `month` and `integration_entry_id` attributes.
-- `ha_finassists.refresh` requests an immediate refresh (optional `entry_id`).
-- `ha_finassists.add_expense` and `ha_finassists.add_income` record a transaction through `POST /api/v1/transactions` and then refresh the sensors. Fields: `entry_id` (required), `amount` (required, greater than zero, in major units such as `12.50`; more decimal places than the currency allows are rejected), `date` (optional, defaults to today) and `description` (optional).
-- `ha_finassists.delete_transaction` deletes a transaction through `DELETE /api/v1/transactions/{transactionId}` and then refreshes the sensors. Fields: `entry_id` (required) and `transaction_id` (required). Deletion is permanent and installation-wide.
-- Polling interval is five minutes. The integration does not manage accounts, books, categories, budgets, schedules or imports.
+```yaml
+type: custom:fin-assist-card
+```
+
+The integration serves the card at `/ha_finassists/fin-assist-card.js`. In a YAML-mode dashboard, declare it as a module resource:
+
+```yaml
+lovelace:
+  resources:
+    - url: /ha_finassists/fin-assist-card.js
+      type: module
+```
+
+In a storage-mode dashboard, add that path as a **JavaScript module** resource under **Settings → Dashboards → Resources**. Automatic registration is intentionally not implemented: it would require private frontend APIs.
+
+The card shows this month's income and expenses and offers a refresh action. Pass `entry_id` to pin it to one integration entry:
+
+```yaml
+type: custom:fin-assist-card
+entry_id: YOUR_CONFIG_ENTRY_ID
+```
+
+Without `entry_id` the card totals every entry and refreshes the entry when only one exists.
+
+## Entities
+
+| Entity | Description |
+| --- | --- |
+| Income this month | Monetary sensor (state class `total`) summing the transactions dated in the current calendar month. |
+| Expenses this month | The same for money spent. |
+
+Both belong to one Fin Assist device per config entry and expose `kind`, `month` and `integration_entry_id` attributes. Amounts are converted with the currency's real fraction digits, and the unit is the currency reported by the app. Until the month has its first transaction the currency is unknown, so the sensors assume `EUR`.
+
+The integration polls every five minutes; the `refresh` service asks for an immediate update.
+
+## Services
+
+| Service | Fields |
+| --- | --- |
+| `ha_finassists.add_expense` | `entry_id`, `amount`, `date` (optional), `description` (optional) |
+| `ha_finassists.add_income` | `entry_id`, `amount`, `date` (optional), `description` (optional) |
+| `ha_finassists.delete_transaction` | `entry_id`, `transaction_id` |
+| `ha_finassists.refresh` | `entry_id` (optional) |
+
+`amount` is expressed in major units (`12.50`) and must be greater than zero; extra decimal places are rejected. `date` defaults to today. Deletion is permanent and installation-wide.
 
 ```yaml
 service: ha_finassists.add_expense
@@ -28,30 +72,10 @@ data:
   description: Groceries
 ```
 
-## Lovelace card
+## How it connects
 
-The bundled card is served by the integration at `/ha_finassists/fin-assist-card.js`. In a YAML-mode dashboard, add a module resource and a card entry, for example:
+The app publishes a one-time bootstrap capability through Supervisor discovery. When you confirm the setup, the integration exchanges it for a dedicated long-lived *system identity* credential, so automation writes are attributed to the integration rather than to a person. Rotate the credential from the integration options; removing the entry revokes it. The integration never asks for Home Assistant administrator access or elevated Supervisor permissions.
 
-```yaml
-lovelace:
-  resources:
-    - url: /ha_finassists/fin-assist-card.js
-      type: module
-```
+## Status
 
-```yaml
-type: custom:fin-assist-card
-```
-
-In storage mode, add `/ha_finassists/fin-assist-card.js` as a JavaScript module resource under **Settings → Dashboards → Resources**. Automatic storage-mode registration is intentionally not implemented: the available resource collection is an internal Home Assistant API, while the phase requires avoiding private frontend APIs. The card supports an optional `entry_id` setting to select which integration entry to display:
-
-```yaml
-type: custom:fin-assist-card
-entry_id: YOUR_CONFIG_ENTRY_ID
-```
-
-The card shows this month's income and expenses and offers a refresh action backed by the `refresh` service. It uses Home Assistant theme variables and reports action failures in the card. Without `entry_id`, it displays the totals of every integration entry and refreshes the entry when only one exists.
-
-## Validation status
-
-The integration has focused offline tests for discovery handling and credential lifecycle, plus syntax and metadata checks. The repository's JavaScript test/lint commands do not exercise this Python integration. A live Home Assistant instance is not available, so actual Supervisor payload delivery, config-entry setup/removal, supported-version compatibility, HACS installation, storage-mode resource behavior, and frontend rendering remain **pending**. Do not treat Phase 4 as complete until those scenarios pass against a supported Home Assistant/Supervisor topology and the add-on/backend contract is verified end-to-end.
+The integration has offline tests for discovery handling and the credential lifecycle, plus syntax and metadata checks, but the repository has not yet been validated against a live Home Assistant/Supervisor installation. Discovery delivery, config entry setup and removal, HACS installation, storage-mode resources and card rendering are still pending validation. Issues and reports are welcome in [the issue tracker](https://github.com/MarioMH8/ha-finassists/issues).
