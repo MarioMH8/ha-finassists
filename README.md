@@ -1,5 +1,8 @@
 <p align="center">
-  <img alt="Fin Assist — household finances, inside Home Assistant" src="docs/assets/banner.svg" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg">
+    <img alt="Fin Assist — household finances, inside Home Assistant" src="docs/assets/banner-light.svg" width="100%">
+  </picture>
 </p>
 
 <p align="center">
