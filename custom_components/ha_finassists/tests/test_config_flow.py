@@ -84,7 +84,7 @@ def _install_home_assistant_stubs() -> None:
     sensor = types.ModuleType("homeassistant.components.sensor")
     sensor.SensorDeviceClass = SimpleNamespace(MONETARY="monetary")
     sensor.SensorEntity = type("SensorEntity", (), {})
-    sensor.SensorStateClass = SimpleNamespace(TOTAL="total")
+    sensor.SensorStateClass = SimpleNamespace(MEASUREMENT="measurement", TOTAL="total")
     components.sensor = sensor
     http = types.ModuleType("homeassistant.components.http")
     http.StaticPathConfig = type("StaticPathConfig", (), {})
@@ -144,7 +144,11 @@ _install_home_assistant_stubs()
 import custom_components.ha_finassists as integration  # noqa: E402
 from custom_components.ha_finassists import config_flow  # noqa: E402
 from custom_components.ha_finassists.api import FinAssistApi, FinAssistApiError  # noqa: E402
-from custom_components.ha_finassists.sensor import FinAssistMonthlyTotalSensor  # noqa: E402
+from custom_components.ha_finassists.sensor import (  # noqa: E402
+    FinAssistMonthlyTotalSensor,
+    FinAssistScheduledDueSensor,
+    FinAssistScheduledTotalSensor,
+)
 
 
 class _FlowApi:
@@ -316,6 +320,16 @@ class _SetupApi:
             "month": "2026-10",
         }
 
+    async def async_fetch_scheduled_summary(self) -> dict[str, Any]:
+        return {
+            "scheduled_currency_code": "EUR",
+            "scheduled_due_count": 0,
+            "scheduled_due_items": [],
+            "scheduled_expense_minor": 0,
+            "scheduled_income_minor": 0,
+            "scheduled_items": [],
+        }
+
 
 class _SetupCoordinator:
     instances: list["_SetupCoordinator"] = []
@@ -451,6 +465,73 @@ class SensorTests(unittest.TestCase):
             {"Food": 100.0, "Transport": 23.45},
         )
         self.assertEqual(sensor.extra_state_attributes["uncategorized"], 5.0)
+
+    def _scheduled_sensor(self, kind: str, data_key: str, **data: Any) -> Any:
+        coordinator = SimpleNamespace(
+            data={
+                "scheduled_currency_code": "USD",
+                "scheduled_from_date": "2026-05-01",
+                "scheduled_income_by_category": {},
+                "scheduled_income_minor": 0,
+                "scheduled_expense_by_category": {},
+                "scheduled_expense_minor": 0,
+                "scheduled_items": [],
+                "scheduled_to_date": "2026-05-30",
+                "scheduled_uncategorized_income_minor": 0,
+                "scheduled_uncategorized_expense_minor": 0,
+                **data,
+            }
+        )
+
+        return FinAssistScheduledTotalSensor(
+            coordinator,
+            SimpleNamespace(entry_id="entry-1"),
+            f"scheduled_{kind}",
+            "Scheduled",
+            data_key,
+            kind,
+            "mdi:cash",
+        )
+
+    def test_scheduled_sensor_converts_minor_units_and_exposes_scope(self) -> None:
+        sensor = self._scheduled_sensor(
+            "income", "scheduled_income_minor", scheduled_income_minor=123456
+        )
+
+        self.assertEqual(sensor.native_value, Decimal("1234.56"))
+        self.assertEqual(sensor.native_unit_of_measurement, "USD")
+        self.assertEqual(sensor.extra_state_attributes["scope"], "scheduled")
+        self.assertEqual(sensor.extra_state_attributes["period"], "next_30_days")
+        self.assertEqual(sensor.extra_state_attributes["kind"], "income")
+        self.assertEqual(sensor.extra_state_attributes["from_date"], "2026-05-01")
+
+    def test_scheduled_sensor_filters_items_and_exposes_the_breakdown(self) -> None:
+        sensor = self._scheduled_sensor(
+            "expense",
+            "scheduled_expense_minor",
+            scheduled_expense_minor=1000,
+            scheduled_expense_by_category={"Rent": 10.0},
+            scheduled_items=[
+                {"kind": "expense", "description": "Rent"},
+                {"kind": "income", "description": "Salary"},
+            ],
+            scheduled_uncategorized_expense_minor=500,
+        )
+
+        attributes = sensor.extra_state_attributes
+        self.assertEqual(attributes["items"], [{"kind": "expense", "description": "Rent"}])
+        self.assertEqual(attributes["by_category"], {"Rent": 10.0})
+        self.assertEqual(attributes["uncategorized"], 5.0)
+
+    def test_scheduled_due_sensor_exposes_the_pending_count(self) -> None:
+        coordinator = SimpleNamespace(
+            data={"scheduled_due_count": 2, "scheduled_due_items": [{"id": "a"}]}
+        )
+        sensor = FinAssistScheduledDueSensor(coordinator, SimpleNamespace(entry_id="entry-1"))
+
+        self.assertEqual(sensor.native_value, 2)
+        self.assertEqual(sensor.extra_state_attributes["scope"], "scheduled_due")
+        self.assertEqual(sensor.extra_state_attributes["items"], [{"id": "a"}])
 
 
 class _Response:
@@ -659,6 +740,145 @@ class TransactionApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(session.calls[0]["url"].endswith("/transactions/transaction-1"))
 
 
+class _ScheduledSession:
+    def __init__(
+        self,
+        forecast: dict[str, Any],
+        categories: list[dict[str, Any]],
+        due: list[dict[str, Any]],
+    ) -> None:
+        self.forecast = forecast
+        self.categories = categories
+        self.due = due
+        self.calls: list[dict[str, Any]] = []
+
+    def request(self, method: str, url: str, **kwargs: Any) -> _RequestContext:
+        self.calls.append({"method": method, "url": url, **kwargs})
+        if "scheduled-transactions/upcoming" in url:
+            return _RequestContext(_Response(200, self.forecast))
+        if url.endswith("/categories"):
+            return _RequestContext(_Response(200, {"items": self.categories}))
+        return _RequestContext(_Response(200, {"items": self.due, "total": len(self.due)}))
+
+
+class ScheduledTransactionApiTests(unittest.IsolatedAsyncioTestCase):
+    async def test_summary_projects_forecast_and_manual_due_items(self) -> None:
+        forecast = {
+            "byCategory": {"expense": {"cat-food": 1000}, "income": {}},
+            "currencyCode": "USD",
+            "fromDate": "2026-02-01",
+            "items": [
+                {
+                    "amountMinor": 1000,
+                    "categoryId": "cat-food",
+                    "currencyCode": "USD",
+                    "description": "Rent",
+                    "dueDate": "2026-02-01",
+                    "kind": "expense",
+                    "postingMode": "automatic",
+                    "scheduleId": "schedule-1",
+                }
+            ],
+            "limit": 200,
+            "offset": 0,
+            "toDate": "2026-03-02",
+            "today": "2026-02-01",
+            "total": 1,
+            "totals": {"expenseMinor": 1000, "incomeMinor": 0, "netMinor": -1000},
+            "uncategorized": {"expenseMinor": 0, "incomeMinor": 0},
+        }
+        due = [
+            {
+                "amountMinor": 500,
+                "categoryId": None,
+                "description": "Water",
+                "id": "schedule-2",
+                "kind": "expense",
+                "nextDueDate": "2026-01-15",
+                "postingMode": "manual",
+                "status": "active",
+            }
+        ]
+        session = _ScheduledSession(
+            forecast,
+            [{"id": "cat-food", "kind": "expense", "name": "Food"}],
+            due,
+        )
+        with patch.object(
+            importlib.import_module("custom_components.ha_finassists.api"), "date"
+        ) as fake_date:
+            fake_date.today.return_value = date(2026, 2, 1)
+            summary = await FinAssistApi(
+                "http://fin-assist/api/v1", "token", session
+            ).async_fetch_scheduled_summary()
+
+        self.assertEqual(summary["scheduled_currency_code"], "USD")
+        self.assertEqual(summary["scheduled_expense_minor"], 1000)
+        self.assertEqual(summary["scheduled_expense_by_category"], {"Food": 10.0})
+        self.assertEqual(summary["scheduled_items"][0]["category"], "Food")
+        self.assertEqual(summary["scheduled_due_count"], 1)
+        self.assertEqual(summary["scheduled_due_items"][0]["amount"], 5.0)
+        self.assertEqual(session.calls[0]["params"]["limit"], 200)
+        self.assertEqual(session.calls[0]["params"]["fromDate"], "2026-02-01")
+        self.assertEqual(session.calls[0]["params"]["toDate"], "2026-03-02")
+        self.assertEqual(session.calls[2]["params"]["postingMode"], "manual")
+        self.assertEqual(session.calls[2]["params"]["dueThrough"], "2026-02-01")
+
+    async def test_create_posts_the_contract_body(self) -> None:
+        session = _Session()
+        api = FinAssistApi("http://fin-assist/api/v1", "token", session)
+
+        await api.async_create_scheduled_transaction(
+            "expense",
+            1250,
+            date(2026, 5, 1),
+            "monthly",
+            2,
+            date(2026, 12, 31),
+            "Rent",
+            "cat-rent",
+            False,
+        )
+
+        call = session.calls[0]
+        self.assertEqual(call["method"], "POST")
+        self.assertTrue(call["url"].endswith("/scheduled-transactions"))
+        self.assertEqual(
+            call["json"],
+            {
+                "amountMinor": 1250,
+                "frequency": "monthly",
+                "interval": 2,
+                "kind": "expense",
+                "postingMode": "manual",
+                "startDate": "2026-05-01",
+                "endDate": "2026-12-31",
+                "description": "Rent",
+                "categoryId": "cat-rent",
+            },
+        )
+
+    async def test_delete_post_and_skip_use_contract_paths(self) -> None:
+        session = _Session()
+        api = FinAssistApi("http://fin-assist/api/v1", "token", session)
+
+        await api.async_delete_scheduled_transaction("schedule-1")
+        await api.async_post_scheduled_transaction("schedule-1")
+        await api.async_skip_scheduled_transaction("schedule-1")
+
+        self.assertEqual(
+            [call["method"] for call in session.calls],
+            ["DELETE", "POST", "POST"],
+        )
+        self.assertTrue(session.calls[0]["url"].endswith("/scheduled-transactions/schedule-1"))
+        self.assertTrue(
+            session.calls[1]["url"].endswith("/scheduled-transactions/schedule-1/post")
+        )
+        self.assertTrue(
+            session.calls[2]["url"].endswith("/scheduled-transactions/schedule-1/skip")
+        )
+
+
 class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
     def _register(self) -> tuple[dict[str, Any], Any, Any]:
         handlers: dict[str, Any] = {}
@@ -670,9 +890,13 @@ class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
         api = SimpleNamespace(
+            async_create_scheduled_transaction=AsyncMock(),
             async_create_transaction=AsyncMock(),
+            async_delete_scheduled_transaction=AsyncMock(),
             async_delete_transaction=AsyncMock(),
             async_list_categories=AsyncMock(return_value=[]),
+            async_post_scheduled_transaction=AsyncMock(),
+            async_skip_scheduled_transaction=AsyncMock(),
         )
         coordinator = SimpleNamespace(
             data={"currencyCode": "EUR"}, async_request_refresh=AsyncMock()
@@ -757,6 +981,101 @@ class TransactionServiceTests(unittest.IsolatedAsyncioTestCase):
                 SimpleNamespace(data={"entry_id": "missing", "transaction_id": "transaction-1"})
             )
         api.async_delete_transaction.assert_not_awaited()
+
+    async def test_add_scheduled_expense_passes_frequency_and_optional_fields(self) -> None:
+        handlers, api, coordinator = self._register()
+        api.async_list_categories.return_value = [
+            {"id": "cat-rent", "name": "Rent", "kind": "expense"}
+        ]
+
+        await handlers["add_scheduled_expense"](
+            SimpleNamespace(
+                data={
+                    "amount": "12.5",
+                    "automatic": False,
+                    "category": "rent",
+                    "date": date(2026, 10, 1),
+                    "description": "Flat",
+                    "end_date": date(2027, 10, 1),
+                    "entry_id": "entry-1",
+                    "frequency": "monthly",
+                    "interval": 2,
+                }
+            )
+        )
+
+        api.async_list_categories.assert_awaited_once_with("expense")
+        api.async_create_scheduled_transaction.assert_awaited_once_with(
+            "expense",
+            1250,
+            date(2026, 10, 1),
+            "monthly",
+            2,
+            date(2027, 10, 1),
+            "Flat",
+            "cat-rent",
+            False,
+        )
+        coordinator.async_request_refresh.assert_awaited_once()
+
+    async def test_add_scheduled_income_uses_defaults(self) -> None:
+        handlers, api, _ = self._register()
+
+        await handlers["add_scheduled_income"](
+            SimpleNamespace(
+                data={"amount": "100", "entry_id": "entry-1", "frequency": "once"}
+            )
+        )
+
+        api.async_create_scheduled_transaction.assert_awaited_once_with(
+            "income", 10000, date.today(), "once", 1, None, None, None, True
+        )
+
+    async def test_add_scheduled_transaction_rejects_invalid_options(self) -> None:
+        handlers, api, _ = self._register()
+
+        with self.assertRaises(ValueError):
+            await handlers["add_scheduled_expense"](
+                SimpleNamespace(
+                    data={"amount": "12.5", "entry_id": "entry-1", "frequency": "hourly"}
+                )
+            )
+        with self.assertRaises(ValueError):
+            await handlers["add_scheduled_expense"](
+                SimpleNamespace(
+                    data={
+                        "amount": "12.5",
+                        "entry_id": "entry-1",
+                        "frequency": "daily",
+                        "interval": 0,
+                    }
+                )
+            )
+        api.async_create_scheduled_transaction.assert_not_awaited()
+
+    async def test_scheduled_delete_post_and_skip_refresh(self) -> None:
+        handlers, api, coordinator = self._register()
+
+        await handlers["delete_scheduled_transaction"](
+            SimpleNamespace(
+                data={"entry_id": "entry-1", "scheduled_transaction_id": "schedule-1"}
+            )
+        )
+        await handlers["post_scheduled_transaction"](
+            SimpleNamespace(
+                data={"entry_id": "entry-1", "scheduled_transaction_id": "schedule-1"}
+            )
+        )
+        await handlers["skip_scheduled_transaction"](
+            SimpleNamespace(
+                data={"entry_id": "entry-1", "scheduled_transaction_id": "schedule-1"}
+            )
+        )
+
+        api.async_delete_scheduled_transaction.assert_awaited_once_with("schedule-1")
+        api.async_post_scheduled_transaction.assert_awaited_once_with("schedule-1")
+        api.async_skip_scheduled_transaction.assert_awaited_once_with("schedule-1")
+        self.assertEqual(coordinator.async_request_refresh.await_count, 3)
 
 
 if __name__ == "__main__":
