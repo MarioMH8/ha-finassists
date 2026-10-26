@@ -13,6 +13,7 @@ interface CategoryDetails {
 }
 
 interface Category extends CategoryDetails {
+	scheduledTransactionCount: number;
 	transactionCount: number;
 }
 
@@ -58,7 +59,13 @@ function isCategoryDetails(value: unknown): value is CategoryDetails {
 }
 
 function isCategory(value: unknown): value is Category {
-	return isCategoryDetails(value) && 'transactionCount' in value && typeof value.transactionCount === 'number';
+	return (
+		isCategoryDetails(value) &&
+		'scheduledTransactionCount' in value &&
+		typeof value.scheduledTransactionCount === 'number' &&
+		'transactionCount' in value &&
+		typeof value.transactionCount === 'number'
+	);
 }
 
 function isCategoryPage(value: unknown): value is { items: Category[] } {

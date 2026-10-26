@@ -161,7 +161,16 @@ function CategoryList({
 											: copy.transactionKindExpense}
 									</Badge>
 								</DataCell>
-								<DataCell numeric>{category.transactionCount}</DataCell>
+								<DataCell numeric>
+									{category.transactionCount}
+									{category.scheduledTransactionCount > 0 ? (
+										<span className={styles.scheduledCount}>
+											{interpolate(copy.categoryScheduledCount, {
+												count: category.scheduledTransactionCount,
+											})}
+										</span>
+									) : undefined}
+								</DataCell>
 								<DataCell
 									align={DATA_ALIGN.END}
 									className={styles.actions}>
@@ -175,7 +184,8 @@ function CategoryList({
 														openEdit(category);
 													},
 												},
-												...(category.transactionCount === 0
+												...(category.transactionCount === 0 &&
+												category.scheduledTransactionCount === 0
 													? [
 															{
 																icon: ICON_NAME.DELETE,
