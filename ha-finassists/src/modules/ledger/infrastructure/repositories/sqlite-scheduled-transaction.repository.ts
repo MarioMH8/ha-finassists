@@ -1,5 +1,6 @@
 import type {
 	ScheduledOccurrencePosting,
+	ScheduledPostingRepository,
 	ScheduledTransactionCriteria,
 	ScheduledTransactionFrequency,
 	ScheduledTransactionPage,
@@ -32,7 +33,6 @@ interface ScheduledTransactionRow {
 }
 
 const DEFAULT_LIMIT = 100;
-const DEFAULT_DUE_LIMIT = 1000;
 const SELECT_COLUMNS = `id, kind, amount_minor, currency_code, description, category_id, start_date,
 	frequency, interval, end_date, next_due_date, occurrence_number, posting_mode, status,
 	created_by, created_at, version`;
@@ -100,19 +100,10 @@ function toScheduledTransaction(row: ScheduledTransactionRow): ScheduledTransact
 	});
 }
 
-export class SqliteScheduledTransactionRepository implements ScheduledTransactionRepository {
+export class SqliteScheduledTransactionRepository
+	implements ScheduledPostingRepository, ScheduledTransactionRepository
+{
 	constructor(private readonly database: Database) {}
-
-	async countByCategory(id: string): Promise<number> {
-		const row = this.database
-			.query<{ total: number }, [string]>(
-				'SELECT COUNT(*) AS total FROM scheduled_transactions WHERE category_id = ?'
-			)
-			.get(id);
-		await Promise.resolve();
-
-		return row?.total ?? 0;
-	}
 
 	async delete(id: string): Promise<boolean> {
 		const result = this.database.query('DELETE FROM scheduled_transactions WHERE id = ?').run(id);
@@ -130,21 +121,6 @@ export class SqliteScheduledTransactionRepository implements ScheduledTransactio
 		await Promise.resolve();
 
 		return row === null ? undefined : toScheduledTransaction(row);
-	}
-
-	async findDueAutomatic(today: string, limit = DEFAULT_DUE_LIMIT): Promise<ScheduledTransaction[]> {
-		const rows = this.database
-			.query<ScheduledTransactionRow, [string, number]>(
-				`SELECT ${SELECT_COLUMNS} FROM scheduled_transactions
-				 WHERE status = 'active' AND posting_mode = 'automatic'
-				   AND next_due_date IS NOT NULL AND next_due_date <= ?
-				 ORDER BY next_due_date ASC, created_at ASC, id ASC
-				 LIMIT ?`
-			)
-			.all(today, limit);
-		await Promise.resolve();
-
-		return rows.map(row => toScheduledTransaction(row));
 	}
 
 	async save(schedule: ScheduledTransaction): Promise<void> {

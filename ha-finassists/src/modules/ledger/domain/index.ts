@@ -29,6 +29,9 @@ export {
 export type { CategoryCriteria, CategoryRepository, CategorySummary } from './repositories/category.repository';
 export type {
 	ScheduledOccurrencePosting,
+	ScheduledPostingRepository,
+} from './repositories/scheduled-posting.repository';
+export type {
 	ScheduledTransactionCriteria,
 	ScheduledTransactionPage,
 	ScheduledTransactionRepository,

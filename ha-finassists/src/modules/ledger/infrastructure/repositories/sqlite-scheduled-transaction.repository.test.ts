@@ -36,15 +36,6 @@ describe('SqliteScheduledTransactionRepository', () => {
 		expect(await repository.findById('schedule-1')).toEqual(schedule);
 	});
 
-	it('counts schedules by category', async () => {
-		await categoryRepository.save(CategoryMother.create({ id: 'category-1' }));
-		await repository.save(ScheduledTransactionMother.create({ categoryId: 'category-1', id: 'a' }));
-		await repository.save(ScheduledTransactionMother.create({ categoryId: 'category-1', id: 'b' }));
-
-		expect(await repository.countByCategory('category-1')).toBe(2);
-		expect(await repository.countByCategory('missing')).toBe(0);
-	});
-
 	it('orders active schedules first, then paused and completed', async () => {
 		await repository.save(
 			ScheduledTransactionMother.create({ id: 'active-late', startDate: '2026-05-01' }).advance()
@@ -126,7 +117,7 @@ describe('SqliteScheduledTransactionRepository', () => {
 		expect(page.items.map(item => item.id)).toEqual(['b']);
 	});
 
-	it('finds only active automatic schedules due through today', async () => {
+	it('finds active automatic schedules due through today with the generic criteria', async () => {
 		await repository.save(ScheduledTransactionMother.create({ id: 'due', startDate: '2026-05-01' }));
 		await repository.save(
 			ScheduledTransactionMother.create({
@@ -138,9 +129,13 @@ describe('SqliteScheduledTransactionRepository', () => {
 		await repository.save(ScheduledTransactionMother.create({ id: 'future', startDate: '2026-05-02' }));
 		await repository.save(ScheduledTransactionMother.create({ id: 'paused', startDate: '2026-05-01' }).pause());
 
-		const due = await repository.findDueAutomatic('2026-05-01');
+		const due = await repository.search({
+			dueThrough: '2026-05-01',
+			postingMode: 'automatic',
+			status: 'active',
+		});
 
-		expect(due.map(item => item.id)).toEqual(['due']);
+		expect(due.items.map(item => item.id)).toEqual(['due']);
 	});
 
 	it('updates with optimistic versioning', async () => {
