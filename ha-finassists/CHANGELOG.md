@@ -1,5 +1,13 @@
 # ha-finassists
 
+## 0.2.1
+
+### Patch Changes
+
+- ca821fa: Keep focus inside the Ingress frame after closing a dialog, so Home Assistant no longer draws a grey frame around the app.
+- 0de268f: Unify empty states with the Home Assistant empty state pattern and the same card surface.
+- 5bb0e5d: Match form controls and dialog layout to Home Assistant on macOS and iOS.
+
 ## 0.2.0
 
 ### Minor Changes
