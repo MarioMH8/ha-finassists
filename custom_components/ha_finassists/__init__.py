@@ -24,6 +24,11 @@ SERVICE_REFRESH = "refresh"
 SERVICE_ADD_EXPENSE = "add_expense"
 SERVICE_ADD_INCOME = "add_income"
 SERVICE_DELETE_TRANSACTION = "delete_transaction"
+SERVICE_ADD_SCHEDULED_EXPENSE = "add_scheduled_expense"
+SERVICE_ADD_SCHEDULED_INCOME = "add_scheduled_income"
+SERVICE_DELETE_SCHEDULED_TRANSACTION = "delete_scheduled_transaction"
+SERVICE_POST_SCHEDULED_TRANSACTION = "post_scheduled_transaction"
+SERVICE_SKIP_SCHEDULED_TRANSACTION = "skip_scheduled_transaction"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,11 +55,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def async_update_data() -> dict[str, Any]:
         try:
-            return await api.async_fetch_summary()
+            summary = await api.async_fetch_summary()
         except FinAssistApiError as err:
             if err.status == 401:
                 raise ConfigEntryAuthFailed("Fin Assist system credential is no longer valid") from err
             raise UpdateFailed(str(err)) from err
+        try:
+            scheduled = await api.async_fetch_scheduled_summary()
+        except FinAssistApiError as err:
+            if err.status == 401:
+                raise ConfigEntryAuthFailed("Fin Assist system credential is no longer valid") from err
+            # Recorded totals stay available when the forecast is temporarily unavailable.
+            scheduled = {"scheduled_error": str(err)}
+        return {**summary, **scheduled}
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -216,3 +229,89 @@ def _async_register_services(hass: HomeAssistant) -> None:
                 }
             ),
         )
+
+    def make_scheduled_handler(kind: str):
+        async def async_add_scheduled_transaction(call: ServiceCall) -> None:
+            runtime = hass.data.get(DOMAIN, {}).get(call.data["entry_id"])
+            if runtime is None:
+                raise ValueError("Unknown Fin Assist config entry")
+            coordinator = runtime["coordinator"]
+            frequency = str(call.data["frequency"])
+            if frequency not in {"once", "daily", "weekly", "monthly", "yearly"}:
+                raise ValueError("Unknown Fin Assist frequency")
+            interval = int(call.data.get("interval", 1))
+            if interval < 1 or interval > 999:
+                raise ValueError("Fin Assist interval must be between 1 and 999")
+            amount_minor = _to_minor_units(call.data["amount"], coordinator.data["currencyCode"])
+            category = call.data.get("category")
+            category_id = None
+            if isinstance(category, str) and category.strip():
+                category_id = await _async_resolve_category(runtime["api"], kind, category)
+            try:
+                await runtime["api"].async_create_scheduled_transaction(
+                    kind,
+                    amount_minor,
+                    call.data.get("date") or date.today(),
+                    frequency,
+                    interval,
+                    call.data.get("end_date"),
+                    call.data.get("description"),
+                    category_id,
+                    bool(call.data.get("automatic", True)),
+                )
+            except FinAssistApiError as err:
+                raise ValueError(str(err)) from err
+            await coordinator.async_request_refresh()
+
+        return async_add_scheduled_transaction
+
+    scheduled_transaction_schema = vol.Schema(
+        {
+            vol.Required("entry_id"): str,
+            vol.Required("amount"): vol.All(vol.Any(int, float, str), vol.Coerce(str)),
+            vol.Optional("date"): vol.Coerce(date.fromisoformat),
+            vol.Required("frequency"): str,
+            vol.Optional("interval"): vol.Coerce(int),
+            vol.Optional("end_date"): vol.Coerce(date.fromisoformat),
+            vol.Optional("description"): str,
+            vol.Optional("category"): str,
+            vol.Optional("automatic"): bool,
+        }
+    )
+    for service, kind in (
+        (SERVICE_ADD_SCHEDULED_EXPENSE, "expense"),
+        (SERVICE_ADD_SCHEDULED_INCOME, "income"),
+    ):
+        if not hass.services.has_service(DOMAIN, service):
+            hass.services.async_register(
+                DOMAIN, service, make_scheduled_handler(kind), schema=scheduled_transaction_schema
+            )
+
+    def make_scheduled_action(api_method: str):
+        async def async_scheduled_action(call: ServiceCall) -> None:
+            runtime = hass.data.get(DOMAIN, {}).get(call.data["entry_id"])
+            if runtime is None:
+                raise ValueError("Unknown Fin Assist config entry")
+            try:
+                await getattr(runtime["api"], api_method)(call.data["scheduled_transaction_id"])
+            except FinAssistApiError as err:
+                raise ValueError(str(err)) from err
+            await runtime["coordinator"].async_request_refresh()
+
+        return async_scheduled_action
+
+    scheduled_action_schema = vol.Schema(
+        {
+            vol.Required("entry_id"): str,
+            vol.Required("scheduled_transaction_id"): str,
+        }
+    )
+    for service, api_method in (
+        (SERVICE_DELETE_SCHEDULED_TRANSACTION, "async_delete_scheduled_transaction"),
+        (SERVICE_POST_SCHEDULED_TRANSACTION, "async_post_scheduled_transaction"),
+        (SERVICE_SKIP_SCHEDULED_TRANSACTION, "async_skip_scheduled_transaction"),
+    ):
+        if not hass.services.has_service(DOMAIN, service):
+            hass.services.async_register(
+                DOMAIN, service, make_scheduled_action(api_method), schema=scheduled_action_schema
+            )

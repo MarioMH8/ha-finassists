@@ -60,8 +60,8 @@ The card ships with the integration. In a storage-mode dashboard, add `/ha_finas
 - **A dashboard that opens in one click.** The app runs behind Home Assistant Ingress and follows your light or dark theme, in Spanish or English.
 - **Categories** to group expenses and incomes by kind, both in the app and through the API.
 - **Scheduled movements** for one-time or recurring expenses and incomes, with automatic posting or manual confirmation, pausing and a next-30-days forecast.
-- **Sensors for your dashboard:** *Income this month* and *Expenses this month*.
-- **Services for automations:** `ha_finassists.add_expense`, `add_income`, `delete_transaction` and `refresh`.
+- **Recorded and scheduled sensors:** *Income this month*, *Expenses this month*, *Scheduled income next 30 days*, *Scheduled expenses next 30 days* and *Scheduled movements due*.
+- **Services for automations:** `ha_finassists.add_expense`, `add_income`, `add_scheduled_expense`, `add_scheduled_income`, `delete_scheduled_transaction`, `post_scheduled_transaction`, `skip_scheduled_transaction`, `delete_transaction` and `refresh`.
 - **A REST API and an MCP server** (`/api/v1` and `/mcp`) for scripts, local tools and assistants. Each person manages their own revocable tokens from the **Administration** page.
 - **Your data, in your backups.** Everything lives in `/data/fin-assist.sqlite` inside the add-on.
 

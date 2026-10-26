@@ -64,7 +64,36 @@ function totalSensor(entryId, kind, state = '10.00', attributes = {}) {
 			integration_entry_id: entryId,
 			kind,
 			month: '2026-10',
+			scope: 'actual',
 			unit_of_measurement: 'EUR',
+			...attributes,
+		},
+	};
+}
+
+function scheduledSensor(entryId, kind, state = '10.00', attributes = {}) {
+	return {
+		entity_id: `sensor.${entryId}_scheduled_${kind}`,
+		state,
+		attributes: {
+			from_date: '2026-05-01',
+			integration_entry_id: entryId,
+			kind,
+			scope: 'scheduled',
+			to_date: '2026-05-30',
+			unit_of_measurement: 'EUR',
+			...attributes,
+		},
+	};
+}
+
+function dueSensor(entryId, state = '2', attributes = {}) {
+	return {
+		entity_id: `sensor.${entryId}_scheduled_due`,
+		state,
+		attributes: {
+			integration_entry_id: entryId,
+			scope: 'scheduled_due',
 			...attributes,
 		},
 	};
@@ -150,6 +179,60 @@ describe('Fin Assist Lovelace card', () => {
 		};
 
 		expect(card.shadowRoot.html).not.toContain('by category');
+	});
+
+	it('shows scheduled totals separately from recorded totals', () => {
+		const card = loadCard();
+		card.setConfig({});
+		card.hass = {
+			states: {
+				income: totalSensor('entry-one', 'income', '1200.00'),
+				expenses: totalSensor('entry-one', 'expense', '345.50'),
+				scheduledIncome: scheduledSensor('entry-one', 'income', '500.00'),
+				scheduledExpenses: scheduledSensor('entry-one', 'expense', '120.00'),
+			},
+			callService() {},
+		};
+
+		expect(card.shadowRoot.html).toContain('Income this month');
+		expect(card.shadowRoot.html).toContain('Scheduled income (next 30 days)');
+		expect(card.shadowRoot.html).toContain('Scheduled expenses (next 30 days)');
+		expect(card.shadowRoot.html).toContain('1200.00 EUR');
+		expect(card.shadowRoot.html).toContain('120.00 EUR');
+	});
+
+	it('breaks down scheduled totals by category', () => {
+		const card = loadCard();
+		card.setConfig({});
+		card.hass = {
+			states: {
+				scheduledExpenses: scheduledSensor('entry-one', 'expense', '120.00', {
+					by_category: { Rent: 100, Utilities: 15 },
+					uncategorized: 5,
+				}),
+			},
+			callService() {},
+		};
+
+		expect(card.shadowRoot.html).toContain('Scheduled expenses (next 30 days) by category');
+		expect(card.shadowRoot.html).toContain('Rent');
+		expect(card.shadowRoot.html).toContain('100 EUR');
+		expect(card.shadowRoot.html).toContain('Uncategorized');
+		expect(card.shadowRoot.html).toContain('5 EUR');
+	});
+
+	it('shows how many scheduled movements need confirmation', () => {
+		const card = loadCard();
+		const calls = [];
+		card.setConfig({});
+		card.hass = {
+			states: { due: dueSensor('entry-one', '2') },
+			callService: (...args) => calls.push(args),
+		};
+
+		expect(card.shadowRoot.html).toContain('2 scheduled movements need confirmation.');
+		card.shadowRoot.querySelector('.refresh').click();
+		expect(calls).toEqual([['ha_finassists', 'refresh', { entry_id: 'entry-one' }]]);
 	});
 
 	it('only displays the configured entry and flags unavailable totals', () => {

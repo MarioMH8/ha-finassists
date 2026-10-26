@@ -26,14 +26,36 @@ class FinAssistCard extends HTMLElement {
 			return;
 		}
 		const states = Object.values(this._hass.states);
-		const inScope = state =>
-			state.entity_id.startsWith('sensor.') &&
-			state.attributes.integration_entry_id &&
-			state.attributes.kind &&
-			(!this.config.entry_id || state.attributes.integration_entry_id === this.config.entry_id);
-		const sensors = states.filter(inScope);
-				const available = state => state.state !== 'unavailable' && state.state !== 'unknown';
-		const entryIds = new Set(sensors.map(state => state.attributes.integration_entry_id));
+		const belongs = state =>
+			!this.config.entry_id || state.attributes.integration_entry_id === this.config.entry_id;
+		const isSensor = state =>
+			state.entity_id.startsWith('sensor.') && state.attributes.integration_entry_id;
+		const actualSensors = states.filter(
+			state =>
+				isSensor(state) &&
+				state.attributes.kind &&
+				state.attributes.scope !== 'scheduled' &&
+				state.attributes.scope !== 'scheduled_due' &&
+				belongs(state)
+		);
+		const scheduledSensors = states.filter(
+			state =>
+				isSensor(state) &&
+				state.attributes.kind &&
+				state.attributes.scope === 'scheduled' &&
+				belongs(state)
+		);
+		const dueSensor = states.find(
+			state =>
+				isSensor(state) && state.attributes.scope === 'scheduled_due' && belongs(state)
+		);
+		const sensors = [...actualSensors, ...scheduledSensors];
+		const available = state => state.state !== 'unavailable' && state.state !== 'unknown';
+		const entryIds = new Set(
+			[...sensors, ...(dueSensor ? [dueSensor] : [])].map(
+				state => state.attributes.integration_entry_id
+			)
+		);
 		const esc = value =>
 			String(value ?? '').replaceAll(
 				/[&<>"']/g,
@@ -46,6 +68,17 @@ class FinAssistCard extends HTMLElement {
 				? new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(number)
 				: esc(value);
 		};
+		const labelFor = state => {
+			const isScheduled = state.attributes.scope === 'scheduled';
+			const isIncome = state.attributes.kind === 'income';
+			if (isScheduled) {
+				return isIncome
+					? 'Scheduled income (next 30 days)'
+					: 'Scheduled expenses (next 30 days)';
+			}
+
+			return isIncome ? 'Income this month' : 'Expenses this month';
+		};
 		const breakdownFor = state => {
 			const attributes = state.attributes || {};
 			const entries = Object.entries(attributes.by_category || {});
@@ -53,8 +86,7 @@ class FinAssistCard extends HTMLElement {
 			if (entries.length === 0 && !(uncategorized > 0)) {
 				return '';
 			}
-			const label =
-				attributes.kind === 'income' ? 'Income this month' : 'Expenses this month';
+			const label = labelFor(state);
 			const unit = esc(attributes.unit_of_measurement || '');
 			const body = entries
 				.sort(([, first], [, second]) => Number(second) - Number(first))
@@ -78,7 +110,7 @@ class FinAssistCard extends HTMLElement {
 			.join('');
 		const rows = sensors
 			.map(state => {
-				const label = state.attributes.kind === 'income' ? 'Income this month' : 'Expenses this month';
+				const label = labelFor(state);
 				const value = available(state)
 					? `${esc(state.state)} ${esc(state.attributes.unit_of_measurement || '')}`
 					: 'Unavailable';
@@ -86,15 +118,23 @@ class FinAssistCard extends HTMLElement {
 				return `<tr><th scope="row">${label}${entryIds.size > 1 ? ` <small>${esc(state.attributes.integration_entry_id)}</small>` : ''}</th><td>${value}</td></tr>`;
 			})
 			.join('');
+		const dueCount = dueSensor && available(dueSensor) ? Number(dueSensor.state) : 0;
+		const dueMessage =
+			dueCount > 0
+				? `<p class="due" role="status">${dueCount} scheduled movement${dueCount === 1 ? '' : 's'} need${dueCount === 1 ? 's' : ''} confirmation.</p>`
+				: '';
 		this.shadowRoot.innerHTML = `
       <ha-card header="Fin Assist">
         <div class="content">
           ${
 				sensors.length === 0
-					? '<p role="status">Fin Assist is not connected or its sensors are unavailable.</p>'
-					: `<table><caption class="visually-hidden">Fin Assist totals for the current month</caption>
+					? dueMessage
+						? ''
+						: '<p role="status">Fin Assist is not connected or its sensors are unavailable.</p>'
+					: `<table><caption class="visually-hidden">Fin Assist recorded and scheduled totals</caption>
             <tbody>${rows}</tbody></table>`
 			}
+          ${dueMessage}
           ${breakdowns}
           <button class="refresh" type="button" ${this._busy.has('refresh') ? 'disabled aria-busy="true"' : ''}>${this._busy.has('refresh') ? 'Refreshing…' : 'Refresh'}</button>
           <p class="feedback${this._feedbackIsError ? ' error' : ''}" role="status" aria-live="polite" aria-atomic="true" tabindex="-1">${esc(this._errorMessage)}</p>
@@ -108,6 +148,7 @@ class FinAssistCard extends HTMLElement {
         td { text-align: right; font-variant-numeric: tabular-nums; }
         small { display: block; color: var(--secondary-text-color); margin-top: 4px; font-weight: normal; }
         caption.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        .due { margin: 12px 0 0; padding: 9px 10px; border: 1px solid var(--divider-color); border-radius: 6px; color: var(--primary-text-color); }
         .breakdown { margin-top: 12px; }
         .breakdown summary { cursor: pointer; font-weight: 500; padding: 6px 0; }
         .breakdown td { font-variant-numeric: tabular-nums; }
@@ -129,11 +170,7 @@ class FinAssistCard extends HTMLElement {
 					const entryId =
 						this.config.entry_id ||
 						(entryIds.size === 1 ? entryIds.values().next().value : undefined);
-					return this._hass.callService(
-						'ha_finassists',
-						'refresh',
-						entryId ? { entry_id: entryId } : {}
-					);
+					return this._hass.callService('ha_finassists', 'refresh', entryId ? { entry_id: entryId } : {});
 				},
 				'Refreshing Fin Assist…',
 				'Fin Assist was refreshed.',
@@ -170,7 +207,7 @@ if (!customElements.get('fin-assist-card')) {
 globalThis.customCards = globalThis.customCards || [];
 if (globalThis.customCards.every(card => card.type !== 'fin-assist-card')) {
 	globalThis.customCards.push({
-		description: 'Income and expenses recorded this month',
+		description: 'Income, expenses and scheduled movements',
 		name: 'Fin Assist',
 		type: 'fin-assist-card',
 	});

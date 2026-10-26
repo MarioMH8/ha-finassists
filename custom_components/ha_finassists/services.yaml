@@ -106,3 +106,209 @@ delete_transaction:
       example: 0f8fad5b-d9cb-469f-a165-70867728950e
       selector:
         text:
+add_scheduled_expense:
+  name: Add scheduled expense
+  description: Create a one-time or recurring expense that posts automatically or waits for confirmation.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that receives the scheduled expense.
+      required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    amount:
+      name: Amount
+      description: Amount in major currency units, for example 12.50.
+      required: true
+      example: 12.50
+      selector:
+        number:
+          min: 0.01
+          step: any
+          mode: box
+    date:
+      name: First date
+      description: First occurrence date. Defaults to today.
+      required: false
+      selector:
+        date:
+    frequency:
+      name: Frequency
+      description: How often the schedule repeats.
+      required: true
+      selector:
+        select:
+          options:
+            - once
+            - daily
+            - weekly
+            - monthly
+            - yearly
+    interval:
+      name: Interval
+      description: Repeat every N days, weeks, months or years. Defaults to 1.
+      required: false
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 999
+          step: 1
+          mode: box
+    end_date:
+      name: Last date
+      description: Optional inclusive last occurrence.
+      required: false
+      selector:
+        date:
+    description:
+      name: Description
+      description: Optional note describing the scheduled movement.
+      required: false
+      selector:
+        text:
+    category:
+      name: Category
+      description: Optional category name. It must already exist and belong to expenses.
+      required: false
+      example: Rent
+      selector:
+        text:
+    automatic:
+      name: Automatic
+      description: Post occurrences automatically. Disable to wait for manual confirmation. Defaults to true.
+      required: false
+      default: true
+      selector:
+        boolean:
+add_scheduled_income:
+  name: Add scheduled income
+  description: Create a one-time or recurring income that posts automatically or waits for confirmation.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that receives the scheduled income.
+      required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    amount:
+      name: Amount
+      description: Amount in major currency units, for example 1200.00.
+      required: true
+      example: 1200.00
+      selector:
+        number:
+          min: 0.01
+          step: any
+          mode: box
+    date:
+      name: First date
+      description: First occurrence date. Defaults to today.
+      required: false
+      selector:
+        date:
+    frequency:
+      name: Frequency
+      description: How often the schedule repeats.
+      required: true
+      selector:
+        select:
+          options:
+            - once
+            - daily
+            - weekly
+            - monthly
+            - yearly
+    interval:
+      name: Interval
+      description: Repeat every N days, weeks, months or years. Defaults to 1.
+      required: false
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 999
+          step: 1
+          mode: box
+    end_date:
+      name: Last date
+      description: Optional inclusive last occurrence.
+      required: false
+      selector:
+        date:
+    description:
+      name: Description
+      description: Optional note describing the scheduled movement.
+      required: false
+      selector:
+        text:
+    category:
+      name: Category
+      description: Optional category name. It must already exist and belong to incomes.
+      required: false
+      example: Salary
+      selector:
+        text:
+    automatic:
+      name: Automatic
+      description: Post occurrences automatically. Disable to wait for manual confirmation. Defaults to true.
+      required: false
+      default: true
+      selector:
+        boolean:
+delete_scheduled_transaction:
+  name: Delete scheduled transaction
+  description: Delete a scheduled transaction. Transactions it already posted remain.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that owns the scheduled transaction.
+      required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    scheduled_transaction_id:
+      name: Scheduled transaction ID
+      description: Identifier of the scheduled transaction to delete.
+      required: true
+      example: 0f8fad5b-d9cb-469f-a165-70867728950e
+      selector:
+        text:
+post_scheduled_transaction:
+  name: Post scheduled transaction
+  description: Post the next due occurrence of a scheduled transaction.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that owns the scheduled transaction.
+      required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    scheduled_transaction_id:
+      name: Scheduled transaction ID
+      description: Identifier of the scheduled transaction to post.
+      required: true
+      example: 0f8fad5b-d9cb-469f-a165-70867728950e
+      selector:
+        text:
+skip_scheduled_transaction:
+  name: Skip scheduled transaction
+  description: Skip the next due occurrence without recording a transaction.
+  fields:
+    entry_id:
+      name: Config entry
+      description: Fin Assist integration entry that owns the scheduled transaction.
+      required: true
+      selector:
+        config_entry:
+          integration: ha_finassists
+    scheduled_transaction_id:
+      name: Scheduled transaction ID
+      description: Identifier of the scheduled transaction to skip.
+      required: true
+      example: 0f8fad5b-d9cb-469f-a165-70867728950e
+      selector:
+        text:
