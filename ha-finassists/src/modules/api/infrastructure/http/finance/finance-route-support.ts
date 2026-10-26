@@ -1,13 +1,20 @@
 import { jsonResponse } from '@modules/api/infrastructure/http/shared/http-responses';
 import type {
 	CreateCategory,
+	CreateScheduledTransaction,
 	CreateTransaction,
 	DeleteCategory,
+	DeleteScheduledTransaction,
 	DeleteTransaction,
 	DeleteTransactions,
 	ListCategories,
+	ListScheduledTransactions,
 	ListTransactions,
+	ListUpcomingScheduledTransactions,
+	PostScheduledTransaction,
+	SkipScheduledTransaction,
 	UpdateCategory,
+	UpdateScheduledTransaction,
 	UpdateTransaction,
 } from '@modules/ledger/application';
 
@@ -23,8 +30,18 @@ interface FinanceUseCases {
 		delete: DeleteTransaction;
 		deleteMany: DeleteTransactions;
 		list: ListTransactions;
+		scheduled: {
+			create: CreateScheduledTransaction;
+			delete: DeleteScheduledTransaction;
+			list: ListScheduledTransactions;
+			post: PostScheduledTransaction;
+			skip: SkipScheduledTransaction;
+			upcoming: ListUpcomingScheduledTransactions;
+			update: UpdateScheduledTransaction;
+		};
 		update: UpdateTransaction;
 	};
+	today: () => string;
 }
 
 interface RouteActor {

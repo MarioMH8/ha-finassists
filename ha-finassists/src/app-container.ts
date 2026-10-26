@@ -146,8 +146,8 @@ function buildLedgerUseCases(container: ReturnType<typeof buildCredentialUseCase
 function buildAppContainer(database: Database, options: AppContainerOptions) {
 	return buildLedgerUseCases(buildCredentialUseCases(buildRepositories(database, options))).registerFactory(
 		'financeUseCases',
-		c => ({ ledger: c.get('ledgerUseCases') }),
-		['ledgerUseCases']
+		c => ({ ledger: c.get('ledgerUseCases'), today: c.get('today') }),
+		['ledgerUseCases', 'today']
 	);
 }
 

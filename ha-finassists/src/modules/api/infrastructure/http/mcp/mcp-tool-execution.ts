@@ -2,6 +2,30 @@ import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/f
 import { handleFinanceRequest } from '@modules/api/infrastructure/http/finance/finance-routes';
 
 const LIST_FILTERS = ['categoryId', 'fromDate', 'kind', 'limit', 'offset', 'search', 'toDate'] as const;
+const SCHEDULED_LIST_FILTERS = [
+	'categoryId',
+	'dueThrough',
+	'kind',
+	'limit',
+	'offset',
+	'postingMode',
+	'search',
+	'status',
+] as const;
+const UPCOMING_FILTERS = ['categoryId', 'fromDate', 'kind', 'limit', 'offset', 'toDate'] as const;
+
+function queryPath(path: string, filters: readonly string[], arguments_: Record<string, unknown>): string {
+	const query = new URLSearchParams();
+	for (const filter of filters) {
+		const value = arguments_[filter];
+		if (typeof value === 'string' || typeof value === 'number') {
+			query.set(filter, String(value));
+		}
+	}
+	const suffix = query.size > 0 ? `?${query.toString()}` : '';
+
+	return `${path}${suffix}`;
+}
 
 function textResult(value: unknown): { content: { text: string; type: 'text' }[]; structuredContent: unknown } {
 	return { content: [{ text: JSON.stringify(value), type: 'text' }], structuredContent: value };
@@ -17,6 +41,25 @@ function getToolRequest(
 				body: { kind: arguments_.kind, name: arguments_.name },
 				method: 'POST',
 				path: '/api/v1/categories',
+			};
+		}
+		case 'create_scheduled_transaction': {
+			return {
+				body: {
+					amountMinor: arguments_.amountMinor,
+					frequency: arguments_.frequency,
+					kind: arguments_.kind,
+					startDate: arguments_.startDate,
+					...(typeof arguments_.categoryId === 'string' && { categoryId: arguments_.categoryId }),
+					...(typeof arguments_.description === 'string' && { description: arguments_.description }),
+					...(typeof arguments_.endDate === 'string' && { endDate: arguments_.endDate }),
+					...(typeof arguments_.interval === 'number' && { interval: arguments_.interval }),
+					...(typeof arguments_.postingMode === 'string' && {
+						postingMode: arguments_.postingMode,
+					}),
+				},
+				method: 'POST',
+				path: '/api/v1/scheduled-transactions',
 			};
 		}
 		case 'create_transaction': {
@@ -35,6 +78,12 @@ function getToolRequest(
 		case 'delete_category': {
 			return { method: 'DELETE', path: `/api/v1/categories/${encodeURIComponent(String(arguments_.id))}` };
 		}
+		case 'delete_scheduled_transaction': {
+			return {
+				method: 'DELETE',
+				path: `/api/v1/scheduled-transactions/${encodeURIComponent(String(arguments_.id))}`,
+			};
+		}
 		case 'delete_transaction': {
 			return { method: 'DELETE', path: `/api/v1/transactions/${encodeURIComponent(String(arguments_.id))}` };
 		}
@@ -47,6 +96,12 @@ function getToolRequest(
 
 			return { method: 'GET', path: `/api/v1/categories${suffix}` };
 		}
+		case 'list_scheduled_transactions': {
+			return {
+				method: 'GET',
+				path: queryPath('/api/v1/scheduled-transactions', SCHEDULED_LIST_FILTERS, arguments_),
+			};
+		}
 		case 'list_transactions': {
 			const query = new URLSearchParams();
 			for (const filter of LIST_FILTERS) {
@@ -58,6 +113,44 @@ function getToolRequest(
 			const suffix = query.size > 0 ? `?${query.toString()}` : '';
 
 			return { method: 'GET', path: `/api/v1/transactions${suffix}` };
+		}
+		case 'list_upcoming_scheduled_transactions': {
+			return {
+				method: 'GET',
+				path: queryPath('/api/v1/scheduled-transactions/upcoming', UPCOMING_FILTERS, arguments_),
+			};
+		}
+		case 'post_scheduled_transaction': {
+			return {
+				method: 'POST',
+				path: `/api/v1/scheduled-transactions/${encodeURIComponent(String(arguments_.id))}/post`,
+			};
+		}
+		case 'skip_scheduled_transaction': {
+			return {
+				method: 'POST',
+				path: `/api/v1/scheduled-transactions/${encodeURIComponent(String(arguments_.id))}/skip`,
+			};
+		}
+		case 'update_scheduled_transaction': {
+			return {
+				body: {
+					...(typeof arguments_.amountMinor === 'number' && { amountMinor: arguments_.amountMinor }),
+					...(typeof arguments_.categoryId === 'string' && { categoryId: arguments_.categoryId }),
+					...(typeof arguments_.description === 'string' && { description: arguments_.description }),
+					...(typeof arguments_.endDate === 'string' && { endDate: arguments_.endDate }),
+					...(typeof arguments_.frequency === 'string' && { frequency: arguments_.frequency }),
+					...(typeof arguments_.interval === 'number' && { interval: arguments_.interval }),
+					...(typeof arguments_.kind === 'string' && { kind: arguments_.kind }),
+					...(typeof arguments_.postingMode === 'string' && {
+						postingMode: arguments_.postingMode,
+					}),
+					...(typeof arguments_.startDate === 'string' && { startDate: arguments_.startDate }),
+					...(typeof arguments_.status === 'string' && { status: arguments_.status }),
+				},
+				method: 'PATCH',
+				path: `/api/v1/scheduled-transactions/${encodeURIComponent(String(arguments_.id))}`,
+			};
 		}
 		default: {
 			return undefined;
