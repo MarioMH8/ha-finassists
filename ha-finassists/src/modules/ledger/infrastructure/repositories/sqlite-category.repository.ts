@@ -2,14 +2,8 @@ import type { CategoryCriteria, CategoryKind, CategoryRepository, CategorySummar
 import { Category } from '@modules/ledger/domain';
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
-interface CategoryRow {
-	created_at: string;
-	id: string;
-	kind: CategoryKind;
-	name: string;
-	scheduled_transaction_count: number;
-	transaction_count: number;
-}
+import type { CategoryRow } from './mappers/sqlite-category.mapper';
+import { SqliteCategoryMapper } from './mappers/sqlite-category.mapper';
 
 function where(criteria: CategoryCriteria): { parameters: SQLQueryBindings[]; sql: string } {
 	return criteria.kind === undefined
@@ -25,23 +19,6 @@ const SELECT_CATEGORY = `
 	FROM categories
 	LEFT JOIN transactions ON transactions.category_id = categories.id
 `;
-
-function toCategory(row: CategoryRow): Category {
-	return Category.create({
-		createdAt: row.created_at,
-		id: row.id,
-		kind: row.kind,
-		name: row.name,
-	});
-}
-
-function toSummary(row: CategoryRow): CategorySummary {
-	return {
-		category: toCategory(row),
-		scheduledTransactionCount: row.scheduled_transaction_count,
-		transactionCount: row.transaction_count,
-	};
-}
 
 export class SqliteCategoryRepository implements CategoryRepository {
 	constructor(private readonly database: Database) {}
@@ -79,7 +56,7 @@ export class SqliteCategoryRepository implements CategoryRepository {
 			.get(id);
 		await Promise.resolve();
 
-		return row === null ? undefined : toCategory(row);
+		return row === null ? undefined : SqliteCategoryMapper.toDomain(row);
 	}
 
 	async findByName(kind: CategoryKind, name: string): Promise<Category | undefined> {
@@ -92,7 +69,7 @@ export class SqliteCategoryRepository implements CategoryRepository {
 			.get(kind, name);
 		await Promise.resolve();
 
-		return row === null ? undefined : toCategory(row);
+		return row === null ? undefined : SqliteCategoryMapper.toDomain(row);
 	}
 
 	async save(category: Category): Promise<void> {
@@ -111,7 +88,7 @@ export class SqliteCategoryRepository implements CategoryRepository {
 			.all(...parameters);
 		await Promise.resolve();
 
-		return rows.map(row => toSummary(row));
+		return rows.map(row => SqliteCategoryMapper.toSummary(row));
 	}
 
 	async update(category: Category): Promise<boolean> {

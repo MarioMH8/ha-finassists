@@ -2,35 +2,14 @@ import type {
 	ScheduledOccurrencePosting,
 	ScheduledPostingRepository,
 	ScheduledTransactionCriteria,
-	ScheduledTransactionFrequency,
 	ScheduledTransactionPage,
-	ScheduledTransactionPostingMode,
 	ScheduledTransactionRepository,
-	ScheduledTransactionStatus,
-	TransactionKind,
 } from '@modules/ledger/domain';
 import { ScheduledTransaction } from '@modules/ledger/domain';
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
-interface ScheduledTransactionRow {
-	amount_minor: number;
-	category_id: null | string;
-	created_at: string;
-	created_by: null | string;
-	currency_code: string;
-	description: string;
-	end_date: null | string;
-	frequency: ScheduledTransactionFrequency;
-	id: string;
-	interval: number;
-	kind: TransactionKind;
-	next_due_date: null | string;
-	occurrence_number: number;
-	posting_mode: ScheduledTransactionPostingMode;
-	start_date: string;
-	status: ScheduledTransactionStatus;
-	version: number;
-}
+import type { ScheduledTransactionRow } from './mappers/sqlite-scheduled-transaction.mapper';
+import { SqliteScheduledTransactionMapper } from './mappers/sqlite-scheduled-transaction.mapper';
 
 const DEFAULT_LIMIT = 100;
 const SELECT_COLUMNS = `id, kind, amount_minor, currency_code, description, category_id, start_date,
@@ -78,28 +57,6 @@ function where(criteria: ScheduledTransactionCriteria): { parameters: SQLQueryBi
 	return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
 }
 
-function toScheduledTransaction(row: ScheduledTransactionRow): ScheduledTransaction {
-	return ScheduledTransaction.restore({
-		amountMinor: row.amount_minor,
-		categoryId: row.category_id,
-		createdAt: row.created_at,
-		createdBy: row.created_by,
-		currencyCode: row.currency_code,
-		description: row.description,
-		endDate: row.end_date,
-		frequency: row.frequency,
-		id: row.id,
-		interval: row.interval,
-		kind: row.kind,
-		nextDueDate: row.next_due_date,
-		occurrenceNumber: row.occurrence_number,
-		postingMode: row.posting_mode,
-		startDate: row.start_date,
-		status: row.status,
-		version: row.version,
-	});
-}
-
 export class SqliteScheduledTransactionRepository
 	implements ScheduledPostingRepository, ScheduledTransactionRepository
 {
@@ -120,7 +77,7 @@ export class SqliteScheduledTransactionRepository
 			.get(id);
 		await Promise.resolve();
 
-		return row === null ? undefined : toScheduledTransaction(row);
+		return row === null ? undefined : SqliteScheduledTransactionMapper.toDomain(row);
 	}
 
 	async save(schedule: ScheduledTransaction): Promise<void> {
@@ -221,7 +178,7 @@ export class SqliteScheduledTransactionRepository
 			.all(...parameters, criteria.limit ?? DEFAULT_LIMIT, criteria.offset ?? 0);
 		await Promise.resolve();
 
-		return { items: rows.map(row => toScheduledTransaction(row)), total };
+		return { items: rows.map(row => SqliteScheduledTransactionMapper.toDomain(row)), total };
 	}
 
 	async update(schedule: ScheduledTransaction, expectedVersion: number): Promise<boolean> {
