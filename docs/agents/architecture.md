@@ -9,7 +9,7 @@
 | HTTP API | `ha-finassists/src/modules/api/infrastructure/http/` | Inbound HTTP adapter (declarative Hono routes with Zod request validation; use cases are resolved from the InferDI scope exposed as `c.var.di`), security headers, and web asset delivery; application behavior is delegated to the owning modules. |
 | Home Assistant identity | `ha-finassists/src/modules/home-assistant/` | Domain actor types plus the Ingress infrastructure adapter that resolves actors only from a trusted Supervisor peer. |
 | Web interface | `ha-finassists/src/app/` | Modular React 19 UI with JSON translations and CSS Modules, rendered by a Bun SSR bundle and hydrated from a separately built client bundle. |
-| Native integration | `custom_components/ha_finassists/` | Home Assistant config flow, REST client, monthly income/expense sensors, add-expense/add-income/refresh services, and the bundled Lovelace card served as a static module. The integration uses a distinct system credential, not a person's token. |
+| Native integration | `custom_components/ha_finassists/` | Home Assistant config flow, REST client, recorded monthly sensors, scheduled forecast and due sensors, transaction and scheduled-movement services, and the bundled Lovelace card served as a static module. The integration uses a distinct system credential, not a person's token. |
 
 ## Runtime boundaries
 

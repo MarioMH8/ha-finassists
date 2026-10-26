@@ -24,8 +24,8 @@ Explicitly out of scope for now: accounts and balances, transfers, budgets, shar
 | Bun service | Transaction and scheduled-transaction rules, the scheduled-posting job, persistent data, REST API, MCP tools, token management, and audit attribution. |
 | REST API | New contract for the native integration and external local-network clients. |
 | MCP | Read and write tools over Streamable HTTP, authenticated with the same personal-token model as REST. |
-| Custom Home Assistant integration | Native Home Assistant configuration, monthly income/expense sensors, and add-expense/add-income/delete-transaction services. It uses a separate system identity for audit attribution. |
-| Lovelace card | A quick view of the month's totals with a refresh action. It is served as a frontend resource by the integration rather than as a second HACS repository category. |
+| Custom Home Assistant integration | Native Home Assistant configuration, recorded monthly sensors, scheduled forecast and due sensors, and services to add, delete, post and skip transactions and scheduled movements. It uses a separate system identity for audit attribution. |
+| Lovelace card | A quick view of recorded and scheduled totals, pending confirmations and category breakdowns with a refresh action. It is served as a frontend resource by the integration rather than as a second HACS repository category. |
 
 The Ingress UI follows Home Assistant's visual patterns, supports its light/dark themes, and avoids private frontend APIs. The initial UI languages are Spanish and English, selected from Home Assistant's language preference, with English as fallback.
 
