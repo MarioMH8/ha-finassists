@@ -8,7 +8,6 @@ import { ICON_NAME } from '@app/components/icon';
 import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
-import { LoadingStatus, SkeletonTableBody } from '@app/components/skeleton';
 import { recurrenceLabel } from '@app/features/scheduled-transactions/scheduled-transaction-recurrence';
 import type { ScheduledTransactionsState } from '@app/features/scheduled-transactions/use-scheduled-transactions.hook';
 import { formatDate, formatMinorUnits } from '@app/features/transactions/transaction-amount';
@@ -18,6 +17,7 @@ import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
 
 import styles from './scheduled-transaction-list.module.css';
+import { ScheduledTransactionListSkeleton } from './scheduled-transaction-list-skeleton';
 
 type ScheduledTransactionListProps = Pick<
 	ScheduledTransactionsState,
@@ -121,13 +121,10 @@ function ScheduledTransactionList({
 			{listState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.scheduledLoadError}</Notice>
 			) : listState === LOAD_STATE.LOADING && schedules.length === 0 ? (
-				<>
-					<LoadingStatus label={copy.scheduledLoading} />
-					<DataTable>
-						{tableHead}
-						<SkeletonTableBody columns={7} />
-					</DataTable>
-				</>
+				<ScheduledTransactionListSkeleton
+					copy={copy}
+					head={tableHead}
+				/>
 			) : schedules.length === 0 ? (
 				<Card bleed>
 					<EmptyState

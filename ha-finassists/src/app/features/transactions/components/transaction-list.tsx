@@ -11,7 +11,6 @@ import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
 import { Select, SELECT_SIZE } from '@app/components/select';
-import { LoadingStatus, SkeletonTableBody } from '@app/components/skeleton';
 import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
 import { formatDate, formatMinorUnits } from '@app/features/transactions/transaction-amount';
 import { TRANSACTION_KIND } from '@app/features/transactions/transactions-api';
@@ -23,6 +22,7 @@ import type { ReactElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import styles from './transaction-list.module.css';
+import { TransactionListSkeleton } from './transaction-list-skeleton';
 
 type TransactionListProps = Pick<
 	TransactionsState,
@@ -336,13 +336,11 @@ function TransactionList({
 				{listState === LOAD_STATE.ERROR ? (
 					<Notice tone={NOTICE_TONE.ERROR}>{copy.transactionLoadError}</Notice>
 				) : listState === LOAD_STATE.LOADING && transactions.length === 0 ? (
-					<>
-						<LoadingStatus label={copy.transactionLoading} />
-						<DataTable header={tableToolbar}>
-							{tableHead}
-							<SkeletonTableBody columns={6} />
-						</DataTable>
-					</>
+					<TransactionListSkeleton
+						copy={copy}
+						head={tableHead}
+						header={tableToolbar}
+					/>
 				) : transactions.length === 0 ? (
 					<Card bleed>
 						<EmptyState

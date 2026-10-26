@@ -10,7 +10,6 @@ import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
 import { Select, SELECT_SIZE } from '@app/components/select';
-import { LoadingStatus, SkeletonTableBody } from '@app/components/skeleton';
 import { CATEGORY_KIND } from '@app/features/categories/categories-api';
 import type { CategoryFilter } from '@app/features/categories/categories-constants';
 import { CATEGORY_FILTER, LOAD_STATE } from '@app/features/categories/categories-constants';
@@ -19,6 +18,7 @@ import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
 
 import styles from './category-list.module.css';
+import { CategoryListSkeleton } from './category-list-skeleton';
 
 type CategoryListProps = Pick<
 	CategoriesState,
@@ -136,13 +136,11 @@ function CategoryList({
 			{listState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.categoryLoadError}</Notice>
 			) : listState === LOAD_STATE.LOADING && categories.length === 0 ? (
-				<>
-					<LoadingStatus label={copy.categoryLoading} />
-					<DataTable header={filterToolbar}>
-						{tableHead}
-						<SkeletonTableBody columns={4} />
-					</DataTable>
-				</>
+				<CategoryListSkeleton
+					copy={copy}
+					head={tableHead}
+					header={filterToolbar}
+				/>
 			) : categories.length === 0 ? (
 				<Card bleed>
 					{hasFilter ? <div className={styles.cardHeader}>{filterToolbar}</div> : undefined}

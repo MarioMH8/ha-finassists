@@ -2,7 +2,6 @@ import { Card } from '@app/components/card';
 import { classNames } from '@app/components/class-names';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
-import { LoadingStatus, Skeleton } from '@app/components/skeleton';
 import type { ScheduledTransactionsState } from '@app/features/scheduled-transactions/use-scheduled-transactions.hook';
 import { formatDate, formatMinorUnits } from '@app/features/transactions/transaction-amount';
 import { LOAD_STATE } from '@app/features/transactions/transactions-constants';
@@ -10,13 +9,12 @@ import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
 
 import styles from './scheduled-summary.module.css';
+import { ScheduledSummarySkeleton } from './scheduled-summary-skeleton';
 
 type ScheduledSummaryProps = Pick<
 	ScheduledTransactionsState,
 	'copy' | 'currencyCode' | 'forecast' | 'forecastState' | 'language' | 'pendingSchedules'
 >;
-
-const SKELETON_METRICS = ['income', 'expense', 'net'] as const;
 
 function ScheduledSummary({
 	copy,
@@ -102,21 +100,7 @@ function ScheduledSummary({
 					) : undefined}
 				</>
 			) : (
-				<>
-					<LoadingStatus label={copy.scheduledSummaryLoading} />
-					<div
-						aria-hidden='true'
-						className={styles.kpis}>
-						{SKELETON_METRICS.map(metric => (
-							<div
-								className={styles.kpi}
-								key={metric}>
-								<Skeleton className={styles.labelSkeleton} />
-								<Skeleton className={styles.valueSkeleton} />
-							</div>
-						))}
-					</div>
-				</>
+				<ScheduledSummarySkeleton copy={copy} />
 			)}
 		</Card>
 	);
