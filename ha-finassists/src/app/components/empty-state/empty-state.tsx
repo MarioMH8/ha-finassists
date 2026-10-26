@@ -1,4 +1,6 @@
 import { classNames } from '@app/components/class-names';
+import type { IconName } from '@app/components/icon';
+import { Icon } from '@app/components/icon';
 import type { ReactElement, ReactNode } from 'react';
 
 import styles from './empty-state.module.css';
@@ -7,15 +9,27 @@ interface EmptyStateProps {
 	action?: ReactNode;
 	children?: ReactNode;
 	className?: string;
+	icon?: IconName;
 	title: ReactNode;
 }
 
-function EmptyState({ action, children, className, title }: EmptyStateProps): ReactElement {
+/*
+ * Mirrors the Home Assistant empty state: a centered icon, heading,
+ * description and optional actions.
+ * https://contributors.home-assistant.io/design/patterns/empty-states/
+ */
+function EmptyState({ action, children, className, icon, title }: EmptyStateProps): ReactElement {
 	return (
 		<div className={classNames(styles.emptyState, className)}>
-			<p className={styles.title}>{title}</p>
+			{icon ? (
+				<Icon
+					className={styles.icon}
+					name={icon}
+				/>
+			) : undefined}
+			<h2 className={styles.title}>{title}</h2>
 			{children ? <p className={styles.description}>{children}</p> : undefined}
-			{action}
+			{action ? <div className={styles.actions}>{action}</div> : undefined}
 		</div>
 	);
 }

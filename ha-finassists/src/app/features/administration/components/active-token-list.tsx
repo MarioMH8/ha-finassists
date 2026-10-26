@@ -130,7 +130,11 @@ function ActiveTokenList({
 					) : isLoading && tokens.length === 0 ? (
 						<Notice>{copy.loadingTokens}</Notice>
 					) : tokens.length === 0 ? (
-						<EmptyState title={copy.tokensEmptyTitle}>{copy.noTokens}</EmptyState>
+						<EmptyState
+							icon={ICON_NAME.WALLET}
+							title={copy.tokensEmptyTitle}>
+							{copy.noTokens}
+						</EmptyState>
 					) : (
 						<List
 							aria-label={copy.activeTokens}
