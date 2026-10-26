@@ -13,7 +13,7 @@
 		"build:web:renderer": "mkdir -p dist && bun build --target=bun --format=esm --packages=bundle --outdir=dist src/app/shell/server-renderer.tsx",
 		"dev": "NODE_ENV=development bun --watch src/server.ts",
 		"start": "NODE_ENV=production bun run dist/server.js",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc -b .."
 	},
 	"dependencies": {
 		"@inferdi/hono": "^6.1.0",
