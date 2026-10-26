@@ -8,7 +8,7 @@ import type {
 import { ScheduledTransaction } from '@modules/ledger/domain';
 import { Currency } from '@modules/money/domain';
 
-import { requireCategory } from './require-category';
+import { CategoryGuard } from './require-category';
 
 interface CreateScheduledTransactionInput {
 	actorId: null | string;
@@ -35,7 +35,7 @@ export class CreateScheduledTransaction {
 	}
 
 	async execute(input: CreateScheduledTransactionInput): Promise<ScheduledTransaction> {
-		const category = await requireCategory(this.categoryRepository, input.categoryId);
+		const category = await CategoryGuard.require(this.categoryRepository, input.categoryId);
 		category?.assertAccepts(input.kind);
 		const schedule = ScheduledTransaction.create({
 			amountMinor: input.amountMinor,

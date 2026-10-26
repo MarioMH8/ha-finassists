@@ -3,9 +3,9 @@ import { CategoryMother } from '@modules/ledger/domain/category.mother';
 import { MockCategoryRepository } from '@modules/ledger/infrastructure/repositories/mock-category.repository';
 import { beforeEach, describe, expect, it } from 'bun:test';
 
-import { requireCategory } from './require-category';
+import { CategoryGuard } from './require-category';
 
-describe('requireCategory', () => {
+describe('CategoryGuard.require', () => {
 	let repository: MockCategoryRepository;
 
 	beforeEach(() => {
@@ -15,14 +15,14 @@ describe('requireCategory', () => {
 	it('returns no category when the id is absent', async () => {
 		const absent: null | undefined = null;
 
-		expect(await requireCategory(repository, absent)).toBeUndefined();
+		expect(await CategoryGuard.require(repository, absent)).toBeUndefined();
 	});
 
 	it('returns the stored category', async () => {
 		const category = CategoryMother.create();
 		repository.shouldFind(category);
 
-		expect(await requireCategory(repository, category.id)).toBe(category);
+		expect(await CategoryGuard.require(repository, category.id)).toBe(category);
 	});
 
 	it('fails when the id does not exist', async () => {
@@ -30,7 +30,7 @@ describe('requireCategory', () => {
 
 		let failure: unknown;
 		try {
-			await requireCategory(repository, 'missing');
+			await CategoryGuard.require(repository, 'missing');
 		} catch (error) {
 			failure = error;
 		}

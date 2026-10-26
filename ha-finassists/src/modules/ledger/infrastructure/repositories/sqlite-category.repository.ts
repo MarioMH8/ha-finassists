@@ -5,10 +5,16 @@ import type { Database, SQLQueryBindings } from 'bun:sqlite';
 import type { CategoryRow } from './mappers/sqlite-category.mapper';
 import { SqliteCategoryMapper } from './mappers/sqlite-category.mapper';
 
-function where(criteria: CategoryCriteria): { parameters: SQLQueryBindings[]; sql: string } {
-	return criteria.kind === undefined
-		? { parameters: [], sql: '' }
-		: { parameters: [criteria.kind], sql: ' WHERE categories.kind = ?' };
+class SqliteCategoryQueries {
+	private constructor() {
+		// Static-only helper: instantiation is not part of the contract.
+	}
+
+	static where(criteria: CategoryCriteria): { parameters: SQLQueryBindings[]; sql: string } {
+		return criteria.kind === undefined
+			? { parameters: [], sql: '' }
+			: { parameters: [criteria.kind], sql: ' WHERE categories.kind = ?' };
+	}
 }
 
 const SELECT_CATEGORY = `
@@ -80,7 +86,7 @@ export class SqliteCategoryRepository implements CategoryRepository {
 	}
 
 	async search(criteria: CategoryCriteria = {}): Promise<CategorySummary[]> {
-		const { parameters, sql } = where(criteria);
+		const { parameters, sql } = SqliteCategoryQueries.where(criteria);
 		const rows = this.database
 			.query<CategoryRow, SQLQueryBindings[]>(
 				`${SELECT_CATEGORY}${sql} GROUP BY categories.id ORDER BY categories.kind DESC, categories.name COLLATE NOCASE ASC`

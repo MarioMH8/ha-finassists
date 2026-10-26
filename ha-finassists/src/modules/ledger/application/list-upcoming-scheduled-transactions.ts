@@ -3,7 +3,7 @@ import type {
 	ScheduledTransactionRepository,
 	TransactionKind,
 } from '@modules/ledger/domain';
-import { isCalendarDate, ScheduledTransactionProjectionRangeInvalidError } from '@modules/ledger/domain';
+import { CalendarDate, ScheduledTransactionProjectionRangeInvalidError } from '@modules/ledger/domain';
 import { Currency } from '@modules/money/domain';
 
 const MAX_FORECAST_SCHEDULES = 1000;
@@ -60,7 +60,11 @@ export class ListUpcomingScheduledTransactions {
 	}
 
 	async execute(input: ListUpcomingScheduledTransactionsInput): Promise<UpcomingScheduledTransactions> {
-		if (!isCalendarDate(input.fromDate) || !isCalendarDate(input.toDate) || input.fromDate > input.toDate) {
+		if (
+			!CalendarDate.isValid(input.fromDate) ||
+			!CalendarDate.isValid(input.toDate) ||
+			input.fromDate > input.toDate
+		) {
 			throw new ScheduledTransactionProjectionRangeInvalidError();
 		}
 		const limit = input.limit ?? DEFAULT_LIMIT;

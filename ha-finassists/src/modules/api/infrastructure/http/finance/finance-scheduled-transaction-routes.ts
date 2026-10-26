@@ -8,7 +8,7 @@ import {
 	readJsonBody,
 } from '@modules/api/infrastructure/http/shared/request-parsing';
 import type { ScheduledTransaction } from '@modules/ledger/domain';
-import { addDays } from '@modules/ledger/domain';
+import { CalendarDate } from '@modules/ledger/domain';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
@@ -192,7 +192,7 @@ function createScheduledTransactionRoutes(): Hono<FinanceEnvironment> {
 			);
 			const today = context.var.useCases.today();
 			const from = fromDate ?? today;
-			const to = toDate ?? addDays(from, 29) ?? from;
+			const to = toDate ?? CalendarDate.addDays(from, 29) ?? from;
 			const forecast = await context.var.useCases.ledger.scheduled.upcoming.execute({
 				...(categoryId !== undefined && { categoryId }),
 				...(kind !== undefined && { kind }),
