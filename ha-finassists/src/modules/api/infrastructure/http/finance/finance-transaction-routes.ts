@@ -2,6 +2,7 @@ import { jsonResponse, methodNotAllowed, noContent } from '@modules/api/infrastr
 import {
 	minorUnits,
 	nonNegativeInteger,
+	nullableReference,
 	optionalText,
 	parseInput,
 	readJsonBody,
@@ -23,6 +24,7 @@ function dateParameter(name: string) {
 }
 
 const listTransactionsQuerySchema = z.object({
+	categoryId: z.string({ error: 'categoryId must be a string' }).optional(),
 	fromDate: dateParameter('fromDate'),
 	kind: z.enum(['expense', 'income'], { error: 'kind must be expense or income' }).optional(),
 	limit: nonNegativeInteger('limit', DEFAULT_LIMIT)
@@ -35,6 +37,7 @@ const listTransactionsQuerySchema = z.object({
 
 const newTransactionSchema = z.object({
 	amountMinor: minorUnits(),
+	categoryId: nullableReference('categoryId'),
 	description: optionalText('description'),
 	kind: z.enum(['expense', 'income'], { error: 'kind must be expense or income' }),
 	transactionDate: z.string({ error: 'transactionDate must use YYYY-MM-DD' }),
@@ -42,6 +45,7 @@ const newTransactionSchema = z.object({
 
 const updateTransactionSchema = z.object({
 	amountMinor: minorUnits().optional(),
+	categoryId: nullableReference('categoryId'),
 	description: optionalText('description'),
 	kind: z.enum(['expense', 'income'], { error: 'kind must be expense or income' }).optional(),
 	transactionDate: z.string({ error: 'transactionDate must use YYYY-MM-DD' }).optional(),
@@ -61,11 +65,12 @@ function createTransactionRoutes(): Hono<FinanceEnvironment> {
 
 	routes
 		.get('/transactions', async context => {
-			const { fromDate, kind, limit, offset, search, toDate } = parseInput(
+			const { categoryId, fromDate, kind, limit, offset, search, toDate } = parseInput(
 				listTransactionsQuerySchema,
 				context.req.query()
 			);
 			const page = await context.var.useCases.ledger.list.execute({
+				...(categoryId !== undefined && { categoryId }),
 				...(fromDate !== undefined && { fromDate }),
 				...(kind !== undefined && { kind }),
 				...(search !== undefined && { search }),
@@ -77,7 +82,7 @@ function createTransactionRoutes(): Hono<FinanceEnvironment> {
 			return jsonResponse({ items: page.items, limit, offset, total: page.total });
 		})
 		.post('/transactions', async context => {
-			const { amountMinor, description, kind, transactionDate } = await readJsonBody(
+			const { amountMinor, categoryId, description, kind, transactionDate } = await readJsonBody(
 				context.req.raw,
 				newTransactionSchema
 			);
@@ -86,6 +91,7 @@ function createTransactionRoutes(): Hono<FinanceEnvironment> {
 				await context.var.useCases.ledger.create.execute({
 					actorId: context.var.actor.id,
 					amountMinor,
+					...(categoryId !== undefined && { categoryId }),
 					kind,
 					transactionDate,
 					...(description !== undefined && { description }),
@@ -105,13 +111,14 @@ function createTransactionRoutes(): Hono<FinanceEnvironment> {
 			return noContent();
 		})
 		.patch('/transactions/:id', async context => {
-			const { amountMinor, description, kind, transactionDate } = await readJsonBody(
+			const { amountMinor, categoryId, description, kind, transactionDate } = await readJsonBody(
 				context.req.raw,
 				updateTransactionSchema
 			);
 			const transaction = await context.var.useCases.ledger.update.execute({
 				id: context.req.param('id'),
 				...(amountMinor !== undefined && { amountMinor }),
+				...(categoryId !== undefined && { categoryId }),
 				...(description !== undefined && { description }),
 				...(kind !== undefined && { kind }),
 				...(transactionDate !== undefined && { transactionDate }),

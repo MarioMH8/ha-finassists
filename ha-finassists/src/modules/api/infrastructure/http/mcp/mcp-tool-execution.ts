@@ -1,7 +1,7 @@
 import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-routes';
 import { handleFinanceRequest } from '@modules/api/infrastructure/http/finance/finance-routes';
 
-const LIST_FILTERS = ['fromDate', 'kind', 'limit', 'offset', 'search', 'toDate'] as const;
+const LIST_FILTERS = ['categoryId', 'fromDate', 'kind', 'limit', 'offset', 'search', 'toDate'] as const;
 
 function textResult(value: unknown): { content: { text: string; type: 'text' }[]; structuredContent: unknown } {
 	return { content: [{ text: JSON.stringify(value), type: 'text' }], structuredContent: value };
@@ -12,20 +12,40 @@ function getToolRequest(
 	arguments_: Record<string, unknown>
 ): undefined | { body?: unknown; method: string; path: string } {
 	switch (name) {
+		case 'create_category': {
+			return {
+				body: { kind: arguments_.kind, name: arguments_.name },
+				method: 'POST',
+				path: '/api/v1/categories',
+			};
+		}
 		case 'create_transaction': {
 			return {
 				body: {
 					amountMinor: arguments_.amountMinor,
 					kind: arguments_.kind,
 					transactionDate: arguments_.transactionDate,
+					...(typeof arguments_.categoryId === 'string' && { categoryId: arguments_.categoryId }),
 					...(typeof arguments_.description === 'string' && { description: arguments_.description }),
 				},
 				method: 'POST',
 				path: '/api/v1/transactions',
 			};
 		}
+		case 'delete_category': {
+			return { method: 'DELETE', path: `/api/v1/categories/${encodeURIComponent(String(arguments_.id))}` };
+		}
 		case 'delete_transaction': {
 			return { method: 'DELETE', path: `/api/v1/transactions/${encodeURIComponent(String(arguments_.id))}` };
+		}
+		case 'list_categories': {
+			const query = new URLSearchParams();
+			if (typeof arguments_.kind === 'string') {
+				query.set('kind', arguments_.kind);
+			}
+			const suffix = query.size > 0 ? `?${query.toString()}` : '';
+
+			return { method: 'GET', path: `/api/v1/categories${suffix}` };
 		}
 		case 'list_transactions': {
 			const query = new URLSearchParams();
