@@ -2,7 +2,7 @@
 
 The web interface is server rendered and runs inside Home Assistant Ingress, so its first paint already contains whatever the page shows while data is on the way. A text notice ("Loading transactions…") is unlike the rest of the interface and easy to see flash: most requests finish in a few milliseconds, so the notice is replaced before it can be read, and every section switch flashes it again.
 
-Content-shaped skeletons follow the Home Assistant loading pattern (https://contributors.home-assistant.io/design/patterns/loading/) and replace those notices. A skeleton keeps the final layout in place, so nothing jumps when the data arrives: summary cards reserve their three metrics, and every data table keeps its real header, toolbar and row rhythm while its rows load. The placeholders live in the shared `@app/components/skeleton` module (`Skeleton`, `SkeletonTableBody`, `LoadingStatus`), so feature code only composes shapes and sizes them with its own CSS.
+Content-shaped skeletons follow the Home Assistant loading pattern (https://contributors.home-assistant.io/design/patterns/loading/) and replace those notices. A skeleton keeps the final layout in place, so nothing jumps when the data arrives: summary cards reserve their three metrics, and every data table keeps its real header, toolbar and row rhythm while its rows load. The placeholders live in the shared `@app/components/skeleton` module (`Skeleton`, `SkeletonTableBody`, `LoadingStatus`), and each surface owns a sibling `<Surface>Skeleton` component — `MonthSummarySkeleton`, `TransactionListSkeleton`, `CategoryListSkeleton` and so on — that composes them and shares the surface's CSS module, so the loading branch of a page is one element.
 
 ## The delay
 
