@@ -55,6 +55,7 @@ function CategoryList({
 }: CategoryListProps): ReactElement {
 	const pendingCategory = categories.find(category => category.id === confirmingCategoryId);
 	const isDeleting = deletingCategoryId === pendingCategory?.id;
+	const hasFilter = filterKind !== CATEGORY_FILTER.ALL;
 	const newCategoryAction = (
 		<Button
 			appearance={BUTTON_APPEARANCE.ACCENT}
@@ -63,6 +64,25 @@ function CategoryList({
 			variant={BUTTON_VARIANT.BRAND}>
 			{copy.categoryCreate}
 		</Button>
+	);
+	const filterToolbar = (
+		<div className={styles.toolbar}>
+			<Field
+				htmlFor='category-filter-kind'
+				label={copy.categoryFilterKind}>
+				<Select
+					id='category-filter-kind'
+					onChange={event => {
+						setFilterKind(event.currentTarget.value as CategoryFilter);
+					}}
+					size={SELECT_SIZE.SMALL}
+					value={filterKind}>
+					<option value={CATEGORY_FILTER.ALL}>{copy.categoryFilterAll}</option>
+					<option value={CATEGORY_KIND.EXPENSE}>{copy.transactionKindExpense}</option>
+					<option value={CATEGORY_KIND.INCOME}>{copy.transactionKindIncome}</option>
+				</Select>
+			</Field>
+		</div>
 	);
 	const confirmationFooter = (
 		<>
@@ -102,37 +122,21 @@ function CategoryList({
 					{feedback.message}
 				</Notice>
 			) : undefined}
-			<div className={styles.toolbar}>
-				<Field
-					htmlFor='category-filter-kind'
-					label={copy.categoryFilterKind}>
-					<Select
-						id='category-filter-kind'
-						onChange={event => {
-							setFilterKind(event.currentTarget.value as CategoryFilter);
-						}}
-						size={SELECT_SIZE.SMALL}
-						value={filterKind}>
-						<option value={CATEGORY_FILTER.ALL}>{copy.categoryFilterAll}</option>
-						<option value={CATEGORY_KIND.EXPENSE}>{copy.transactionKindExpense}</option>
-						<option value={CATEGORY_KIND.INCOME}>{copy.transactionKindIncome}</option>
-					</Select>
-				</Field>
-			</div>
 			{listState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.categoryLoadError}</Notice>
 			) : listState === LOAD_STATE.LOADING && categories.length === 0 ? (
 				<Notice>{copy.categoryLoading}</Notice>
 			) : categories.length === 0 ? (
 				<Card bleed>
+					{hasFilter ? <div className={styles.cardHeader}>{filterToolbar}</div> : undefined}
 					<EmptyState
 						icon={ICON_NAME.TAG}
-						title={copy.categoryEmptyTitle}>
-						{copy.categoryEmptyDescription}
+						title={hasFilter ? copy.categoryEmptyFilteredTitle : copy.categoryEmptyTitle}>
+						{hasFilter ? copy.categoryEmptyFilteredDescription : copy.categoryEmptyDescription}
 					</EmptyState>
 				</Card>
 			) : (
-				<DataTable>
+				<DataTable header={filterToolbar}>
 					<thead>
 						<tr>
 							<DataHeaderCell>{copy.categoryColumnName}</DataHeaderCell>

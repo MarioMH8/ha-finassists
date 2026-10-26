@@ -22,6 +22,8 @@
 	"categoryEditDescription": "Actualiza el nombre o el tipo de esta categoría.",
 	"categoryEditTitle": "Renombrar categoría",
 	"categoryEmptyDescription": "Crea una categoría para agrupar tus movimientos.",
+	"categoryEmptyFilteredDescription": "Cambia el tipo o crea una categoría.",
+	"categoryEmptyFilteredTitle": "No hay categorías de este tipo",
 	"categoryEmptyTitle": "Aún no hay categorías",
 	"categoryFilterAll": "Todos",
 	"categoryFilterKind": "Tipo",

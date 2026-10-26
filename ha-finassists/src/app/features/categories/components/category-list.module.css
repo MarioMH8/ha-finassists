@@ -4,10 +4,17 @@
 }
 
 .toolbar {
+  --select-border-radius: calc(var(--ha-border-radius-lg) - var(--ha-space-2));
+
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--ha-space-3);
+}
+
+.cardHeader {
+  padding: var(--ha-space-2);
+  border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
 }
 
 .name {

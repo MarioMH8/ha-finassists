@@ -22,6 +22,8 @@
 	"categoryEditDescription": "Update the name or kind of this category.",
 	"categoryEditTitle": "Rename category",
 	"categoryEmptyDescription": "Create a category to group your movements.",
+	"categoryEmptyFilteredDescription": "Choose another kind or create a category.",
+	"categoryEmptyFilteredTitle": "No categories of this kind",
 	"categoryEmptyTitle": "No categories yet",
 	"categoryFilterAll": "All",
 	"categoryFilterKind": "Kind",
