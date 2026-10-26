@@ -1,4 +1,4 @@
-import type { TransactionRepository } from '../domain';
+import type { TransactionRepository } from '@modules/ledger/domain';
 
 interface DeleteTransactionsInput {
 	ids: string[];

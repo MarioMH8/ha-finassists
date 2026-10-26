@@ -4,12 +4,12 @@ import { classNames } from '@app/components/class-names';
 import { Icon, ICON_NAME } from '@app/components/icon';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
+import { formatMinorUnits } from '@app/features/transactions/transaction-amount';
+import { LOAD_STATE } from '@app/features/transactions/transactions-constants';
+import type { TransactionsState } from '@app/features/transactions/use-transactions.hook';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 
-import { formatMinorUnits } from '../transaction-amount';
-import { LOAD_STATE } from '../transactions-constants';
-import type { TransactionsState } from '../use-transactions.hook';
 import styles from './month-summary.module.css';
 import { MonthlyFlowChart } from './monthly-flow-chart';
 

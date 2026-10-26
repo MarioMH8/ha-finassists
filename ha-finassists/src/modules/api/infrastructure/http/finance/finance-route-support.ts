@@ -1,3 +1,4 @@
+import { jsonResponse } from '@modules/api/infrastructure/http/shared/http-responses';
 import type {
 	CreateTransaction,
 	DeleteTransaction,
@@ -5,8 +6,6 @@ import type {
 	ListTransactions,
 	UpdateTransaction,
 } from '@modules/ledger/application';
-
-import { jsonResponse } from '../shared/http-responses';
 
 interface FinanceUseCases {
 	ledger: {

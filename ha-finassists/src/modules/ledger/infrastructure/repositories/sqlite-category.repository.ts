@@ -1,7 +1,6 @@
+import type { CategoryCriteria, CategoryKind, CategoryRepository, CategorySummary } from '@modules/ledger/domain';
+import { Category } from '@modules/ledger/domain';
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
-
-import type { CategoryCriteria, CategoryKind, CategoryRepository, CategorySummary } from '../../domain';
-import { Category } from '../../domain';
 
 interface CategoryRow {
 	created_at: string;

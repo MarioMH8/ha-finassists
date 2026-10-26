@@ -1,3 +1,6 @@
+import { handleMcpRequest, MCP_MAX_BODY_BYTES } from '@modules/api/infrastructure/http/mcp/mcp-transport';
+import { handleRequest } from '@modules/api/infrastructure/http/routes';
+import { createHttpContainer } from '@modules/api/infrastructure/http/shared/http-container';
 import {
 	CreateTransaction,
 	DeleteTransaction,
@@ -12,9 +15,6 @@ import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modu
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import { handleMcpRequest, MCP_MAX_BODY_BYTES } from '../mcp/mcp-transport';
-import { handleRequest } from '../routes';
-import { createHttpContainer } from '../shared/http-container';
 import type { FinanceUseCases } from './finance-routes';
 import { handleFinanceRequest } from './finance-routes';
 

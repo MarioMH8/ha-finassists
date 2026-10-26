@@ -1,7 +1,7 @@
+import { TransactionNotFoundError } from '@modules/ledger/domain';
+import { MockLedgerRepository } from '@modules/ledger/infrastructure/repositories/mock-ledger.repository';
 import { beforeEach, describe, expect, it } from 'bun:test';
 
-import { TransactionNotFoundError } from '../domain';
-import { MockLedgerRepository } from '../infrastructure/repositories/mock-ledger.repository';
 import { DeleteTransaction } from './delete-transaction';
 
 describe('DeleteTransaction', () => {

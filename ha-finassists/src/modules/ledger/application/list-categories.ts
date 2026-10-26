@@ -1,4 +1,4 @@
-import type { CategoryCriteria, CategoryRepository, CategorySummary } from '../domain';
+import type { CategoryCriteria, CategoryRepository, CategorySummary } from '@modules/ledger/domain';
 
 export class ListCategories {
 	constructor(private readonly repository: CategoryRepository) {}

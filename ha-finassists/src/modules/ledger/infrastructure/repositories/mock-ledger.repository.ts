@@ -1,12 +1,11 @@
-import { expect, mock } from 'bun:test';
-
 import type {
 	Transaction,
 	TransactionCriteria,
 	TransactionDeleteCriteria,
 	TransactionPage,
 	TransactionRepository,
-} from '../../domain';
+} from '@modules/ledger/domain';
+import { expect, mock } from 'bun:test';
 
 export class MockLedgerRepository implements TransactionRepository {
 	private readonly deleteManyMock = mock<TransactionRepository['deleteMany']>(() => Promise.resolve(0));

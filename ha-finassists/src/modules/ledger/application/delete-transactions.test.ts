@@ -1,6 +1,6 @@
+import { MockLedgerRepository } from '@modules/ledger/infrastructure/repositories/mock-ledger.repository';
 import { beforeEach, describe, expect, it } from 'bun:test';
 
-import { MockLedgerRepository } from '../infrastructure/repositories/mock-ledger.repository';
 import { DeleteTransactions } from './delete-transactions';
 
 describe('DeleteTransactions', () => {

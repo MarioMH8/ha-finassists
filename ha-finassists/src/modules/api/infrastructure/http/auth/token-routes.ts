@@ -1,10 +1,9 @@
+import { jsonResponse, methodNotAllowed, noContent } from '@modules/api/infrastructure/http/shared/http-responses';
+import type { HttpEnvironment, TokenManagementUseCases } from '@modules/api/infrastructure/http/shared/request-context';
 import { isTrustedIngressPeer, resolveIngressActor } from '@modules/home-assistant';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import { z } from 'zod';
-
-import { jsonResponse, methodNotAllowed, noContent } from '../shared/http-responses';
-import type { HttpEnvironment, TokenManagementUseCases } from '../shared/request-context';
 
 interface TokenEnvironment extends HttpEnvironment {
 	Variables: HttpEnvironment['Variables'] & { actor: { id: string } };

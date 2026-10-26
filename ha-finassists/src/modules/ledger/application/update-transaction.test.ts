@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it } from 'bun:test';
-
 import {
 	CategoryKindMismatchError,
 	CategoryNotFoundError,
 	TransactionAmountInvalidError,
 	TransactionNotFoundError,
-} from '../domain';
-import { CategoryMother } from '../domain/category.mother';
-import { TransactionMother } from '../domain/transaction.mother';
-import { MockCategoryRepository } from '../infrastructure/repositories/mock-category.repository';
-import { MockLedgerRepository } from '../infrastructure/repositories/mock-ledger.repository';
+} from '@modules/ledger/domain';
+import { CategoryMother } from '@modules/ledger/domain/category.mother';
+import { TransactionMother } from '@modules/ledger/domain/transaction.mother';
+import { MockCategoryRepository } from '@modules/ledger/infrastructure/repositories/mock-category.repository';
+import { MockLedgerRepository } from '@modules/ledger/infrastructure/repositories/mock-ledger.repository';
+import { beforeEach, describe, expect, it } from 'bun:test';
+
 import { UpdateTransaction } from './update-transaction';
 
 describe('UpdateTransaction', () => {

@@ -1,4 +1,4 @@
-import '../styles/global.css';
+import '@app/styles/global.css';
 
 import type { Language } from '@app/i18n/language';
 import type { ShellConfig } from '@modules/shell/domain';

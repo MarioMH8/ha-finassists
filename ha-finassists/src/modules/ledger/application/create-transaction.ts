@@ -1,7 +1,7 @@
+import type { CategoryRepository, TransactionKind, TransactionRepository } from '@modules/ledger/domain';
+import { Transaction } from '@modules/ledger/domain';
 import { Currency } from '@modules/money/domain';
 
-import type { CategoryRepository, TransactionKind, TransactionRepository } from '../domain';
-import { Transaction } from '../domain';
 import { loadCategory } from './load-category';
 
 interface CreateTransactionInput {

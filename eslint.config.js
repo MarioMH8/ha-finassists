@@ -17,6 +17,27 @@ const config = await hexadrop(
 	{
 		rules: {
 			'import/prefer-default-export': 'off',
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							group: ['../*', '../../*', '../../../*'],
+							message: 'Import through @app/* or @modules/* instead of traversing parent directories.',
+						},
+					],
+				},
+			],
+		},
+	},
+	{
+		/*
+		 * The version constant is the only app file that reaches outside src, and
+		 * no alias points at the package manifest.
+		 */
+		files: ['ha-finassists/src/modules/version.ts'],
+		rules: {
+			'no-restricted-imports': 'off',
 		},
 	},
 	{

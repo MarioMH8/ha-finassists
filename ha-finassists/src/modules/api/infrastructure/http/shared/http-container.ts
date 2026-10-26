@@ -1,7 +1,7 @@
 import type { InferdiRoot, InferdiScope } from '@inferdi/hono';
 import { Container } from '@inferdi/inferdi';
+import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-route-support';
 
-import type { FinanceUseCases } from '../finance/finance-route-support';
 import type { SystemCredentialUseCases, TokenManagementUseCases } from './request-context';
 
 interface HttpServices {

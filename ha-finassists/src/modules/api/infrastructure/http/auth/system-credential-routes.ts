@@ -1,8 +1,8 @@
+import { jsonResponse, methodNotAllowed, noContent } from '@modules/api/infrastructure/http/shared/http-responses';
+import type { HttpEnvironment } from '@modules/api/infrastructure/http/shared/request-context';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
-import { jsonResponse, methodNotAllowed, noContent } from '../shared/http-responses';
-import type { HttpEnvironment } from '../shared/request-context';
 import { authenticateSystemBearer, bearerSecret } from './authentication';
 
 const exchangeSchema = z.object({

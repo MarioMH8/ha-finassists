@@ -1,5 +1,5 @@
-import type { CategoryRepository } from '../domain';
-import { CategoryInUseError, CategoryNotFoundError } from '../domain';
+import type { CategoryRepository } from '@modules/ledger/domain';
+import { CategoryInUseError, CategoryNotFoundError } from '@modules/ledger/domain';
 
 interface DeleteCategoryInput {
 	id: string;

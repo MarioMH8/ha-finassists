@@ -1,13 +1,12 @@
-import type { Database, SQLQueryBindings } from 'bun:sqlite';
-
 import type {
 	TransactionCriteria,
 	TransactionDeleteCriteria,
 	TransactionKind,
 	TransactionPage,
 	TransactionRepository,
-} from '../../domain';
-import { Transaction } from '../../domain';
+} from '@modules/ledger/domain';
+import { Transaction } from '@modules/ledger/domain';
+import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
 interface TransactionRow {
 	actor_id: null | string;
