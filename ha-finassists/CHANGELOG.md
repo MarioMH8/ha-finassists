@@ -1,5 +1,12 @@
 # ha-finassists
 
+## 0.2.2
+
+### Patch Changes
+
+- 7167686: Hide the categories kind filter when there are no categories, and explain a filtered empty state when the selected kind has no categories.
+- c014712: Align the active tokens section with the categories and transactions sections: the heading, status and create action now sit outside the card, and the card holds only the token list or empty state.
+
 ## 0.2.1
 
 ### Patch Changes
