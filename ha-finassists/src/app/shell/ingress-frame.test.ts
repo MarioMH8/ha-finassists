@@ -1,34 +1,78 @@
 import { describe, expect, test } from 'bun:test';
 
-import { clearIngressFrameOutline, removeFrameOutline } from './ingress-frame';
+import { clearHostFrameOutline, clearIngressFrameOutline, removeFrameOutline } from './ingress-frame';
 
-function createFrame(outline = '2px solid') {
-	return {
-		contentWindow: null as null | Window,
-		style: { outline, outlineOffset: '2px' },
-	};
+function createFrame(contentWindow: unknown = null, outline = '2px solid') {
+	return { contentWindow, style: { outline, outlineOffset: '2px' } };
 }
 
 describe('ingress frame outline', () => {
-	test('clears the outline of the iframe that hosts this document', () => {
-		const frameWindow = {} as Window;
-		const otherFrame = createFrame('2px solid');
-		const ingressFrame = createFrame('2px solid');
-		ingressFrame.contentWindow = frameWindow;
+	test('clears the hosting frame through frameElement', () => {
+		const ingressFrame = createFrame();
+		let didQueryFallback = false;
 
-		removeFrameOutline([otherFrame, ingressFrame], frameWindow);
+		clearHostFrameOutline({
+			frameElement: ingressFrame,
+			parent: {
+				document: {
+					querySelectorAll: () => {
+						didQueryFallback = true;
+
+						return [];
+					},
+				},
+			},
+		});
+
 		expect(ingressFrame.style.outline).toBe('none');
 		expect(ingressFrame.style.outlineOffset).toBe('0');
+		expect(didQueryFallback).toBe(false);
+	});
+
+	test('falls back to the parent document iframe query', () => {
+		const queriedSelectors: string[] = [];
+		let frames: ReturnType<typeof createFrame>[] = [];
+		const host = {
+			frameElement: null,
+			parent: {
+				document: {
+					querySelectorAll: (selector: string) => {
+						queriedSelectors.push(selector);
+
+						return frames;
+					},
+				},
+			},
+		};
+		const otherFrame = createFrame();
+		const ingressFrame = createFrame(host);
+		frames = [otherFrame, ingressFrame];
+
+		clearHostFrameOutline(host);
+
+		expect(queriedSelectors).toEqual(['iframe']);
+		expect(ingressFrame.style.outline).toBe('none');
 		expect(otherFrame.style.outline).toBe('2px solid');
 	});
 
-	test('leaves every frame untouched when none hosts this document', () => {
-		const frameWindow = {} as Window;
+	test('leaves frames untouched when the fallback has no match', () => {
 		const frame = createFrame();
 
-		removeFrameOutline([frame], frameWindow);
+		removeFrameOutline([frame], {});
+
 		expect(frame.style.outline).toBe('2px solid');
 		expect(frame.style.outlineOffset).toBe('2px');
+	});
+
+	test('ignores an unreachable parent document', () => {
+		const host = {
+			frameElement: null,
+			get parent(): never {
+				throw new Error('cross-origin');
+			},
+		};
+
+		expect(() => clearHostFrameOutline(host)).not.toThrow();
 	});
 
 	test('is a no-op without a parent document', () => {
