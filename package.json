@@ -16,7 +16,7 @@
 		"prepare": "husky",
 		"start": "bun run --filter ha-finassists start",
 		"test": "bun test",
-		"typecheck": "tsc --noEmit && tsc --noEmit -p ha-finassists",
+		"typecheck": "tsc -b",
 		"version": "changeset version && bun sync-release.ts"
 	},
 	"devDependencies": {

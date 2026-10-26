@@ -1,8 +1,5 @@
 {
 	"extends": "@hexadrop/tsconfig",
-	"compilerOptions": {
-		"types": ["bun"],
-		"noEmit": true
-	},
-	"include": ["commitlint.config.ts", "sync-release.ts"]
+	"references": [{ "path": "./tsconfig.tools.json" }, { "path": "./ha-finassists" }],
+	"files": []
 }

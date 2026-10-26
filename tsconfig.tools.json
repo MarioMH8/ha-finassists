@@ -1,0 +1,10 @@
+{
+	"extends": "@hexadrop/tsconfig",
+	"compilerOptions": {
+		"composite": true,
+		"tsBuildInfoFile": "./node_modules/.cache/tsbuild/tools.tsbuildinfo",
+		"types": ["bun"],
+		"noEmit": true
+	},
+	"include": ["commitlint.config.ts", "sync-release.ts"]
+}

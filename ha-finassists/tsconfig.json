@@ -1,6 +1,8 @@
 {
 	"extends": "@hexadrop/tsconfig",
 	"compilerOptions": {
+		"composite": true,
+		"tsBuildInfoFile": "../node_modules/.cache/tsbuild/app.tsbuildinfo",
 		"paths": {
 			"@app/*": ["./src/app/*"],
 			"@modules/*": ["./src/modules/*"]
