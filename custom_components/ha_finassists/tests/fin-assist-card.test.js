@@ -56,7 +56,7 @@ function loadCard() {
 	return new (elements.get('fin-assist-card'))();
 }
 
-function totalSensor(entryId, kind, state = '10.00') {
+function totalSensor(entryId, kind, state = '10.00', attributes = {}) {
 	return {
 		entity_id: `sensor.${entryId}_${kind}`,
 		state,
@@ -65,6 +65,7 @@ function totalSensor(entryId, kind, state = '10.00') {
 			kind,
 			month: '2026-10',
 			unit_of_measurement: 'EUR',
+			...attributes,
 		},
 	};
 }
@@ -115,6 +116,40 @@ describe('Fin Assist Lovelace card', () => {
 		expect(calls).toEqual([
 			['ha_finassists', 'refresh', { entry_id: 'configured-entry' }],
 		]);
+	});
+
+	it('breaks the totals down by category', () => {
+		const card = loadCard();
+		card.setConfig({});
+		card.hass = {
+			states: {
+				income: totalSensor('entry-one', 'income', '1200.00'),
+				expenses: totalSensor('entry-one', 'expense', '345.50', {
+					by_category: { Food: 200.25, Transport: 95.25 },
+					uncategorized: 50,
+				}),
+			},
+			callService() {},
+		};
+
+		expect(card.shadowRoot.html).toContain('Expenses this month by category');
+		expect(card.shadowRoot.html).toContain('Food');
+		expect(card.shadowRoot.html).toContain('200.25 EUR');
+		expect(card.shadowRoot.html).toContain('Transport');
+		expect(card.shadowRoot.html).toContain('Uncategorized');
+		expect(card.shadowRoot.html).toContain('50 EUR');
+		expect(card.shadowRoot.html).not.toContain('Income this month by category');
+	});
+
+	it('omits the breakdown when the sensors do not expose categories', () => {
+		const card = loadCard();
+		card.setConfig({});
+		card.hass = {
+			states: { expenses: totalSensor('entry-one', 'expense') },
+			callService() {},
+		};
+
+		expect(card.shadowRoot.html).not.toContain('by category');
 	});
 
 	it('only displays the configured entry and flags unavailable totals', () => {

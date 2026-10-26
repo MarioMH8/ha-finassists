@@ -2,7 +2,7 @@ import type { CategoryRepository, TransactionKind, TransactionRepository } from 
 import { Transaction } from '@modules/ledger/domain';
 import { Currency } from '@modules/money/domain';
 
-import { loadCategory } from './load-category';
+import { requireCategory } from './require-category';
 
 interface CreateTransactionInput {
 	actorId: null | string;
@@ -25,7 +25,7 @@ export class CreateTransaction {
 	}
 
 	async execute(input: CreateTransactionInput): Promise<Transaction> {
-		const category = await loadCategory(this.categoryRepository, input.categoryId);
+		const category = await requireCategory(this.categoryRepository, input.categoryId);
 		category?.assertAccepts(input.kind);
 		const transaction = Transaction.create({
 			actorId: input.actorId,

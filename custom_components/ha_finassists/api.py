@@ -79,7 +79,7 @@ class FinAssistApi:
     async def async_fetch_summary(
         self, currency_code: str = DEFAULT_CURRENCY_CODE
     ) -> dict[str, Any]:
-        """Total income and expenses for the current calendar month."""
+        """Total income and expenses, and their breakdown by category."""
         today = date.today()
         last_day = calendar.monthrange(today.year, today.month)[1]
         transactions = await self.async_page(
@@ -90,6 +90,8 @@ class FinAssistApi:
             },
         )
         totals = {"income": 0, "expense": 0}
+        per_category: dict[str, dict[str, int]] = {"income": {}, "expense": {}}
+        uncategorized = {"income": 0, "expense": 0}
         currency: str | None = None
         for transaction in transactions:
             amount = transaction.get("amountMinor")
@@ -98,12 +100,44 @@ class FinAssistApi:
                 raise FinAssistApiError("Fin Assist returned an invalid transaction")
             totals[kind] += amount
             currency = currency or transaction.get("currencyCode")
-        return {
+            category_id = transaction.get("categoryId")
+            if isinstance(category_id, str) and category_id:
+                categories_for_kind = per_category[kind]
+                categories_for_kind[category_id] = categories_for_kind.get(category_id, 0) + amount
+            else:
+                uncategorized[kind] += amount
+        summary: dict[str, Any] = {
             "currencyCode": str(currency or currency_code),
             "income_minor": totals["income"],
             "expense_minor": totals["expense"],
             "month": today.strftime("%Y-%m"),
         }
+        try:
+            categories = await self.async_list_categories()
+        except FinAssistApiError:
+            # The monthly totals stay usable even when the breakdown is unavailable.
+            return summary
+        names = {
+            str(category["id"]): str(category["name"])
+            for category in categories
+            if isinstance(category.get("id"), str) and isinstance(category.get("name"), str)
+        }
+        for kind in ("income", "expense"):
+            summary[f"{kind}_by_category"] = {
+                names.get(category_id, "Unknown"): amount
+                for category_id, amount in per_category[kind].items()
+            }
+            summary[f"uncategorized_{kind}_minor"] = uncategorized[kind]
+        return summary
+
+    async def async_list_categories(self, kind: str | None = None) -> list[dict[str, Any]]:
+        """Read every category, optionally filtered by kind."""
+        result = await self.async_request(
+            "GET", "categories", params={"kind": kind} if kind else None
+        )
+        if not isinstance(result, dict) or not isinstance(result.get("items"), list):
+            raise FinAssistApiError("Fin Assist returned an invalid category list")
+        return [item for item in result["items"] if isinstance(item, dict)]
 
     async def async_create_transaction(
         self,
@@ -111,8 +145,9 @@ class FinAssistApi:
         amount_minor: int,
         transaction_date: date,
         description: str | None = None,
+        category_id: str | None = None,
     ) -> dict[str, Any]:
-        """Record an expense or income."""
+        """Record an expense or income, optionally grouped by category."""
         body: dict[str, Any] = {
             "kind": kind,
             "amountMinor": amount_minor,
@@ -120,6 +155,8 @@ class FinAssistApi:
         }
         if description:
             body["description"] = description
+        if category_id:
+            body["categoryId"] = category_id
         result = await self.async_request("POST", "transactions", json=body)
         if not isinstance(result, dict):
             raise FinAssistApiError("Fin Assist returned an invalid transaction")
