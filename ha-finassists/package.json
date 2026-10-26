@@ -1,6 +1,6 @@
 {
 	"name": "ha-finassists",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "Household finance management for Home Assistant",
 	"license": "MIT",
 	"private": true,

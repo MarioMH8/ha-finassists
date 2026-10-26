@@ -1,5 +1,11 @@
 # ha-finassists
 
+## 0.2.3
+
+### Patch Changes
+
+- 200d997: Keep alert dialog footer buttons at their normal height instead of stretching them to the dialog height.
+
 ## 0.2.2
 
 ### Patch Changes
