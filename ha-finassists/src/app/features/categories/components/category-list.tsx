@@ -55,6 +55,7 @@ function CategoryList({
 }: CategoryListProps): ReactElement {
 	const pendingCategory = categories.find(category => category.id === confirmingCategoryId);
 	const isDeleting = deletingCategoryId === pendingCategory?.id;
+	const hasFilter = filterKind !== CATEGORY_FILTER.ALL;
 	const newCategoryAction = (
 		<Button
 			appearance={BUTTON_APPEARANCE.ACCENT}
@@ -102,23 +103,25 @@ function CategoryList({
 					{feedback.message}
 				</Notice>
 			) : undefined}
-			<div className={styles.toolbar}>
-				<Field
-					htmlFor='category-filter-kind'
-					label={copy.categoryFilterKind}>
-					<Select
-						id='category-filter-kind'
-						onChange={event => {
-							setFilterKind(event.currentTarget.value as CategoryFilter);
-						}}
-						size={SELECT_SIZE.SMALL}
-						value={filterKind}>
-						<option value={CATEGORY_FILTER.ALL}>{copy.categoryFilterAll}</option>
-						<option value={CATEGORY_KIND.EXPENSE}>{copy.transactionKindExpense}</option>
-						<option value={CATEGORY_KIND.INCOME}>{copy.transactionKindIncome}</option>
-					</Select>
-				</Field>
-			</div>
+			{hasFilter || categories.length > 0 ? (
+				<div className={styles.toolbar}>
+					<Field
+						htmlFor='category-filter-kind'
+						label={copy.categoryFilterKind}>
+						<Select
+							id='category-filter-kind'
+							onChange={event => {
+								setFilterKind(event.currentTarget.value as CategoryFilter);
+							}}
+							size={SELECT_SIZE.SMALL}
+							value={filterKind}>
+							<option value={CATEGORY_FILTER.ALL}>{copy.categoryFilterAll}</option>
+							<option value={CATEGORY_KIND.EXPENSE}>{copy.transactionKindExpense}</option>
+							<option value={CATEGORY_KIND.INCOME}>{copy.transactionKindIncome}</option>
+						</Select>
+					</Field>
+				</div>
+			) : undefined}
 			{listState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.categoryLoadError}</Notice>
 			) : listState === LOAD_STATE.LOADING && categories.length === 0 ? (
@@ -127,8 +130,8 @@ function CategoryList({
 				<Card bleed>
 					<EmptyState
 						icon={ICON_NAME.TAG}
-						title={copy.categoryEmptyTitle}>
-						{copy.categoryEmptyDescription}
+						title={hasFilter ? copy.categoryEmptyFilteredTitle : copy.categoryEmptyTitle}>
+						{hasFilter ? copy.categoryEmptyFilteredDescription : copy.categoryEmptyDescription}
 					</EmptyState>
 				</Card>
 			) : (

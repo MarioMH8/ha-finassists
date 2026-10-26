@@ -4,6 +4,7 @@ import { describe, expect, test } from 'bun:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import type { Category } from './categories-api';
+import { CATEGORY_KIND } from './categories-api';
 import { CATEGORY_FILTER, LOAD_STATE } from './categories-constants';
 import { CategoryForm, CategoryList } from './components';
 import type { CategoriesState } from './use-categories.hook';
@@ -59,7 +60,18 @@ function render(language: 'en' | 'es', element: React.ReactElement): string {
 
 describe('CategoryList', () => {
 	test('shows an empty state without categories', () => {
-		expect(render('en', <CategoryList {...state('en')} />)).toContain('No categories yet');
+		const markup = render('en', <CategoryList {...state('en')} />);
+
+		expect(markup).toContain('No categories yet');
+		expect(markup).not.toContain('category-filter-kind');
+	});
+
+	test('keeps the kind filter and explains a filtered empty state', () => {
+		const markup = render('en', <CategoryList {...state('en', { filterKind: CATEGORY_KIND.INCOME })} />);
+
+		expect(markup).toContain('No categories of this kind');
+		expect(markup).not.toContain('No categories yet');
+		expect(markup).toContain('category-filter-kind');
 	});
 
 	test('shows loading and error states', () => {
