@@ -1,6 +1,5 @@
 import { LANGUAGE } from '@app/i18n/language';
 import { App } from '@app/shell/app';
-import { clearIngressFrameOutline } from '@app/shell/ingress-frame';
 import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import { hydrateRoot } from 'react-dom/client';
 
@@ -19,5 +18,4 @@ if (rootElement) {
 			settings={settings}
 		/>
 	);
-	clearIngressFrameOutline();
 }

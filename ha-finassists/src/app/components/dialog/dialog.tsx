@@ -1,7 +1,6 @@
 import { Button, BUTTON_APPEARANCE, BUTTON_SIZE } from '@app/components/button';
 import { classNames } from '@app/components/class-names';
 import { Icon, ICON_NAME } from '@app/components/icon';
-import { clearIngressFrameOutline } from '@app/shell/ingress-frame';
 import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 
@@ -12,7 +11,7 @@ const DIALOG_TYPE = {
 	STANDARD: 'standard',
 } as const;
 
-const FALLBACK_FOCUS_SELECTOR = '#main-content';
+const FALLBACK_FOCUS_SELECTOR = '#page-title';
 
 type DialogType = (typeof DIALOG_TYPE)[keyof typeof DIALOG_TYPE];
 
@@ -39,13 +38,11 @@ function hasDialogFocus(activeElement: Element | null, dialog: HTMLDialogElement
 
 function restoreFocus(opener: HTMLElement | undefined, dialog: HTMLDialogElement): void {
 	requestAnimationFrame(() => {
-		focus();
 		if (opener?.isConnected === true) {
 			opener.focus();
 		} else if (hasDialogFocus(document.activeElement, dialog)) {
 			document.querySelector<HTMLElement>(FALLBACK_FOCUS_SELECTOR)?.focus();
 		}
-		clearIngressFrameOutline();
 	});
 }
 
