@@ -7,6 +7,7 @@ Fin Assist provides household financial management through Home Assistant.
 - **Test:** `bun run test`
 - **Type-check:** `bun run typecheck`
 - **Lint:** `bun run lint:fix`
+- **Comments:** only for non-obvious constraints or workarounds; rationale belongs in ADRs and task guides
 - **Changeset:** `bun changeset add` in every pull request that changes what users get
 
 ## Task guides
