@@ -39,7 +39,12 @@ function App({ language, settings }: AppProps): ReactElement {
 					className={styles['main-content']}
 					id='main-content'
 					tabIndex={-1}>
-					<h1 className={styles['visually-hidden']}>{settings.applicationName}</h1>
+					<h1
+						className={styles['visually-hidden']}
+						id='page-title'
+						tabIndex={-1}>
+						{settings.applicationName}
+					</h1>
 					{section === SECTION.TRANSACTIONS && (
 						<TransactionsManagement currencyCode={settings.currencyCode} />
 					)}

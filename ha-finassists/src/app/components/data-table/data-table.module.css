@@ -1,8 +1,13 @@
 .wrapper {
-  overflow-x: auto;
+  overflow: hidden;
   border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
   border-radius: var(--ha-border-radius-lg);
   background: var(--ha-color-surface-default);
+}
+
+.scroller {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .header {
@@ -38,6 +43,7 @@
   padding: var(--ha-space-3) var(--ha-space-4);
   border-bottom: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .table tbody tr:last-child td {

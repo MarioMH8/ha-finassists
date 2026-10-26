@@ -143,11 +143,6 @@
 }
 
 @media (max-width: 600px) {
-  .toolbar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .footer {
     align-items: flex-start;
     flex-direction: column;

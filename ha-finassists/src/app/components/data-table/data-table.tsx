@@ -29,12 +29,14 @@ function DataTable({ caption, children, className, header, wrapperClassName, ...
 	return (
 		<div className={classNames(styles.wrapper, wrapperClassName)}>
 			{header ? <div className={styles.header}>{header}</div> : undefined}
-			<table
-				className={classNames(styles.table, className)}
-				{...props}>
-				{caption ? <caption className={styles.caption}>{caption}</caption> : undefined}
-				{children}
-			</table>
+			<div className={styles.scroller}>
+				<table
+					className={classNames(styles.table, className)}
+					{...props}>
+					{caption ? <caption className={styles.caption}>{caption}</caption> : undefined}
+					{children}
+				</table>
+			</div>
 		</div>
 	);
 }
