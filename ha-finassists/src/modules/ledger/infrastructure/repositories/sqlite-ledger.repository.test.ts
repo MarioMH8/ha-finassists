@@ -2,7 +2,9 @@ import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 
+import { CategoryMother } from '../../domain/category.mother';
 import { TransactionMother } from '../../domain/transaction.mother';
+import { SqliteCategoryRepository } from './sqlite-category.repository';
 import { SqliteLedgerRepository } from './sqlite-ledger.repository';
 
 describe('SqliteLedgerRepository', () => {
@@ -63,6 +65,20 @@ describe('SqliteLedgerRepository', () => {
 
 		expect(groceries.items.map(item => item.id)).toEqual(['a']);
 		expect(wildcard.items.map(item => item.id)).toEqual(['c']);
+	});
+
+	it('filters by category', async () => {
+		const categoryRepository = new SqliteCategoryRepository(database);
+		await categoryRepository.save(CategoryMother.create({ id: 'category-1', name: 'Food' }));
+		await categoryRepository.save(CategoryMother.create({ id: 'category-2', name: 'Travel' }));
+		await repository.save(TransactionMother.create({ categoryId: 'category-1', id: 'a' }));
+		await repository.save(TransactionMother.create({ categoryId: 'category-2', id: 'b' }));
+		await repository.save(TransactionMother.create({ categoryId: null, id: 'c' }));
+
+		const filtered = await repository.search({ categoryId: 'category-1' });
+
+		expect(filtered.items.map(item => item.id)).toEqual(['a']);
+		expect(filtered.total).toBe(1);
 	});
 
 	it('paginates while reporting the total', async () => {

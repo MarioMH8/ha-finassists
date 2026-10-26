@@ -1,12 +1,16 @@
 import { Container } from '@inferdi/inferdi';
 import {
+	CreateCategory,
 	CreateTransaction,
+	DeleteCategory,
 	DeleteTransaction,
 	DeleteTransactions,
+	ListCategories,
 	ListTransactions,
+	UpdateCategory,
 	UpdateTransaction,
 } from '@modules/ledger/application';
-import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
+import { SqliteCategoryRepository, SqliteLedgerRepository } from '@modules/ledger/infrastructure';
 import {
 	AuthenticateSystemCredential,
 	ExchangeSystemCredential,
@@ -29,6 +33,7 @@ function buildRepositories(database: Database, { currencyCode }: AppContainerOpt
 	return new Container()
 		.registerValue('currencyCode', currencyCode)
 		.registerValue('database', database)
+		.registerClass('categoryRepository', SqliteCategoryRepository, ['database'])
 		.registerClass('ledgerRepository', SqliteLedgerRepository, ['database'])
 		.registerClass('systemCredentialRepository', SqliteSystemCredentialRepository, ['database'])
 		.registerClass('systemCredentialService', WebCryptoSystemCredentialService, [])
@@ -69,13 +74,23 @@ function buildLedgerUseCases(container: ReturnType<typeof buildCredentialUseCase
 	return container.registerFactory(
 		'ledgerUseCases',
 		c => ({
-			create: new CreateTransaction(c.get('ledgerRepository'), c.get('currencyCode')),
+			categories: {
+				create: new CreateCategory(c.get('categoryRepository')),
+				delete: new DeleteCategory(c.get('categoryRepository')),
+				list: new ListCategories(c.get('categoryRepository')),
+				update: new UpdateCategory(c.get('categoryRepository')),
+			},
+			create: new CreateTransaction(
+				c.get('ledgerRepository'),
+				c.get('categoryRepository'),
+				c.get('currencyCode')
+			),
 			delete: new DeleteTransaction(c.get('ledgerRepository')),
 			deleteMany: new DeleteTransactions(c.get('ledgerRepository')),
 			list: new ListTransactions(c.get('ledgerRepository')),
-			update: new UpdateTransaction(c.get('ledgerRepository')),
+			update: new UpdateTransaction(c.get('ledgerRepository'), c.get('categoryRepository')),
 		}),
-		['ledgerRepository', 'currencyCode']
+		['categoryRepository', 'ledgerRepository', 'currencyCode']
 	);
 }
 

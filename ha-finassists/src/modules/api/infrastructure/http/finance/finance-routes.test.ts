@@ -5,7 +5,7 @@ import {
 	ListTransactions,
 	UpdateTransaction,
 } from '@modules/ledger/application';
-import { SqliteLedgerRepository } from '@modules/ledger/infrastructure';
+import { SqliteCategoryRepository, SqliteLedgerRepository } from '@modules/ledger/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
 import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modules/tokens/infrastructure';
@@ -54,16 +54,18 @@ function createMigratedDatabase(): Database {
 }
 
 function setup(): { useCases: FinanceUseCases } {
-	const repository = new SqliteLedgerRepository(createMigratedDatabase());
+	const database = createMigratedDatabase();
+	const repository = new SqliteLedgerRepository(database);
+	const categoryRepository = new SqliteCategoryRepository(database);
 
 	return {
 		useCases: {
 			ledger: {
-				create: new CreateTransaction(repository, 'EUR'),
+				create: new CreateTransaction(repository, categoryRepository, 'EUR'),
 				delete: new DeleteTransaction(repository),
 				deleteMany: new DeleteTransactions(repository),
 				list: new ListTransactions(repository),
-				update: new UpdateTransaction(repository),
+				update: new UpdateTransaction(repository, categoryRepository),
 			},
 		},
 	};
