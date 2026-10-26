@@ -1,6 +1,7 @@
 import { Button, BUTTON_APPEARANCE, BUTTON_SIZE } from '@app/components/button';
 import { classNames } from '@app/components/class-names';
 import { Icon, ICON_NAME } from '@app/components/icon';
+import { clearIngressFrameOutline } from '@app/shell/ingress-frame';
 import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 
@@ -10,6 +11,8 @@ const DIALOG_TYPE = {
 	ALERT: 'alert',
 	STANDARD: 'standard',
 } as const;
+
+const FALLBACK_FOCUS_SELECTOR = '#main-content';
 
 type DialogType = (typeof DIALOG_TYPE)[keyof typeof DIALOG_TYPE];
 
@@ -23,6 +26,40 @@ interface DialogProps {
 	open: boolean;
 	title: ReactNode;
 	type?: DialogType;
+}
+
+/*
+ * WebKit can leave focus on the parent page when a native dialog closes. Moving
+ * it back inside this document keeps keyboard navigation and the Ingress iframe
+ * outline in the state the app expects.
+ */
+function hasDialogFocus(activeElement: Element | null, dialog: HTMLDialogElement): boolean {
+	return (
+		activeElement === null ||
+		activeElement === document.body ||
+		activeElement === document.documentElement ||
+		dialog.contains(activeElement)
+	);
+}
+
+function restoreFocus(opener: HTMLElement | undefined, dialog: HTMLDialogElement): void {
+	requestAnimationFrame(() => {
+		focus();
+		if (opener?.isConnected === true) {
+			opener.focus();
+		} else if (hasDialogFocus(document.activeElement, dialog)) {
+			/*
+			 * A list update may already have moved focus to the next row, so the
+			 * fallback only applies when nothing else outside the dialog holds it.
+			 */
+			document.querySelector<HTMLElement>(FALLBACK_FOCUS_SELECTOR)?.focus();
+		}
+		/*
+		 * Moving focus back lets Home Assistant paint the iframe outline again,
+		 * so clear it once focus is inside this document.
+		 */
+		clearIngressFrameOutline();
+	});
 }
 
 /*
@@ -42,6 +79,7 @@ function Dialog({
 	type = DIALOG_TYPE.STANDARD,
 }: DialogProps): ReactElement {
 	const dialogReference = useRef<HTMLDialogElement>(null);
+	const openerReference = useRef<HTMLElement | undefined>(undefined);
 	const titleId = `${id}-title`;
 	const descriptionId = `${id}-description`;
 
@@ -51,12 +89,34 @@ function Dialog({
 			return;
 		}
 		if (open && !dialog.open) {
+			const activeElement = document.activeElement;
+			openerReference.current =
+				activeElement instanceof HTMLElement && activeElement !== document.body ? activeElement : undefined;
 			dialog.showModal();
 			dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
 		} else if (!open && dialog.open) {
 			dialog.close();
+			const opener = openerReference.current;
+			openerReference.current = undefined;
+			restoreFocus(opener, dialog);
 		}
 	}, [open]);
+
+	useEffect(() => {
+		const dialog = dialogReference.current;
+
+		return () => {
+			/*
+			 * The passive cleanup runs after the ref is detached, so the dialog
+			 * captured at mount is the only way to tell whether it was still open.
+			 */
+			if (!dialog?.open) {
+				return;
+			}
+			dialog.close();
+			restoreFocus(openerReference.current, dialog);
+		};
+	}, []);
 
 	return (
 		<dialog
@@ -72,7 +132,16 @@ function Dialog({
 					onClose();
 				}
 			}}
-			onClose={onClose}
+			onClose={() => {
+				/*
+				 * Calling `dialog.close()` emits a native close event. The `open`
+				 * prop already asked for that close, so only a close the app did
+				 * not initiate should reach `onClose`.
+				 */
+				if (open) {
+					onClose();
+				}
+			}}
 			ref={dialogReference}>
 			<header className={styles.header}>
 				{type === DIALOG_TYPE.STANDARD ? (
