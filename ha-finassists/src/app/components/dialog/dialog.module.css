@@ -119,12 +119,14 @@
 
 @media all and (max-width: 450px), all and (max-height: 500px) {
   .dialog:not(.alert) {
+    inset: 0;
     width: 100%;
     max-width: none;
     height: 100vh;
     height: 100dvh;
     max-height: none;
-    padding-block: var(--safe-area-inset-top) var(--safe-area-inset-bottom);
+    margin: 0;
+    padding-block: 0 var(--safe-area-inset-bottom);
     padding-inline: var(--safe-area-inset-left) var(--safe-area-inset-right);
     border-radius: 0;
   }
