@@ -25,7 +25,7 @@ function Document({ children, developmentMode, language, settings }: DocumentPro
 			<head>
 				<meta charSet='utf-8' />
 				<meta
-					content='width=device-width, initial-scale=1'
+					content='width=device-width, initial-scale=1, viewport-fit=cover'
 					name='viewport'
 				/>
 				<meta

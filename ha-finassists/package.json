@@ -9,8 +9,8 @@
 		"build": "bun run build:server && bun run build:web",
 		"build:server": "mkdir -p dist && bun build --target=bun --packages=external --outfile=dist/server.js src/server.ts",
 		"build:web": "bun run build:web:client && bun run build:web:renderer && cp dist/server-renderer.css dist/styles.css",
-		"build:web:client": "mkdir -p dist && bun build --target=browser --format=esm --minify --outdir=dist src/app/client.tsx",
-		"build:web:renderer": "mkdir -p dist && bun build --target=bun --format=esm --packages=bundle --outdir=dist src/app/shell/server-renderer.tsx",
+		"build:web:client": "mkdir -p dist && bun build --target=browser --format=esm --minify --external='/static/*' --outdir=dist src/app/client.tsx",
+		"build:web:renderer": "mkdir -p dist && bun build --target=bun --format=esm --packages=bundle --external='/static/*' --outdir=dist src/app/shell/server-renderer.tsx",
 		"dev": "NODE_ENV=development bun --watch src/server.ts",
 		"start": "NODE_ENV=production bun run dist/server.js",
 		"typecheck": "tsc -b .."

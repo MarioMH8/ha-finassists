@@ -7,11 +7,13 @@
 .select {
   width: 100%;
   min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
   border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
   border-radius: var(--select-border-radius, var(--ha-border-radius-md));
   background: var(--ha-color-surface-default);
+  box-shadow: none;
   color: var(--ha-color-text-primary);
-  appearance: none;
   cursor: pointer;
   transition: border-color var(--ha-animation-duration-fast) ease-out;
 }
@@ -50,7 +52,7 @@
 
 .select:focus-visible {
   border-color: var(--ha-color-border-primary-loud);
-  outline-offset: 0;
+  outline: none;
 }
 
 .select[aria-invalid='true'] {
@@ -61,4 +63,15 @@
   background: var(--ha-color-form-background-disabled);
   color: var(--ha-color-text-disabled);
   cursor: not-allowed;
+}
+
+/*
+ * iOS zooms the page when a control smaller than 16px receives focus. Raise
+ * every size to the body-large size on touch pointers instead of blocking
+ * user scaling.
+ */
+@media (pointer: coarse) {
+  .select {
+    font-size: var(--ha-font-size-l);
+  }
 }

@@ -1,3 +1,29 @@
+/* Home Assistant ships Roboto from its frontend static assets, which the
+   Ingress iframe resolves against the Home Assistant origin. Prefer an
+   installed copy, then the Home Assistant files. In local development without
+   Home Assistant the URL 404s and the font stack falls back to Noto or the
+   system sans-serif. */
+@font-face {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Roboto'),
+    local('Roboto Regular'),
+    url('/static/fonts/roboto/Roboto-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    local('Roboto Medium'),
+    url('/static/fonts/roboto/Roboto-Medium.woff2') format('woff2');
+}
+
 * {
   box-sizing: border-box;
 }
@@ -161,6 +187,15 @@
   --ha-animation-duration-normal: 250ms;
   --ha-animation-duration-slow: 350ms;
 
+  /* --- Core: environment -------------------------------------------- */
+  /* The Home Assistant app WebViews report safe-area insets for the notch
+     and the home indicator. Browsers without support resolve to 0px, so
+     layouts can always add the inset without a feature query. */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+
   /* --- Semantic: color (light) -------------------------------------- */
   --ha-color-focus: var(--ha-color-neutral-60);
 
@@ -297,6 +332,7 @@
   --ha-alert-padding: var(--ha-space-2);
   --ha-alert-icon-size: 24px;
   --ha-dialog-border-radius: var(--ha-border-radius-3xl);
+  --ha-dialog-scrim-background: rgb(0 0 0 / 25%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -406,6 +442,8 @@
 html {
   font-family: var(--ha-font-family-body);
   font-size: 14px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -448,6 +486,14 @@ h4 {
 ::selection {
   background: var(--ha-color-fill-primary-normal-resting);
   color: var(--ha-color-on-primary-normal);
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
 }
 
 button,
