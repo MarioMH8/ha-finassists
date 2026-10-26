@@ -60,6 +60,19 @@
   overflow-wrap: anywhere;
 }
 
+.labelSkeleton {
+  width: var(--ha-space-16);
+}
+
+.valueSkeleton {
+  width: 55%;
+  height: calc(var(--ha-font-size-2xl) * var(--ha-line-height-condensed));
+}
+
+.deltaSkeleton {
+  width: var(--ha-space-20);
+}
+
 .delta {
   display: flex;
   flex-wrap: wrap;
@@ -150,6 +163,10 @@
   .value {
     font-size: var(--ha-font-size-m);
     line-height: var(--ha-line-height-condensed);
+  }
+
+  .valueSkeleton {
+    height: calc(var(--ha-font-size-m) * var(--ha-line-height-condensed));
   }
 
   .delta {

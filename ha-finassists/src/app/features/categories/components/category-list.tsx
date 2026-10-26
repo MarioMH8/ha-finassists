@@ -10,6 +10,7 @@ import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
 import { Select, SELECT_SIZE } from '@app/components/select';
+import { LoadingStatus, SkeletonTableBody } from '@app/components/skeleton';
 import { CATEGORY_KIND } from '@app/features/categories/categories-api';
 import type { CategoryFilter } from '@app/features/categories/categories-constants';
 import { CATEGORY_FILTER, LOAD_STATE } from '@app/features/categories/categories-constants';
@@ -106,6 +107,16 @@ function CategoryList({
 			</Button>
 		</>
 	);
+	const tableHead = (
+		<thead>
+			<tr>
+				<DataHeaderCell>{copy.categoryColumnName}</DataHeaderCell>
+				<DataHeaderCell>{copy.categoryColumnKind}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.categoryColumnTransactions}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.categoryColumnActions}</DataHeaderCell>
+			</tr>
+		</thead>
+	);
 
 	return (
 		<section
@@ -125,7 +136,13 @@ function CategoryList({
 			{listState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.categoryLoadError}</Notice>
 			) : listState === LOAD_STATE.LOADING && categories.length === 0 ? (
-				<Notice>{copy.categoryLoading}</Notice>
+				<>
+					<LoadingStatus label={copy.categoryLoading} />
+					<DataTable header={filterToolbar}>
+						{tableHead}
+						<SkeletonTableBody columns={4} />
+					</DataTable>
+				</>
 			) : categories.length === 0 ? (
 				<Card bleed>
 					{hasFilter ? <div className={styles.cardHeader}>{filterToolbar}</div> : undefined}
@@ -137,14 +154,7 @@ function CategoryList({
 				</Card>
 			) : (
 				<DataTable header={filterToolbar}>
-					<thead>
-						<tr>
-							<DataHeaderCell>{copy.categoryColumnName}</DataHeaderCell>
-							<DataHeaderCell>{copy.categoryColumnKind}</DataHeaderCell>
-							<DataHeaderCell align={DATA_ALIGN.END}>{copy.categoryColumnTransactions}</DataHeaderCell>
-							<DataHeaderCell align={DATA_ALIGN.END}>{copy.categoryColumnActions}</DataHeaderCell>
-						</tr>
-					</thead>
+					{tableHead}
 					<tbody>
 						{categories.map(category => (
 							<tr key={category.id}>

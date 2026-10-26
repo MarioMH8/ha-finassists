@@ -118,6 +118,7 @@ describe('ScheduledTransactionsManagement', () => {
 
 		expect(markup).toContain('Loading forecast…');
 		expect(markup).toContain('Loading scheduled movements…');
+		expect(markup.match(/data-skeleton="rows"/g) ?? []).toHaveLength(1);
 	});
 });
 
@@ -142,12 +143,13 @@ describe('ScheduledSummary', () => {
 	});
 
 	test('shows loading and error states', () => {
-		expect(
-			render(
-				'en',
-				<ScheduledSummary {...state('en', { forecast: undefined, forecastState: LOAD_STATE.LOADING })} />
-			)
-		).toContain('Loading forecast…');
+		const loadingMarkup = render(
+			'en',
+			<ScheduledSummary {...state('en', { forecast: undefined, forecastState: LOAD_STATE.LOADING })} />
+		);
+
+		expect(loadingMarkup).toContain('Loading forecast…');
+		expect(loadingMarkup).toContain('data-skeleton="text"');
 		expect(render('es', <ScheduledSummary {...state('es', { forecastState: LOAD_STATE.ERROR })} />)).toContain(
 			'No se pudo cargar la previsión de programados.'
 		);
@@ -203,9 +205,13 @@ describe('ScheduledTransactionList', () => {
 	});
 
 	test('shows loading and error states', () => {
-		expect(
-			render('en', <ScheduledTransactionList {...state('en', { listState: LOAD_STATE.LOADING })} />)
-		).toContain('Loading scheduled movements…');
+		const loadingMarkup = render(
+			'en',
+			<ScheduledTransactionList {...state('en', { listState: LOAD_STATE.LOADING })} />
+		);
+
+		expect(loadingMarkup).toContain('Loading scheduled movements…');
+		expect(loadingMarkup).toContain('data-skeleton="rows"');
 		expect(render('es', <ScheduledTransactionList {...state('es', { listState: LOAD_STATE.ERROR })} />)).toContain(
 			'No se pudieron cargar los movimientos programados.'
 		);

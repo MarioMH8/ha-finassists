@@ -4,6 +4,7 @@ import { classNames } from '@app/components/class-names';
 import { Icon, ICON_NAME } from '@app/components/icon';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
+import { LoadingStatus, Skeleton } from '@app/components/skeleton';
 import { formatMinorUnits } from '@app/features/transactions/transaction-amount';
 import { LOAD_STATE } from '@app/features/transactions/transactions-constants';
 import type { TransactionsState } from '@app/features/transactions/use-transactions.hook';
@@ -39,6 +40,8 @@ function deltaArrow(delta: number): string {
 
 	return delta > 0 ? '↑' : '↓';
 }
+
+const SKELETON_METRICS = ['income', 'expense', 'net'] as const;
 
 function MonthSummary({ copy, currencyCode, language, summary, summaryState }: MonthSummaryProps): ReactElement {
 	const [isChartOpen, setIsChartOpen] = useState(false);
@@ -103,8 +106,6 @@ function MonthSummary({ copy, currencyCode, language, summary, summaryState }: M
 			/>
 			{summaryState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.monthSummaryError}</Notice>
-			) : !summary && summaryState === LOAD_STATE.LOADING ? (
-				<Notice>{copy.monthSummaryLoading}</Notice>
 			) : summary ? (
 				<>
 					<dl className={styles.kpis}>
@@ -170,7 +171,22 @@ function MonthSummary({ copy, currencyCode, language, summary, summaryState }: M
 					</section>
 				</>
 			) : (
-				<Notice>{copy.monthSummaryLoading}</Notice>
+				<>
+					<LoadingStatus label={copy.monthSummaryLoading} />
+					<div
+						aria-hidden='true'
+						className={styles.kpis}>
+						{SKELETON_METRICS.map(metric => (
+							<div
+								className={styles.kpi}
+								key={metric}>
+								<Skeleton className={styles.labelSkeleton} />
+								<Skeleton className={styles.valueSkeleton} />
+								<Skeleton className={styles.deltaSkeleton} />
+							</div>
+						))}
+					</div>
+				</>
 			)}
 		</Card>
 	);

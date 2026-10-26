@@ -11,6 +11,7 @@ import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
 import { Select, SELECT_SIZE } from '@app/components/select';
+import { LoadingStatus, SkeletonTableBody } from '@app/components/skeleton';
 import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
 import { formatDate, formatMinorUnits } from '@app/features/transactions/transaction-amount';
 import { TRANSACTION_KIND } from '@app/features/transactions/transactions-api';
@@ -297,6 +298,27 @@ function TransactionList({
 			</Button>
 		</>
 	);
+	const tableHead = (
+		<thead>
+			<tr>
+				<DataHeaderCell className={styles.selectionCell}>
+					<input
+						aria-label={copy.transactionSelectAll}
+						checked={isAllSelected}
+						className={styles.checkbox}
+						onChange={toggleAllSelected}
+						ref={selectAllReference}
+						type='checkbox'
+					/>
+				</DataHeaderCell>
+				<DataHeaderCell>{copy.transactionColumnDate}</DataHeaderCell>
+				<DataHeaderCell>{copy.transactionColumnDescription}</DataHeaderCell>
+				<DataHeaderCell>{copy.transactionColumnCategory}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.transactionColumnAmount}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.transactionColumnActions}</DataHeaderCell>
+			</tr>
+		</thead>
+	);
 
 	return (
 		<section
@@ -314,7 +336,13 @@ function TransactionList({
 				{listState === LOAD_STATE.ERROR ? (
 					<Notice tone={NOTICE_TONE.ERROR}>{copy.transactionLoadError}</Notice>
 				) : listState === LOAD_STATE.LOADING && transactions.length === 0 ? (
-					<Notice>{copy.transactionLoading}</Notice>
+					<>
+						<LoadingStatus label={copy.transactionLoading} />
+						<DataTable header={tableToolbar}>
+							{tableHead}
+							<SkeletonTableBody columns={6} />
+						</DataTable>
+					</>
 				) : transactions.length === 0 ? (
 					<Card bleed>
 						<EmptyState
@@ -333,29 +361,7 @@ function TransactionList({
 						<DataTable
 							aria-busy={isListBusy || undefined}
 							header={selectedCount > 0 ? selectionToolbar : tableToolbar}>
-							<thead>
-								<tr>
-									<DataHeaderCell className={styles.selectionCell}>
-										<input
-											aria-label={copy.transactionSelectAll}
-											checked={isAllSelected}
-											className={styles.checkbox}
-											onChange={toggleAllSelected}
-											ref={selectAllReference}
-											type='checkbox'
-										/>
-									</DataHeaderCell>
-									<DataHeaderCell>{copy.transactionColumnDate}</DataHeaderCell>
-									<DataHeaderCell>{copy.transactionColumnDescription}</DataHeaderCell>
-									<DataHeaderCell>{copy.transactionColumnCategory}</DataHeaderCell>
-									<DataHeaderCell align={DATA_ALIGN.END}>
-										{copy.transactionColumnAmount}
-									</DataHeaderCell>
-									<DataHeaderCell align={DATA_ALIGN.END}>
-										{copy.transactionColumnActions}
-									</DataHeaderCell>
-								</tr>
-							</thead>
+							{tableHead}
 							<tbody ref={listReference}>
 								{transactions.map(transaction => {
 									const description = transaction.description || copy.transactionNoDescription;

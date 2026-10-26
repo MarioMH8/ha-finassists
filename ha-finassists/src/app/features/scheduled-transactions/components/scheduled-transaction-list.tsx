@@ -8,6 +8,7 @@ import { ICON_NAME } from '@app/components/icon';
 import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
+import { LoadingStatus, SkeletonTableBody } from '@app/components/skeleton';
 import { recurrenceLabel } from '@app/features/scheduled-transactions/scheduled-transaction-recurrence';
 import type { ScheduledTransactionsState } from '@app/features/scheduled-transactions/use-scheduled-transactions.hook';
 import { formatDate, formatMinorUnits } from '@app/features/transactions/transaction-amount';
@@ -93,6 +94,20 @@ function ScheduledTransactionList({
 		</>
 	);
 
+	const tableHead = (
+		<thead>
+			<tr>
+				<DataHeaderCell>{copy.scheduledColumnNextDate}</DataHeaderCell>
+				<DataHeaderCell>{copy.scheduledColumnDescription}</DataHeaderCell>
+				<DataHeaderCell>{copy.scheduledColumnCategory}</DataHeaderCell>
+				<DataHeaderCell>{copy.scheduledColumnRecurrence}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.scheduledColumnAmount}</DataHeaderCell>
+				<DataHeaderCell>{copy.scheduledColumnStatus}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.scheduledColumnActions}</DataHeaderCell>
+			</tr>
+		</thead>
+	);
+
 	return (
 		<section
 			aria-labelledby='scheduled-list-title'
@@ -106,7 +121,13 @@ function ScheduledTransactionList({
 			{listState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.scheduledLoadError}</Notice>
 			) : listState === LOAD_STATE.LOADING && schedules.length === 0 ? (
-				<Notice>{copy.scheduledLoading}</Notice>
+				<>
+					<LoadingStatus label={copy.scheduledLoading} />
+					<DataTable>
+						{tableHead}
+						<SkeletonTableBody columns={7} />
+					</DataTable>
+				</>
 			) : schedules.length === 0 ? (
 				<Card bleed>
 					<EmptyState
@@ -117,17 +138,7 @@ function ScheduledTransactionList({
 				</Card>
 			) : (
 				<DataTable aria-busy={listState === LOAD_STATE.LOADING || undefined}>
-					<thead>
-						<tr>
-							<DataHeaderCell>{copy.scheduledColumnNextDate}</DataHeaderCell>
-							<DataHeaderCell>{copy.scheduledColumnDescription}</DataHeaderCell>
-							<DataHeaderCell>{copy.scheduledColumnCategory}</DataHeaderCell>
-							<DataHeaderCell>{copy.scheduledColumnRecurrence}</DataHeaderCell>
-							<DataHeaderCell align={DATA_ALIGN.END}>{copy.scheduledColumnAmount}</DataHeaderCell>
-							<DataHeaderCell>{copy.scheduledColumnStatus}</DataHeaderCell>
-							<DataHeaderCell align={DATA_ALIGN.END}>{copy.scheduledColumnActions}</DataHeaderCell>
-						</tr>
-					</thead>
+					{tableHead}
 					<tbody>
 						{schedules.map(schedule => {
 							const isBusy = busyScheduleId === schedule.id;

@@ -159,9 +159,10 @@ describe('TransactionList', () => {
 	});
 
 	test('shows loading and error states', () => {
-		expect(render('en', <TransactionList {...state('en', { listState: LOAD_STATE.LOADING })} />)).toContain(
-			'Loading transactions…'
-		);
+		const loadingMarkup = render('en', <TransactionList {...state('en', { listState: LOAD_STATE.LOADING })} />);
+
+		expect(loadingMarkup).toContain('Loading transactions…');
+		expect(loadingMarkup).toContain('data-skeleton="rows"');
 		expect(render('es', <TransactionList {...state('es', { listState: LOAD_STATE.ERROR })} />)).toContain(
 			'No se pudieron cargar las transacciones.'
 		);

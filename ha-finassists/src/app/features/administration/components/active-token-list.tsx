@@ -7,6 +7,7 @@ import { List, ListItem } from '@app/components/list';
 import { Menu, MENU_ITEM_TONE } from '@app/components/menu';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
+import { LoadingStatus, Skeleton, SKELETON_SHAPE } from '@app/components/skeleton';
 import type { AdministrationState } from '@app/features/administration/use-administration.hook';
 import { formatTokenDate } from '@app/features/administration/use-administration.hook';
 import { formatTokenCount, interpolate } from '@app/i18n';
@@ -34,6 +35,8 @@ type ActiveTokenListProps = Pick<
 	| 'tokenListReference'
 	| 'tokens'
 >;
+
+const SKELETON_TOKENS = ['token-1', 'token-2', 'token-3'];
 
 function ActiveTokenList({
 	cancelRevoke,
@@ -126,7 +129,21 @@ function ActiveTokenList({
 						{listError ? (
 							<Notice tone={NOTICE_TONE.ERROR}>{copy.errorLoadingTokens}</Notice>
 						) : isLoading && tokens.length === 0 ? (
-							<Notice>{copy.loadingTokens}</Notice>
+							<>
+								<LoadingStatus label={copy.loadingTokens} />
+								<List aria-hidden='true'>
+									{SKELETON_TOKENS.map(token => (
+										<ListItem
+											actions={<Skeleton shape={SKELETON_SHAPE.CIRCLE} />}
+											key={token}>
+											<div className={styles.details}>
+												<Skeleton className={styles.nameSkeleton} />
+												<Skeleton className={styles.metaSkeleton} />
+											</div>
+										</ListItem>
+									))}
+								</List>
+							</>
 						) : tokens.length === 0 ? (
 							<EmptyState
 								icon={ICON_NAME.WALLET}
