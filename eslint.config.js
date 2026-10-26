@@ -102,6 +102,50 @@ const config = await hexadrop(
 			'ha-finassists/src/modules/ledger/infrastructure/**/*.ts',
 		],
 		rules: { 'unicorn/no-null': 'off' },
+	},
+	{
+		/*
+		 * Stateless server helpers live in static classes. The React bundle, tests
+		 * and the process/composition entrypoints stay function-based, and the
+		 * root tooling files are outside this scope.
+		 *
+		 * `Program > FunctionDeclaration` also catches `function foo() {}` paired
+		 * with `export { foo }`, which an export-only selector would miss.
+		 */
+		files: ['ha-finassists/src/**/*.ts'],
+		ignores: [
+			'ha-finassists/src/app/**',
+			'ha-finassists/src/**/*.test.ts',
+			'ha-finassists/src/**/*.test.tsx',
+			'ha-finassists/src/server.ts',
+			'ha-finassists/src/app-bootstrap.ts',
+			'ha-finassists/src/app-container.ts',
+		],
+		rules: {
+			'no-restricted-syntax': [
+				'error',
+				// Kept from the shared preset: replacing the rule entry would drop them.
+				'DebuggerStatement',
+				'LabeledStatement',
+				'WithStatement',
+				'TSEnumDeclaration[const=true]',
+				'TSExportAssignment',
+				...[
+					'Program > FunctionDeclaration',
+					'Program > VariableDeclaration > VariableDeclarator > ArrowFunctionExpression',
+					'Program > VariableDeclaration > VariableDeclarator > FunctionExpression',
+					'ExportNamedDeclaration > FunctionDeclaration',
+					'ExportNamedDeclaration > VariableDeclaration > VariableDeclarator > ArrowFunctionExpression',
+					'ExportNamedDeclaration > VariableDeclaration > VariableDeclarator > FunctionExpression',
+					'ExportDefaultDeclaration > FunctionDeclaration',
+					'ExportDefaultDeclaration > ArrowFunctionExpression',
+					'ExportDefaultDeclaration > FunctionExpression',
+				].map(selector => ({
+					message: 'Prefer a class with static methods over an exported standalone function.',
+					selector,
+				})),
+			],
+		},
 	}
 );
 

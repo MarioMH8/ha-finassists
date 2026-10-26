@@ -3,10 +3,6 @@ import { z } from 'zod';
 
 import { JSON_NULL } from './http-responses';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== JSON_NULL && !Array.isArray(value);
-}
-
 class RequestParsing {
 	private constructor() {}
 
@@ -76,7 +72,7 @@ class RequestParsing {
 		} catch {
 			throw new TypeError('Invalid JSON body');
 		}
-		if (!isRecord(body)) {
+		if (!this.isRecord(body)) {
 			throw new TypeError('Request body must be a JSON object');
 		}
 
@@ -93,6 +89,10 @@ class RequestParsing {
 		const error = `${name} must be an array of strings`;
 
 		return z.array(z.string({ error }), { error });
+	}
+
+	private static isRecord(value: unknown): value is Record<string, unknown> {
+		return typeof value === 'object' && value !== JSON_NULL && !Array.isArray(value);
 	}
 }
 

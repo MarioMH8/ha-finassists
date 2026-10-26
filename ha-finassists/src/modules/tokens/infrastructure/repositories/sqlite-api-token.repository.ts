@@ -11,24 +11,28 @@ interface TokenRow {
 	token_prefix: string;
 }
 
-function where(criteria: ApiTokenCriteria): { parameters: SQLQueryBindings[]; sql: string } {
-	const clauses: string[] = [];
-	const parameters: SQLQueryBindings[] = [];
+class SqliteApiTokenQueries {
+	private constructor() {}
 
-	if (criteria.id !== undefined) {
-		clauses.push('id = ?');
-		parameters.push(criteria.id);
-	}
-	if (criteria.ownerId !== undefined) {
-		clauses.push('owner_id = ?');
-		parameters.push(criteria.ownerId);
-	}
-	if (criteria.secretHash !== undefined) {
-		clauses.push('secret_hash = ?');
-		parameters.push(criteria.secretHash);
-	}
+	static where(criteria: ApiTokenCriteria): { parameters: SQLQueryBindings[]; sql: string } {
+		const clauses: string[] = [];
+		const parameters: SQLQueryBindings[] = [];
 
-	return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
+		if (criteria.id !== undefined) {
+			clauses.push('id = ?');
+			parameters.push(criteria.id);
+		}
+		if (criteria.ownerId !== undefined) {
+			clauses.push('owner_id = ?');
+			parameters.push(criteria.ownerId);
+		}
+		if (criteria.secretHash !== undefined) {
+			clauses.push('secret_hash = ?');
+			parameters.push(criteria.secretHash);
+		}
+
+		return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
+	}
 }
 
 export class SqliteApiTokenRepository implements ApiTokenRepository {
@@ -58,7 +62,7 @@ export class SqliteApiTokenRepository implements ApiTokenRepository {
 	}
 
 	async search(criteria: ApiTokenCriteria = {}): Promise<ApiToken[]> {
-		const filter = where(criteria);
+		const filter = SqliteApiTokenQueries.where(criteria);
 		const rows = this.database
 			.query<TokenRow, SQLQueryBindings[]>(
 				`SELECT id, owner_id, name, token_prefix, secret_hash, created_at FROM api_tokens${filter.sql} ORDER BY created_at DESC`
