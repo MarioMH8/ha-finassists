@@ -1,3 +1,29 @@
+/* Home Assistant ships Roboto from its frontend static assets, which the
+   Ingress iframe resolves against the Home Assistant origin. Prefer an
+   installed copy, then the Home Assistant files. In local development without
+   Home Assistant the URL 404s and the font stack falls back to Noto or the
+   system sans-serif. */
+@font-face {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Roboto'),
+    local('Roboto Regular'),
+    url('/static/fonts/roboto/Roboto-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    local('Roboto Medium'),
+    url('/static/fonts/roboto/Roboto-Medium.woff2') format('woff2');
+}
+
 * {
   box-sizing: border-box;
 }

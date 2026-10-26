@@ -55,6 +55,12 @@ async function buildBundle(
 ): Promise<{ script: string; stylesheet: string }> {
 	const result = await Bun.build({
 		entrypoints: [entrypoint.pathname],
+		/*
+		 * Home Assistant serves Roboto from its own `/static/fonts` path, which
+		 * the Ingress iframe resolves against the Home Assistant origin. Keep
+		 * that URL external so the CSS bundler does not look for an app asset.
+		 */
+		external: ['/static/*'],
 		format: 'esm',
 		jsx: { runtime: 'automatic' },
 		minify: target === 'browser',
