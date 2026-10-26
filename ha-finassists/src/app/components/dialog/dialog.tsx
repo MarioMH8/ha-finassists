@@ -1,6 +1,7 @@
 import { Button, BUTTON_APPEARANCE, BUTTON_SIZE } from '@app/components/button';
 import { classNames } from '@app/components/class-names';
 import { Icon, ICON_NAME } from '@app/components/icon';
+import { clearIngressFrameOutline } from '@app/shell/ingress-frame';
 import type { ReactElement, ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 
@@ -37,10 +38,14 @@ function restoreFocus(opener: HTMLElement | undefined): void {
 		focus();
 		if (opener?.isConnected === true) {
 			opener.focus();
-
-			return;
+		} else {
+			document.querySelector<HTMLElement>(FALLBACK_FOCUS_SELECTOR)?.focus();
 		}
-		document.querySelector<HTMLElement>(FALLBACK_FOCUS_SELECTOR)?.focus();
+		/*
+		 * Moving focus back lets Home Assistant paint the iframe outline again,
+		 * so clear it once focus is inside this document.
+		 */
+		clearIngressFrameOutline();
 	});
 }
 
