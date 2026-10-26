@@ -60,6 +60,22 @@ describe('UpdateCategory', () => {
 		expect(failure).toBeInstanceOf(CategoryInUseError);
 	});
 
+	it('rejects changing the kind of a category used by a scheduled transaction', async () => {
+		const existing = CategoryMother.create();
+		repository.shouldFind(existing);
+		repository.shouldCountTransactions(0);
+		repository.shouldCountScheduledTransactions(1);
+
+		let failure: unknown;
+		try {
+			await useCase.execute({ id: existing.id, kind: 'income' });
+		} catch (error) {
+			failure = error;
+		}
+
+		expect(failure).toBeInstanceOf(CategoryInUseError);
+	});
+
 	it('changes the kind of an unused category', async () => {
 		const existing = CategoryMother.create();
 		repository.shouldFind(existing);

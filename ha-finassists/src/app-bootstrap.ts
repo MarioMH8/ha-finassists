@@ -1,7 +1,10 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import process from 'node:process';
 
 import { createServer, prepareWebAssets } from '@modules/api';
+import { ScheduledPostingJob } from '@modules/ledger/application';
+import { BunCronScheduler } from '@modules/scheduling/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { createBootstrapCapability, publishSupervisorDiscovery } from '@modules/system-credentials/infrastructure';
 import { Database } from 'bun:sqlite';
@@ -16,7 +19,10 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 	const database = new Database(config.databasePath);
 	database.run('PRAGMA journal_mode = WAL');
 	migrateDatabase(database);
-	const container = createAppContainer(database, { currencyCode: config.shellConfig.currencyCode });
+	const container = createAppContainer(database, {
+		currencyCode: config.shellConfig.currencyCode,
+		timeZone: config.timeZone,
+	});
 	const bootstrapCapability =
 		config.supervisorToken === undefined ? config.bootstrapCapability : createBootstrapCapability();
 	const isBootstrapCapabilityConfigured =
@@ -47,6 +53,15 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 			throw new Error('Unable to provision Home Assistant integration discovery; add-on startup aborted');
 		}
 	}
+
+	const scheduledPostingJob = new ScheduledPostingJob(
+		container.get('ledgerUseCases').scheduled.postDue,
+		new BunCronScheduler(config.timeZone),
+		error => {
+			process.stderr.write(`Scheduled posting failed: ${String(error)}\n`);
+		}
+	);
+	scheduledPostingJob.start();
 
 	return server;
 }

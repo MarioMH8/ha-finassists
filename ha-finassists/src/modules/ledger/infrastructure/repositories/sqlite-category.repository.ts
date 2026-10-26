@@ -7,6 +7,7 @@ interface CategoryRow {
 	id: string;
 	kind: CategoryKind;
 	name: string;
+	scheduled_transaction_count: number;
 	transaction_count: number;
 }
 
@@ -18,7 +19,9 @@ function where(criteria: CategoryCriteria): { parameters: SQLQueryBindings[]; sq
 
 const SELECT_CATEGORY = `
 	SELECT categories.id, categories.name, categories.kind, categories.created_at,
-	       COUNT(transactions.id) AS transaction_count
+	       COUNT(transactions.id) AS transaction_count,
+	       (SELECT COUNT(*) FROM scheduled_transactions
+	        WHERE scheduled_transactions.category_id = categories.id) AS scheduled_transaction_count
 	FROM categories
 	LEFT JOIN transactions ON transactions.category_id = categories.id
 `;
@@ -33,11 +36,26 @@ function toCategory(row: CategoryRow): Category {
 }
 
 function toSummary(row: CategoryRow): CategorySummary {
-	return { category: toCategory(row), transactionCount: row.transaction_count };
+	return {
+		category: toCategory(row),
+		scheduledTransactionCount: row.scheduled_transaction_count,
+		transactionCount: row.transaction_count,
+	};
 }
 
 export class SqliteCategoryRepository implements CategoryRepository {
 	constructor(private readonly database: Database) {}
+
+	async countScheduledTransactions(id: string): Promise<number> {
+		const row = this.database
+			.query<{ total: number }, [string]>(
+				'SELECT COUNT(*) AS total FROM scheduled_transactions WHERE category_id = ?'
+			)
+			.get(id);
+		await Promise.resolve();
+
+		return row?.total ?? 0;
+	}
 
 	async countTransactions(id: string): Promise<number> {
 		const row = this.database

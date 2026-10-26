@@ -8,6 +8,10 @@ import type {
 import { expect, mock } from 'bun:test';
 
 export class MockCategoryRepository implements CategoryRepository {
+	private readonly countScheduledTransactionsMock = mock<CategoryRepository['countScheduledTransactions']>(() =>
+		Promise.resolve(0)
+	);
+
 	private readonly countTransactionsMock = mock<CategoryRepository['countTransactions']>(() => Promise.resolve(0));
 
 	private readonly deleteMock = mock<CategoryRepository['delete']>(() => Promise.resolve(false));
@@ -27,6 +31,10 @@ export class MockCategoryRepository implements CategoryRepository {
 
 	assertSaveHasBeenCalledWith(category: Category): void {
 		expect(this.saveMock).toHaveBeenCalledWith(category);
+	}
+
+	async countScheduledTransactions(id: string): Promise<number> {
+		return this.countScheduledTransactionsMock(id);
 	}
 
 	async countTransactions(id: string): Promise<number> {
@@ -51,6 +59,10 @@ export class MockCategoryRepository implements CategoryRepository {
 
 	async search(criteria: CategoryCriteria = {}): Promise<CategorySummary[]> {
 		return this.searchMock(criteria);
+	}
+
+	shouldCountScheduledTransactions(total: number): void {
+		this.countScheduledTransactionsMock.mockResolvedValue(total);
 	}
 
 	shouldCountTransactions(total: number): void {

@@ -6,10 +6,12 @@ interface CategoryCriteria {
 
 interface CategorySummary {
 	category: Category;
+	scheduledTransactionCount: number;
 	transactionCount: number;
 }
 
 interface CategoryRepository {
+	countScheduledTransactions(id: string): Promise<number>;
 	countTransactions(id: string): Promise<number>;
 	delete(id: string): Promise<boolean>;
 	findById(id: string): Promise<Category | undefined>;

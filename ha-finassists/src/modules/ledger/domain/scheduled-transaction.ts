@@ -290,6 +290,7 @@ class ScheduledTransaction {
 				nextDueDate === undefined
 					? SCHEDULED_TRANSACTION_STATUS.COMPLETED
 					: SCHEDULED_TRANSACTION_STATUS.ACTIVE,
+			version: this.version + 1,
 		});
 	}
 
@@ -315,6 +316,7 @@ class ScheduledTransaction {
 		return ScheduledTransaction.restore({
 			...this.toProperties(),
 			status: SCHEDULED_TRANSACTION_STATUS.PAUSED,
+			version: this.version + 1,
 		});
 	}
 
@@ -357,6 +359,7 @@ class ScheduledTransaction {
 			return ScheduledTransaction.restore({
 				...this.toProperties(),
 				status: SCHEDULED_TRANSACTION_STATUS.ACTIVE,
+				version: this.version + 1,
 			});
 		}
 		const first = firstOccurrenceOnOrAfter(this, today, this.occurrenceNumber);
@@ -365,6 +368,7 @@ class ScheduledTransaction {
 				...this.toProperties(),
 				nextDueDate: null,
 				status: SCHEDULED_TRANSACTION_STATUS.COMPLETED,
+				version: this.version + 1,
 			});
 		}
 
@@ -373,6 +377,7 @@ class ScheduledTransaction {
 			nextDueDate: first.dueDate,
 			occurrenceNumber: first.occurrenceNumber,
 			status: SCHEDULED_TRANSACTION_STATUS.ACTIVE,
+			version: this.version + 1,
 		});
 	}
 
@@ -412,6 +417,7 @@ class ScheduledTransaction {
 					nextDueDate: null,
 					occurrenceNumber: 0,
 					status: SCHEDULED_TRANSACTION_STATUS.COMPLETED,
+					version: this.version + 1,
 				});
 			}
 
@@ -423,6 +429,7 @@ class ScheduledTransaction {
 					candidate.status === SCHEDULED_TRANSACTION_STATUS.PAUSED
 						? SCHEDULED_TRANSACTION_STATUS.PAUSED
 						: SCHEDULED_TRANSACTION_STATUS.ACTIVE,
+				version: this.version + 1,
 			});
 		}
 		if (candidate.endDate !== this.endDate) {
@@ -436,13 +443,20 @@ class ScheduledTransaction {
 					nextDueDate: null,
 					occurrenceNumber: 0,
 					status: SCHEDULED_TRANSACTION_STATUS.COMPLETED,
+					version: this.version + 1,
 				});
 			}
 
-			return ScheduledTransaction.restore(candidate.toProperties());
+			return ScheduledTransaction.restore({
+				...candidate.toProperties(),
+				version: this.version + 1,
+			});
 		}
 
-		return ScheduledTransaction.restore(candidate.toProperties());
+		return ScheduledTransaction.restore({
+			...candidate.toProperties(),
+			version: this.version + 1,
+		});
 	}
 
 	private toProperties(): ScheduledTransactionProperties {

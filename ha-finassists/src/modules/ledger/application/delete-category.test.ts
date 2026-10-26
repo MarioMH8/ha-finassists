@@ -36,7 +36,23 @@ describe('DeleteCategory', () => {
 		}
 
 		expect(failure).toBeInstanceOf(CategoryInUseError);
-		expect((failure as Error).message).toContain('7 transactions');
+		expect((failure as Error).message).toContain('7 movements');
+	});
+
+	it('refuses to delete a category used only by scheduled transactions', async () => {
+		repository.shouldFind(CategoryMother.create());
+		repository.shouldCountTransactions(0);
+		repository.shouldCountScheduledTransactions(2);
+
+		let failure: unknown;
+		try {
+			await useCase.execute({ id: 'category-1' });
+		} catch (error) {
+			failure = error;
+		}
+
+		expect(failure).toBeInstanceOf(CategoryInUseError);
+		expect((failure as Error).message).toContain('2 movements');
 	});
 
 	it('fails when the category does not exist', async () => {
