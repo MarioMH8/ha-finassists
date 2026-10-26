@@ -3,16 +3,27 @@ import { handleRequest } from '@modules/api/infrastructure/http/routes';
 import { createHttpContainer } from '@modules/api/infrastructure/http/shared/http-container';
 import {
 	CreateCategory,
+	CreateScheduledTransaction,
 	CreateTransaction,
 	DeleteCategory,
+	DeleteScheduledTransaction,
 	DeleteTransaction,
 	DeleteTransactions,
 	ListCategories,
+	ListScheduledTransactions,
 	ListTransactions,
+	ListUpcomingScheduledTransactions,
+	PostScheduledTransaction,
+	SkipScheduledTransaction,
 	UpdateCategory,
+	UpdateScheduledTransaction,
 	UpdateTransaction,
 } from '@modules/ledger/application';
-import { SqliteCategoryRepository, SqliteLedgerRepository } from '@modules/ledger/infrastructure';
+import {
+	SqliteCategoryRepository,
+	SqliteLedgerRepository,
+	SqliteScheduledTransactionRepository,
+} from '@modules/ledger/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
 import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modules/tokens/infrastructure';
@@ -29,7 +40,39 @@ interface CategoryJson {
 	id: string;
 	kind: string;
 	name: string;
+	scheduledTransactionCount?: number;
 	transactionCount?: number;
+}
+interface ScheduledTransactionJson {
+	amountMinor: number;
+	categoryId: null | string;
+	createdAt: string;
+	createdBy: null | string;
+	currencyCode: string;
+	description: string;
+	endDate: null | string;
+	frequency: string;
+	id: string;
+	interval: number;
+	kind: string;
+	nextDueDate: null | string;
+	postingMode: string;
+	startDate: string;
+	status: string;
+}
+interface ScheduledUpcomingJson {
+	byCategory: {
+		expense: Record<string, number>;
+		income: Record<string, number>;
+	};
+	currencyCode: string;
+	fromDate: string;
+	items: { dueDate: string; kind: string; scheduleId: string }[];
+	toDate: string;
+	today: string;
+	total: number;
+	totals: { expenseMinor: number; incomeMinor: number; netMinor: number };
+	uncategorized: { expenseMinor: number; incomeMinor: number };
 }
 interface TransactionJson {
 	actorId: null | string;
@@ -56,6 +99,20 @@ interface MCPJson {
 		tools: { name: string }[];
 	};
 }
+interface MCPScheduledJson {
+	result: {
+		isError: boolean;
+		structuredContent: {
+			id: string;
+			items: { id: string; nextDueDate: null | string }[];
+			nextDueDate: null | string;
+			scheduledTransaction: { nextDueDate: null | string; status: string };
+			total: number;
+			totals: { expenseMinor: number; incomeMinor: number; netMinor: number };
+			transaction: { transactionDate: string };
+		};
+	};
+}
 
 function createMigratedDatabase(): Database {
 	const database = new Database(':memory:');
@@ -69,6 +126,7 @@ function setup(): { useCases: FinanceUseCases } {
 	const database = createMigratedDatabase();
 	const repository = new SqliteLedgerRepository(database);
 	const categoryRepository = new SqliteCategoryRepository(database);
+	const scheduledRepository = new SqliteScheduledTransactionRepository(database);
 
 	return {
 		useCases: {
@@ -83,8 +141,18 @@ function setup(): { useCases: FinanceUseCases } {
 				delete: new DeleteTransaction(repository),
 				deleteMany: new DeleteTransactions(repository),
 				list: new ListTransactions(repository),
+				scheduled: {
+					create: new CreateScheduledTransaction(scheduledRepository, categoryRepository, 'EUR'),
+					delete: new DeleteScheduledTransaction(scheduledRepository),
+					list: new ListScheduledTransactions(scheduledRepository),
+					post: new PostScheduledTransaction(scheduledRepository),
+					skip: new SkipScheduledTransaction(scheduledRepository),
+					upcoming: new ListUpcomingScheduledTransactions(scheduledRepository, 'EUR'),
+					update: new UpdateScheduledTransaction(scheduledRepository, categoryRepository),
+				},
 				update: new UpdateTransaction(repository, categoryRepository),
 			},
+			today: () => '2026-05-15',
 		},
 	};
 }
@@ -452,11 +520,18 @@ describe('transactions REST routes', () => {
 		expect(initialized.headers.get('mcp-session-id')).toBeNull();
 		expect(listed.result.tools.map(tool => tool.name)).toEqual([
 			'create_category',
+			'create_scheduled_transaction',
 			'create_transaction',
 			'delete_category',
+			'delete_scheduled_transaction',
 			'delete_transaction',
 			'list_categories',
+			'list_scheduled_transactions',
 			'list_transactions',
+			'list_upcoming_scheduled_transactions',
+			'post_scheduled_transaction',
+			'skip_scheduled_transaction',
+			'update_scheduled_transaction',
 		]);
 		expect(created.result.isError).toBe(false);
 		expect(created.result.structuredContent).toMatchObject({
@@ -713,5 +788,346 @@ describe('categories over MCP', () => {
 		expect(listed.result.structuredContent.items).toHaveLength(1);
 		expect(transaction.result.structuredContent.categoryId).toBe(category.result.structuredContent.id);
 		expect(removed.result.isError).toBe(true);
+	});
+});
+
+describe('scheduled transactions REST routes', () => {
+	it('creates, lists, updates and deletes a schedule', async () => {
+		const { useCases } = setup();
+		const created = await send(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 1250,
+			description: 'Rent',
+			frequency: 'monthly',
+			kind: 'expense',
+			startDate: '2026-05-01',
+		});
+		const body = await readJson<ScheduledTransactionJson>(created);
+		const list = await sendJson<PaginatedJson<ScheduledTransactionJson> & { today: string }>(
+			useCases,
+			'/api/v1/scheduled-transactions'
+		);
+		const updated = await sendJson<ScheduledTransactionJson>(
+			useCases,
+			`/api/v1/scheduled-transactions/${body.id}`,
+			'PATCH',
+			{ amountMinor: 2000 }
+		);
+		const deleted = await send(useCases, `/api/v1/scheduled-transactions/${body.id}`, 'DELETE');
+		const empty = await sendJson<PaginatedJson<ScheduledTransactionJson>>(
+			useCases,
+			'/api/v1/scheduled-transactions'
+		);
+
+		expect(created.status).toBe(201);
+		expect(body).toMatchObject({
+			amountMinor: 1250,
+			createdBy: 'actor-123',
+			currencyCode: 'EUR',
+			description: 'Rent',
+			frequency: 'monthly',
+			interval: 1,
+			kind: 'expense',
+			nextDueDate: '2026-05-01',
+			postingMode: 'automatic',
+			startDate: '2026-05-01',
+			status: 'active',
+		});
+		expect(list).toMatchObject({ limit: 100, offset: 0, today: '2026-05-15', total: 1 });
+		expect(updated.amountMinor).toBe(2000);
+		expect(deleted.status).toBe(204);
+		expect(empty.total).toBe(0);
+	});
+
+	it('posts a due manual occurrence and skips another', async () => {
+		const { useCases } = setup();
+		const first = await sendJson<ScheduledTransactionJson>(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 1000,
+			frequency: 'monthly',
+			kind: 'expense',
+			postingMode: 'manual',
+			startDate: '2026-05-01',
+		});
+		const second = await sendJson<ScheduledTransactionJson>(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 500,
+			frequency: 'monthly',
+			kind: 'income',
+			postingMode: 'manual',
+			startDate: '2026-05-01',
+		});
+		const posted = await sendJson<{
+			scheduledTransaction: ScheduledTransactionJson;
+			transaction: TransactionJson;
+		}>(useCases, `/api/v1/scheduled-transactions/${first.id}/post`, 'POST');
+		const skipped = await sendJson<ScheduledTransactionJson>(
+			useCases,
+			`/api/v1/scheduled-transactions/${second.id}/skip`,
+			'POST'
+		);
+		const transactions = await sendJson<PaginatedJson<TransactionJson>>(useCases, '/api/v1/transactions');
+
+		expect(posted.transaction).toMatchObject({
+			actorId: 'actor-123',
+			amountMinor: 1000,
+			kind: 'expense',
+			transactionDate: '2026-05-01',
+		});
+		expect(posted.scheduledTransaction.nextDueDate).toBe('2026-06-01');
+		expect(skipped.nextDueDate).toBe('2026-06-01');
+		expect(transactions.total).toBe(1);
+	});
+
+	it('returns the upcoming forecast and filters by kind', async () => {
+		const { useCases } = setup();
+		const category = await sendJson<CategoryJson>(useCases, '/api/v1/categories', 'POST', {
+			kind: 'expense',
+			name: 'Food',
+		});
+		await send(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 1000,
+			categoryId: category.id,
+			frequency: 'monthly',
+			kind: 'expense',
+			startDate: '2026-05-01',
+		});
+		await send(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 2000,
+			frequency: 'once',
+			kind: 'income',
+			startDate: '2026-05-15',
+		});
+
+		const forecast = await sendJson<ScheduledUpcomingJson>(
+			useCases,
+			'/api/v1/scheduled-transactions/upcoming?fromDate=2026-05-01&toDate=2026-07-01'
+		);
+		const income = await sendJson<ScheduledUpcomingJson>(
+			useCases,
+			'/api/v1/scheduled-transactions/upcoming?fromDate=2026-05-01&toDate=2026-07-01&kind=income'
+		);
+
+		expect(forecast).toMatchObject({
+			currencyCode: 'EUR',
+			fromDate: '2026-05-01',
+			toDate: '2026-07-01',
+			today: '2026-05-15',
+			total: 4,
+			totals: { expenseMinor: 3000, incomeMinor: 2000, netMinor: -1000 },
+			uncategorized: { expenseMinor: 0, incomeMinor: 2000 },
+		});
+		expect(forecast.byCategory.expense).toEqual({ [category.id]: 3000 });
+		expect(forecast.items.map(item => item.dueDate)).toEqual([
+			'2026-05-01',
+			'2026-05-15',
+			'2026-06-01',
+			'2026-07-01',
+		]);
+		expect(income.total).toBe(1);
+		expect(income.items[0]?.kind).toBe('income');
+	});
+
+	it('validates scheduled transaction requests', async () => {
+		const { useCases } = setup();
+		const badFrequency = await send(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 100,
+			frequency: 'hourly',
+			kind: 'expense',
+			startDate: '2026-05-01',
+		});
+		const badInterval = await send(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 100,
+			frequency: 'daily',
+			interval: 0,
+			kind: 'expense',
+			startDate: '2026-05-01',
+		});
+		const badDate = await send(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 100,
+			frequency: 'monthly',
+			kind: 'expense',
+			startDate: '2026-02-30',
+		});
+		const future = await sendJson<ScheduledTransactionJson>(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 100,
+			frequency: 'once',
+			kind: 'expense',
+			startDate: '2026-06-01',
+		});
+		const notDue = await send(useCases, `/api/v1/scheduled-transactions/${future.id}/post`, 'POST');
+		const missing = await send(useCases, '/api/v1/scheduled-transactions/missing/post', 'POST');
+		const unsupported = await send(useCases, '/api/v1/scheduled-transactions', 'PUT');
+
+		expect(badFrequency.status).toBe(400);
+		expect(badInterval.status).toBe(400);
+		expect(badDate.status).toBe(400);
+		expect(notDue.status).toBe(409);
+		expect(missing.status).toBe(404);
+		expect(unsupported.status).toBe(405);
+	});
+
+	it('reports scheduled usage in the category summary', async () => {
+		const { useCases } = setup();
+		const category = await sendJson<CategoryJson>(useCases, '/api/v1/categories', 'POST', {
+			kind: 'expense',
+			name: 'Food',
+		});
+		await send(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 1000,
+			categoryId: category.id,
+			frequency: 'monthly',
+			kind: 'expense',
+			startDate: '2026-05-01',
+		});
+
+		const list = await sendJson<{ items: CategoryJson[] }>(useCases, '/api/v1/categories');
+		const deleted = await send(useCases, `/api/v1/categories/${category.id}`, 'DELETE');
+
+		expect(list.items[0]).toMatchObject({ scheduledTransactionCount: 1, transactionCount: 0 });
+		expect(deleted.status).toBe(409);
+	});
+
+	it('filters the scheduled list', async () => {
+		const { useCases } = setup();
+		await send(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 1000,
+			frequency: 'monthly',
+			kind: 'expense',
+			startDate: '2026-05-01',
+		});
+		await send(useCases, '/api/v1/scheduled-transactions', 'POST', {
+			amountMinor: 2000,
+			frequency: 'monthly',
+			kind: 'income',
+			postingMode: 'manual',
+			startDate: '2026-06-01',
+		});
+
+		const manualIncome = await sendJson<PaginatedJson<ScheduledTransactionJson>>(
+			useCases,
+			'/api/v1/scheduled-transactions?kind=income&postingMode=manual&status=active'
+		);
+		const due = await sendJson<PaginatedJson<ScheduledTransactionJson>>(
+			useCases,
+			'/api/v1/scheduled-transactions?dueThrough=2026-05-31'
+		);
+
+		expect(manualIncome.total).toBe(1);
+		expect(manualIncome.items[0]?.kind).toBe('income');
+		expect(due.total).toBe(1);
+	});
+});
+
+describe('scheduled transactions over MCP', () => {
+	it('creates, lists, forecasts, posts, skips, pauses and deletes schedules', async () => {
+		const { useCases } = setup();
+		const tokenUseCases = setupTokens();
+		const issued = await tokenUseCases.issue.execute({ name: 'Client', ownerId: 'mcp-owner' });
+		const call = async (message: unknown) =>
+			handleMcpRequest(
+				new Request('http://localhost/mcp', {
+					body: JSON.stringify(message),
+					headers: {
+						Accept: 'application/json, text/event-stream',
+						Authorization: `Bearer ${issued.secret}`,
+						'Content-Type': 'application/json',
+					},
+					method: 'POST',
+				}),
+				tokenUseCases,
+				useCases
+			);
+		const create = async (id: number) => {
+			return readJson<MCPScheduledJson>(
+				await call({
+					id,
+					jsonrpc: '2.0',
+					method: 'tools/call',
+					params: {
+						arguments: {
+							amountMinor: 1000,
+							frequency: 'monthly',
+							kind: 'expense',
+							postingMode: 'manual',
+							startDate: '2026-05-01',
+						},
+						name: 'create_scheduled_transaction',
+					},
+				})
+			);
+		};
+		const first = await create(1);
+		const second = await create(2);
+		const listed = await readJson<MCPScheduledJson>(
+			await call({
+				id: 3,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: { arguments: {}, name: 'list_scheduled_transactions' },
+			})
+		);
+		const forecast = await readJson<MCPScheduledJson>(
+			await call({
+				id: 4,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: {
+					arguments: { fromDate: '2026-05-01', toDate: '2026-07-01' },
+					name: 'list_upcoming_scheduled_transactions',
+				},
+			})
+		);
+		const posted = await readJson<MCPScheduledJson>(
+			await call({
+				id: 5,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: {
+					arguments: { id: first.result.structuredContent.id },
+					name: 'post_scheduled_transaction',
+				},
+			})
+		);
+		const skipped = await readJson<MCPScheduledJson>(
+			await call({
+				id: 6,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: {
+					arguments: { id: second.result.structuredContent.id },
+					name: 'skip_scheduled_transaction',
+				},
+			})
+		);
+		const paused = await readJson<MCPScheduledJson>(
+			await call({
+				id: 7,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: {
+					arguments: { id: first.result.structuredContent.id, status: 'paused' },
+					name: 'update_scheduled_transaction',
+				},
+			})
+		);
+		const deleted = await readJson<MCPScheduledJson>(
+			await call({
+				id: 8,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: {
+					arguments: { id: second.result.structuredContent.id },
+					name: 'delete_scheduled_transaction',
+				},
+			})
+		);
+
+		expect(first.result.isError).toBe(false);
+		expect(listed.result.structuredContent.items).toHaveLength(2);
+		expect(forecast.result.structuredContent.total).toBe(6);
+		expect(forecast.result.structuredContent.totals.expenseMinor).toBe(6000);
+		expect(posted.result.structuredContent.transaction.transactionDate).toBe('2026-05-01');
+		expect(posted.result.structuredContent.scheduledTransaction.nextDueDate).toBe('2026-06-01');
+		expect(skipped.result.structuredContent.nextDueDate).toBe('2026-06-01');
+		expect(paused.result.structuredContent.id).toBe(first.result.structuredContent.id);
+		expect(deleted.result.isError).toBe(false);
 	});
 });

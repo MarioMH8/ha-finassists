@@ -197,6 +197,120 @@ paths:
         '204': { description: Transaction deleted }
         '404': { description: Transaction does not exist }
         '405': { $ref: '#/components/responses/MethodNotAllowed' }
+  /scheduled-transactions:
+    get:
+      summary: List scheduled transactions, next due first
+      parameters:
+        - { name: categoryId, in: query, schema: { type: string } }
+        - { name: dueThrough, in: query, schema: { type: string, format: date } }
+        - { name: kind, in: query, schema: { type: string, enum: [expense, income] } }
+        - { $ref: '#/components/parameters/limit' }
+        - { $ref: '#/components/parameters/offset' }
+        - { name: postingMode, in: query, schema: { type: string, enum: [automatic, manual] } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [active, paused, completed] } }
+      responses:
+        '200':
+          description: Paginated schedules with the server's current calendar date
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduledTransactionPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+    post:
+      summary: Create a scheduled expense or income
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduledTransactionInput' }
+      responses:
+        '201':
+          description: Created schedule
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduledTransaction' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+  /scheduled-transactions/upcoming:
+    get:
+      summary: Project scheduled occurrences in a date range
+      description: Includes active schedules in the installation currency. Totals and the category breakdown cover the whole range even when items are paginated.
+      parameters:
+        - { name: categoryId, in: query, schema: { type: string } }
+        - { name: fromDate, in: query, schema: { type: string, format: date } }
+        - { name: kind, in: query, schema: { type: string, enum: [expense, income] } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 100 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: toDate, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Projected occurrences and totals
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduledForecast' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+  /scheduled-transactions/{scheduledTransactionId}:
+    patch:
+      summary: Update a scheduled transaction
+      description: Partial update; omitted properties keep their current value. Changes to the recurrence recalculate the next occurrence from today. Posted transactions never change.
+      parameters:
+        - { $ref: '#/components/parameters/scheduledTransactionId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduledTransactionUpdate' }
+      responses:
+        '200':
+          description: Updated schedule
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduledTransaction' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { description: Scheduled transaction does not exist }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '409': { description: The schedule changed, is completed or its category is in use }
+    delete:
+      summary: Delete a scheduled transaction
+      description: Deletes the template. Transactions it already posted remain in the ledger.
+      parameters:
+        - { $ref: '#/components/parameters/scheduledTransactionId' }
+      responses:
+        '204': { description: Scheduled transaction deleted }
+        '404': { description: Scheduled transaction does not exist }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+  /scheduled-transactions/{scheduledTransactionId}/post:
+    post:
+      summary: Post the next due occurrence
+      description: Requires the next occurrence to be due. The transaction is dated on the due date and attributed to the authenticated actor.
+      parameters:
+        - { $ref: '#/components/parameters/scheduledTransactionId' }
+      responses:
+        '200':
+          description: Posted transaction and advanced schedule
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduledPostResult' }
+        '404': { description: Scheduled transaction does not exist }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '409': { description: The occurrence is not due, the schedule changed or it is paused }
+  /scheduled-transactions/{scheduledTransactionId}/skip:
+    post:
+      summary: Skip the next due occurrence
+      description: Advances the schedule without creating a transaction. Requires the next occurrence to be due.
+      parameters:
+        - { $ref: '#/components/parameters/scheduledTransactionId' }
+      responses:
+        '200':
+          description: Advanced schedule
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduledTransaction' }
+        '404': { description: Scheduled transaction does not exist }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '409': { description: The occurrence is not due or the schedule changed }
 components:
   securitySchemes:
     bearerAuth:
@@ -224,6 +338,11 @@ components:
       schema: { type: string }
     transactionId:
       name: transactionId
+      in: path
+      required: true
+      schema: { type: string }
+    scheduledTransactionId:
+      name: scheduledTransactionId
       in: path
       required: true
       schema: { type: string }
@@ -282,6 +401,118 @@ components:
           required: [secret]
           properties:
             secret: { type: string, description: Returned once at issuance; cannot be retrieved later }
+    ScheduledFrequency:
+      type: string
+      enum: [once, daily, weekly, monthly, yearly]
+    ScheduledPostingMode:
+      type: string
+      enum: [automatic, manual]
+    ScheduledStatus:
+      type: string
+      enum: [active, paused, completed]
+    ScheduledTransactionInput:
+      type: object
+      required: [amountMinor, frequency, kind, startDate]
+      properties:
+        amountMinor: { type: integer, minimum: 1, description: Amount in minor units of the configured currency }
+        categoryId: { type: [string, 'null'], description: Optional category of the same kind }
+        description: { type: string, maxLength: 200, default: '' }
+        endDate: { type: [string, 'null'], format: date, description: Optional inclusive last occurrence }
+        frequency: { $ref: '#/components/schemas/ScheduledFrequency' }
+        interval: { type: integer, minimum: 1, maximum: 999, default: 1, description: Repeat every N days, weeks, months or years }
+        kind: { type: string, enum: [expense, income] }
+        postingMode: { allOf: [{ $ref: '#/components/schemas/ScheduledPostingMode' }], default: automatic }
+        startDate: { type: string, format: date, description: First occurrence }
+    ScheduledTransactionUpdate:
+      type: object
+      description: Partial schedule update; omitted properties keep their current value.
+      properties:
+        amountMinor: { type: integer, minimum: 1, description: Amount in minor units of the configured currency }
+        categoryId: { type: [string, 'null'], description: Optional category of the same kind }
+        description: { type: string, maxLength: 200 }
+        endDate: { type: [string, 'null'], format: date }
+        frequency: { $ref: '#/components/schemas/ScheduledFrequency' }
+        interval: { type: integer, minimum: 1, maximum: 999 }
+        kind: { type: string, enum: [expense, income] }
+        postingMode: { $ref: '#/components/schemas/ScheduledPostingMode' }
+        startDate: { type: string, format: date }
+        status: { type: string, enum: [active, paused] }
+    ScheduledTransaction:
+      type: object
+      required: [id, kind, amountMinor, currencyCode, description, categoryId, startDate, frequency, interval, endDate, nextDueDate, postingMode, status, createdBy, createdAt]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [expense, income] }
+        amountMinor: { type: integer }
+        currencyCode: { type: string }
+        description: { type: string }
+        categoryId: { type: [string, 'null'] }
+        startDate: { type: string, format: date }
+        frequency: { $ref: '#/components/schemas/ScheduledFrequency' }
+        interval: { type: integer }
+        endDate: { type: [string, 'null'], format: date }
+        nextDueDate: { type: [string, 'null'], format: date }
+        postingMode: { $ref: '#/components/schemas/ScheduledPostingMode' }
+        status: { $ref: '#/components/schemas/ScheduledStatus' }
+        createdBy: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+    ScheduledTransactionPage:
+      allOf:
+        - { $ref: '#/components/schemas/Page' }
+        - type: object
+          required: [today]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/ScheduledTransaction' } }
+            today: { type: string, format: date, description: Server calendar date in the Home Assistant time zone }
+    UpcomingScheduledTransaction:
+      type: object
+      required: [scheduleId, dueDate, kind, amountMinor, currencyCode, description, categoryId, postingMode]
+      properties:
+        scheduleId: { type: string }
+        dueDate: { type: string, format: date }
+        kind: { type: string, enum: [expense, income] }
+        amountMinor: { type: integer }
+        currencyCode: { type: string }
+        description: { type: string }
+        categoryId: { type: [string, 'null'] }
+        postingMode: { $ref: '#/components/schemas/ScheduledPostingMode' }
+    ScheduledForecastTotals:
+      type: object
+      required: [expenseMinor, incomeMinor, netMinor]
+      properties:
+        expenseMinor: { type: integer }
+        incomeMinor: { type: integer }
+        netMinor: { type: integer }
+    ScheduledForecast:
+      allOf:
+        - { $ref: '#/components/schemas/Page' }
+        - type: object
+          required: [byCategory, currencyCode, fromDate, today, toDate, totals, uncategorized]
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/UpcomingScheduledTransaction' } }
+            byCategory:
+              type: object
+              required: [expense, income]
+              properties:
+                expense: { type: object, additionalProperties: { type: integer } }
+                income: { type: object, additionalProperties: { type: integer } }
+            currencyCode: { type: string }
+            fromDate: { type: string, format: date }
+            toDate: { type: string, format: date }
+            today: { type: string, format: date }
+            totals: { $ref: '#/components/schemas/ScheduledForecastTotals' }
+            uncategorized:
+              type: object
+              required: [expenseMinor, incomeMinor]
+              properties:
+                expenseMinor: { type: integer }
+                incomeMinor: { type: integer }
+    ScheduledPostResult:
+      type: object
+      required: [scheduledTransaction, transaction]
+      properties:
+        scheduledTransaction: { $ref: '#/components/schemas/ScheduledTransaction' }
+        transaction: { $ref: '#/components/schemas/Transaction' }
     TransactionInput:
       type: object
       required: [kind, amountMinor, transactionDate]

@@ -4,12 +4,14 @@ import { Hono } from 'hono';
 import { createCategoryRoutes } from './finance-category-routes';
 import type { FinanceEnvironment, FinanceUseCases, RouteActor } from './finance-route-support';
 import { routeError } from './finance-route-support';
+import { createScheduledTransactionRoutes } from './finance-scheduled-transaction-routes';
 import { createTransactionRoutes } from './finance-transaction-routes';
 
 function createFinanceRoutes(): Hono<FinanceEnvironment> {
 	const routes = new Hono<FinanceEnvironment>({ strict: false });
 
 	routes.route('/', createCategoryRoutes());
+	routes.route('/', createScheduledTransactionRoutes());
 	routes.route('/', createTransactionRoutes());
 	routes.all('*', () => jsonResponse({ error: 'Not found' }, 404));
 	routes.onError(error => routeError(error));

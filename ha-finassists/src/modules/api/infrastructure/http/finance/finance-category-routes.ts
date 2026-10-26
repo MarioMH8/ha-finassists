@@ -32,6 +32,7 @@ interface CategoryJson {
 }
 
 interface CategorySummaryJson extends CategoryJson {
+	scheduledTransactionCount: number;
 	transactionCount: number;
 }
 
@@ -44,8 +45,12 @@ function categoryJson(category: Category): CategoryJson {
 	};
 }
 
-function categorySummaryJson({ category, transactionCount }: CategorySummary): CategorySummaryJson {
-	return { ...categoryJson(category), transactionCount };
+function categorySummaryJson({
+	category,
+	scheduledTransactionCount,
+	transactionCount,
+}: CategorySummary): CategorySummaryJson {
+	return { ...categoryJson(category), scheduledTransactionCount, transactionCount };
 }
 
 function createCategoryRoutes(): Hono<FinanceEnvironment> {
