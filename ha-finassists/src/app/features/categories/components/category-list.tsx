@@ -65,6 +65,25 @@ function CategoryList({
 			{copy.categoryCreate}
 		</Button>
 	);
+	const filterToolbar = (
+		<div className={styles.toolbar}>
+			<Field
+				htmlFor='category-filter-kind'
+				label={copy.categoryFilterKind}>
+				<Select
+					id='category-filter-kind'
+					onChange={event => {
+						setFilterKind(event.currentTarget.value as CategoryFilter);
+					}}
+					size={SELECT_SIZE.SMALL}
+					value={filterKind}>
+					<option value={CATEGORY_FILTER.ALL}>{copy.categoryFilterAll}</option>
+					<option value={CATEGORY_KIND.EXPENSE}>{copy.transactionKindExpense}</option>
+					<option value={CATEGORY_KIND.INCOME}>{copy.transactionKindIncome}</option>
+				</Select>
+			</Field>
+		</div>
+	);
 	const confirmationFooter = (
 		<>
 			<Button
@@ -103,31 +122,13 @@ function CategoryList({
 					{feedback.message}
 				</Notice>
 			) : undefined}
-			{hasFilter || categories.length > 0 ? (
-				<div className={styles.toolbar}>
-					<Field
-						htmlFor='category-filter-kind'
-						label={copy.categoryFilterKind}>
-						<Select
-							id='category-filter-kind'
-							onChange={event => {
-								setFilterKind(event.currentTarget.value as CategoryFilter);
-							}}
-							size={SELECT_SIZE.SMALL}
-							value={filterKind}>
-							<option value={CATEGORY_FILTER.ALL}>{copy.categoryFilterAll}</option>
-							<option value={CATEGORY_KIND.EXPENSE}>{copy.transactionKindExpense}</option>
-							<option value={CATEGORY_KIND.INCOME}>{copy.transactionKindIncome}</option>
-						</Select>
-					</Field>
-				</div>
-			) : undefined}
 			{listState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.categoryLoadError}</Notice>
 			) : listState === LOAD_STATE.LOADING && categories.length === 0 ? (
 				<Notice>{copy.categoryLoading}</Notice>
 			) : categories.length === 0 ? (
 				<Card bleed>
+					{hasFilter ? <div className={styles.cardHeader}>{filterToolbar}</div> : undefined}
 					<EmptyState
 						icon={ICON_NAME.TAG}
 						title={hasFilter ? copy.categoryEmptyFilteredTitle : copy.categoryEmptyTitle}>
@@ -135,7 +136,7 @@ function CategoryList({
 					</EmptyState>
 				</Card>
 			) : (
-				<DataTable>
+				<DataTable header={filterToolbar}>
 					<thead>
 						<tr>
 							<DataHeaderCell>{copy.categoryColumnName}</DataHeaderCell>
