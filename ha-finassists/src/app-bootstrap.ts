@@ -16,7 +16,10 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 	const database = new Database(config.databasePath);
 	database.run('PRAGMA journal_mode = WAL');
 	migrateDatabase(database);
-	const container = createAppContainer(database, { currencyCode: config.shellConfig.currencyCode });
+	const container = createAppContainer(database, {
+		currencyCode: config.shellConfig.currencyCode,
+		timeZone: config.timeZone,
+	});
 	const bootstrapCapability =
 		config.supervisorToken === undefined ? config.bootstrapCapability : createBootstrapCapability();
 	const isBootstrapCapabilityConfigured =

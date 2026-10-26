@@ -14,6 +14,7 @@ interface ServerConfig {
 	port: number;
 	shellConfig: ShellConfig;
 	supervisorToken: string | undefined;
+	timeZone: string;
 	trustedIngressIp: string;
 }
 
@@ -27,6 +28,7 @@ interface ServerEnvironment {
 	SUPERVISOR_IP?: string;
 	SUPERVISOR_TOKEN?: string;
 	SYSTEM_CREDENTIAL_BOOTSTRAP_CAPABILITY?: string;
+	TZ?: string;
 }
 
 interface LoadServerConfigOptions {
@@ -79,6 +81,21 @@ function readOptionalEnvironmentValue(value: string | undefined): string | undef
 	const normalized = value?.trim();
 
 	return normalized === '' ? undefined : normalized;
+}
+
+function resolveTimeZone(value: string | undefined): string {
+	const configured = value?.trim();
+	const timeZone =
+		configured === undefined || configured === ''
+			? new Intl.DateTimeFormat().resolvedOptions().timeZone
+			: configured;
+	try {
+		const formatter = new Intl.DateTimeFormat('en', { timeZone });
+
+		return formatter.resolvedOptions().timeZone;
+	} catch {
+		throw new Error('TZ must be a valid IANA time zone');
+	}
 }
 
 function createDevelopmentActor(environment: ServerEnvironment): HomeAssistantActor {
@@ -150,6 +167,7 @@ async function loadServerConfig({
 		port,
 		shellConfig,
 		supervisorToken: readOptionalEnvironmentValue(environment.SUPERVISOR_TOKEN),
+		timeZone: resolveTimeZone(environment.TZ),
 		trustedIngressIp,
 	};
 }

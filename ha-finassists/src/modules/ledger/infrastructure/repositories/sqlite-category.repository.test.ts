@@ -1,4 +1,5 @@
 import { CategoryMother } from '@modules/ledger/domain/category.mother';
+import { ScheduledTransactionMother } from '@modules/ledger/domain/scheduled-transaction.mother';
 import { TransactionMother } from '@modules/ledger/domain/transaction.mother';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
@@ -6,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 
 import { SqliteCategoryRepository } from './sqlite-category.repository';
 import { SqliteLedgerRepository } from './sqlite-ledger.repository';
+import { SqliteScheduledTransactionRepository } from './sqlite-scheduled-transaction.repository';
 
 describe('SqliteCategoryRepository', () => {
 	let database: Database;
@@ -57,10 +59,26 @@ describe('SqliteCategoryRepository', () => {
 
 		const summaries = await repository.search();
 
-		expect(summaries.map(summary => [summary.category.id, summary.transactionCount])).toEqual([
-			['category-2', 0],
-			['category-1', 1],
+		expect(
+			summaries.map(summary => [summary.category.id, summary.transactionCount, summary.scheduledTransactionCount])
+		).toEqual([
+			['category-2', 0, 0],
+			['category-1', 1, 0],
 		]);
+	});
+
+	it('counts scheduled transactions separately from recorded movements', async () => {
+		const scheduled = new SqliteScheduledTransactionRepository(database);
+		await repository.save(CategoryMother.create({ id: 'category-1' }));
+		await scheduled.save(ScheduledTransactionMother.create({ categoryId: 'category-1', id: 'schedule-1' }));
+
+		const [summary] = await repository.search();
+
+		expect(summary).toMatchObject({
+			scheduledTransactionCount: 1,
+			transactionCount: 0,
+		});
+		expect(await repository.countScheduledTransactions('category-1')).toBe(1);
 	});
 
 	it('filters by kind', async () => {

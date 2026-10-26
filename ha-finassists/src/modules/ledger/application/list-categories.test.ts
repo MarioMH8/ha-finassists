@@ -7,7 +7,11 @@ import { ListCategories } from './list-categories';
 describe('ListCategories', () => {
 	it('delegates the criteria to the repository', async () => {
 		const repository = new MockCategoryRepository();
-		const summary = { category: CategoryMother.create(), transactionCount: 3 };
+		const summary = {
+			category: CategoryMother.create(),
+			scheduledTransactionCount: 1,
+			transactionCount: 3,
+		};
 		repository.shouldSearch([summary]);
 
 		const categories = await new ListCategories(repository).execute({ kind: 'expense' });

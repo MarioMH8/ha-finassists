@@ -12,9 +12,13 @@ export class DeleteCategory {
 
 	async execute({ id }: DeleteCategoryInput): Promise<void> {
 		await requireCategory(this.repository, id);
-		const transactionCount = await this.repository.countTransactions(id);
-		if (transactionCount > 0) {
-			throw new CategoryInUseError(id, transactionCount);
+		const [transactionCount, scheduledTransactionCount] = await Promise.all([
+			this.repository.countTransactions(id),
+			this.repository.countScheduledTransactions(id),
+		]);
+		const movementCount = transactionCount + scheduledTransactionCount;
+		if (movementCount > 0) {
+			throw new CategoryInUseError(id, movementCount);
 		}
 		const isDeleted = await this.repository.delete(id);
 		if (!isDeleted) {

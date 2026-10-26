@@ -35,8 +35,8 @@ class CategoryKindMismatchError extends Error {
 }
 
 class CategoryInUseError extends Error {
-	constructor(id: string, transactionCount: number) {
-		super(`category ${id} cannot be changed or deleted while ${transactionCount.toString()} transactions use it`);
+	constructor(id: string, movementCount: number) {
+		super(`category ${id} cannot be changed or deleted while ${movementCount.toString()} movements use it`);
 	}
 }
 

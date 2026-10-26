@@ -1,16 +1,26 @@
 import { Container } from '@inferdi/inferdi';
 import {
 	CreateCategory,
+	CreateScheduledTransaction,
 	CreateTransaction,
 	DeleteCategory,
+	DeleteScheduledTransaction,
 	DeleteTransaction,
 	DeleteTransactions,
 	ListCategories,
+	ListScheduledTransactions,
 	ListTransactions,
+	ListUpcomingScheduledTransactions,
 	UpdateCategory,
+	UpdateScheduledTransaction,
 	UpdateTransaction,
 } from '@modules/ledger/application';
-import { SqliteCategoryRepository, SqliteLedgerRepository } from '@modules/ledger/infrastructure';
+import { todayInTimeZone } from '@modules/ledger/domain';
+import {
+	SqliteCategoryRepository,
+	SqliteLedgerRepository,
+	SqliteScheduledTransactionRepository,
+} from '@modules/ledger/infrastructure';
 import {
 	AuthenticateSystemCredential,
 	ExchangeSystemCredential,
@@ -27,14 +37,18 @@ import type { Database } from 'bun:sqlite';
 
 interface AppContainerOptions {
 	currencyCode: string;
+	timeZone: string;
 }
 
-function buildRepositories(database: Database, { currencyCode }: AppContainerOptions) {
+function buildRepositories(database: Database, { currencyCode, timeZone }: AppContainerOptions) {
 	return new Container()
 		.registerValue('currencyCode', currencyCode)
 		.registerValue('database', database)
+		.registerValue('timeZone', timeZone)
+		.registerValue('today', () => todayInTimeZone(timeZone))
 		.registerClass('categoryRepository', SqliteCategoryRepository, ['database'])
 		.registerClass('ledgerRepository', SqliteLedgerRepository, ['database'])
+		.registerClass('scheduledTransactionRepository', SqliteScheduledTransactionRepository, ['database'])
 		.registerClass('systemCredentialRepository', SqliteSystemCredentialRepository, ['database'])
 		.registerClass('systemCredentialService', WebCryptoSystemCredentialService, [])
 		.registerClass('tokenCredentialService', WebCryptoTokenCredentialService, [])
@@ -88,9 +102,26 @@ function buildLedgerUseCases(container: ReturnType<typeof buildCredentialUseCase
 			delete: new DeleteTransaction(c.get('ledgerRepository')),
 			deleteMany: new DeleteTransactions(c.get('ledgerRepository')),
 			list: new ListTransactions(c.get('ledgerRepository')),
+			scheduled: {
+				create: new CreateScheduledTransaction(
+					c.get('scheduledTransactionRepository'),
+					c.get('categoryRepository'),
+					c.get('currencyCode')
+				),
+				delete: new DeleteScheduledTransaction(c.get('scheduledTransactionRepository')),
+				list: new ListScheduledTransactions(c.get('scheduledTransactionRepository')),
+				upcoming: new ListUpcomingScheduledTransactions(
+					c.get('scheduledTransactionRepository'),
+					c.get('currencyCode')
+				),
+				update: new UpdateScheduledTransaction(
+					c.get('scheduledTransactionRepository'),
+					c.get('categoryRepository')
+				),
+			},
 			update: new UpdateTransaction(c.get('ledgerRepository'), c.get('categoryRepository')),
 		}),
-		['categoryRepository', 'ledgerRepository', 'currencyCode']
+		['categoryRepository', 'ledgerRepository', 'scheduledTransactionRepository', 'currencyCode', 'today']
 	);
 }
 

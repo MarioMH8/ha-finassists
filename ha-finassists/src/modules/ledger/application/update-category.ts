@@ -26,9 +26,13 @@ export class UpdateCategory {
 			name: input.name ?? existing.name,
 		});
 		if (category.kind !== existing.kind) {
-			const transactionCount = await this.repository.countTransactions(category.id);
-			if (transactionCount > 0) {
-				throw new CategoryInUseError(category.id, transactionCount);
+			const [transactionCount, scheduledTransactionCount] = await Promise.all([
+				this.repository.countTransactions(category.id),
+				this.repository.countScheduledTransactions(category.id),
+			]);
+			const movementCount = transactionCount + scheduledTransactionCount;
+			if (movementCount > 0) {
+				throw new CategoryInUseError(category.id, movementCount);
 			}
 		}
 		const duplicate = await this.repository.findByName(category.kind, category.name);
