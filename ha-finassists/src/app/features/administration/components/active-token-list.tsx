@@ -106,77 +106,76 @@ function ActiveTokenList({
 
 	return (
 		<>
-			<Card
+			<section
 				aria-labelledby='active-tokens-title'
-				bleed>
-				<div className={styles.heading}>
-					<SectionHeading
-						actions={headingActions}
-						description={headingDescription}
-						level={3}
-						title={copy.activeTokens}
-						titleId='active-tokens-title'
-						titleRef={tokenHeadingReference}
-					/>
-				</div>
-				<div className={styles.body}>
-					{feedback.message ? (
-						<Notice tone={feedback.state === 'error' ? NOTICE_TONE.ERROR : NOTICE_TONE.SUCCESS}>
-							{feedback.message}
-						</Notice>
-					) : undefined}
-					{listError ? (
-						<Notice tone={NOTICE_TONE.ERROR}>{copy.errorLoadingTokens}</Notice>
-					) : isLoading && tokens.length === 0 ? (
-						<Notice>{copy.loadingTokens}</Notice>
-					) : tokens.length === 0 ? (
-						<EmptyState
-							icon={ICON_NAME.WALLET}
-							title={copy.tokensEmptyTitle}>
-							{copy.noTokens}
-						</EmptyState>
-					) : (
-						<List
-							aria-label={copy.activeTokens}
-							ref={tokenListReference}>
-							{tokens.map(token => {
-								const actions = (
-									<span
-										className={styles.menu}
-										data-token-id={token.id}>
-										<Menu
-											items={[
-												{
-													icon: ICON_NAME.DELETE,
-													label: copy.revoke,
-													onSelect: () => {
-														setConfirmingTokenId(token.id);
+				className={styles.section}>
+				<SectionHeading
+					actions={headingActions}
+					description={headingDescription}
+					title={copy.activeTokens}
+					titleId='active-tokens-title'
+					titleRef={tokenHeadingReference}
+				/>
+				<Card bleed>
+					<div className={styles.body}>
+						{feedback.message ? (
+							<Notice tone={feedback.state === 'error' ? NOTICE_TONE.ERROR : NOTICE_TONE.SUCCESS}>
+								{feedback.message}
+							</Notice>
+						) : undefined}
+						{listError ? (
+							<Notice tone={NOTICE_TONE.ERROR}>{copy.errorLoadingTokens}</Notice>
+						) : isLoading && tokens.length === 0 ? (
+							<Notice>{copy.loadingTokens}</Notice>
+						) : tokens.length === 0 ? (
+							<EmptyState
+								icon={ICON_NAME.WALLET}
+								title={copy.tokensEmptyTitle}>
+								{copy.noTokens}
+							</EmptyState>
+						) : (
+							<List
+								aria-label={copy.activeTokens}
+								ref={tokenListReference}>
+								{tokens.map(token => {
+									const actions = (
+										<span
+											className={styles.menu}
+											data-token-id={token.id}>
+											<Menu
+												items={[
+													{
+														icon: ICON_NAME.DELETE,
+														label: copy.revoke,
+														onSelect: () => {
+															setConfirmingTokenId(token.id);
+														},
+														tone: MENU_ITEM_TONE.DANGER,
 													},
-													tone: MENU_ITEM_TONE.DANGER,
-												},
-											]}
-											label={interpolate(copy.tokenOptions, { name: token.name })}
-										/>
-									</span>
-								);
+												]}
+												label={interpolate(copy.tokenOptions, { name: token.name })}
+											/>
+										</span>
+									);
 
-								return (
-									<ListItem
-										actions={actions}
-										key={token.id}>
-										<div className={styles.details}>
-											<strong>{token.name}</strong>
-											<span>
-												{token.prefix} · {formatTokenDate(token.createdAt, language)}
-											</span>
-										</div>
-									</ListItem>
-								);
-							})}
-						</List>
-					)}
-				</div>
-			</Card>
+									return (
+										<ListItem
+											actions={actions}
+											key={token.id}>
+											<div className={styles.details}>
+												<strong>{token.name}</strong>
+												<span>
+													{token.prefix} · {formatTokenDate(token.createdAt, language)}
+												</span>
+											</div>
+										</ListItem>
+									);
+								})}
+							</List>
+						)}
+					</div>
+				</Card>
+			</section>
 			<Dialog
 				closeLabel={copy.close}
 				description={
