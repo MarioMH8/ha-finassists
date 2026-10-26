@@ -1,4 +1,4 @@
-import { migrateDatabase } from '@modules/storage/infrastructure';
+import { DatabaseMigrator } from '@modules/storage/infrastructure';
 import { ApiTokenMother } from '@modules/tokens/domain/api-token.mother';
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
@@ -13,7 +13,7 @@ describe('SqliteApiTokenRepository', () => {
 	describe('search', () => {
 		it('filters by owner and retains newest-first listing order', async () => {
 			database = new Database(':memory:');
-			migrateDatabase(database);
+			DatabaseMigrator.migrate(database);
 			const repository = new SqliteApiTokenRepository(database);
 			const older = ApiTokenMother.create({
 				createdAt: '2026-05-14T00:00:00.000Z',
@@ -39,7 +39,7 @@ describe('SqliteApiTokenRepository', () => {
 	describe('find', () => {
 		it('finds a token by its secret hash', async () => {
 			database = new Database(':memory:');
-			migrateDatabase(database);
+			DatabaseMigrator.migrate(database);
 			const repository = new SqliteApiTokenRepository(database);
 			const token = ApiTokenMother.create({ secretHash: 'sha256-hash' });
 			await repository.save(token);
@@ -52,7 +52,7 @@ describe('SqliteApiTokenRepository', () => {
 	describe('delete', () => {
 		it('deletes only when both token id and owner match', async () => {
 			database = new Database(':memory:');
-			migrateDatabase(database);
+			DatabaseMigrator.migrate(database);
 			const repository = new SqliteApiTokenRepository(database);
 			const token = ApiTokenMother.create({ id: 'token-1', ownerId: 'user-1' });
 			await repository.save(token);

@@ -5,11 +5,11 @@ import path from 'node:path';
 import { DEFAULT_TRUSTED_INGRESS_IP } from '@modules/home-assistant';
 import { describe, expect, it } from 'bun:test';
 
-import { loadServerConfig } from './config';
+import { ServerConfigLoader } from './config';
 
-describe('loadServerConfig', () => {
+describe('ServerConfigLoader.load', () => {
 	it('uses the Ingress default and application port when no options exist', async () => {
-		const config = await loadServerConfig({
+		const config = await ServerConfigLoader.load({
 			environment: { NODE_ENV: 'production', TZ: 'UTC' },
 			optionsPath: '/tmp/fin-assist-options-not-found.json',
 		});
@@ -28,7 +28,7 @@ describe('loadServerConfig', () => {
 	});
 
 	it('accepts an IANA time zone and rejects an invalid one', async () => {
-		const config = await loadServerConfig({
+		const config = await ServerConfigLoader.load({
 			environment: { NODE_ENV: 'production', TZ: 'Europe/Madrid' },
 			optionsPath: '/tmp/fin-assist-options-not-found.json',
 		});
@@ -37,7 +37,7 @@ describe('loadServerConfig', () => {
 
 		let configError: unknown;
 		try {
-			await loadServerConfig({
+			await ServerConfigLoader.load({
 				environment: { NODE_ENV: 'production', TZ: 'Mars/Olympus' },
 				optionsPath: '/tmp/fin-assist-options-not-found.json',
 			});
@@ -62,7 +62,7 @@ describe('loadServerConfig', () => {
 					supervisor_ip: ['127.0.0.1'],
 				})
 			);
-			const config = await loadServerConfig({
+			const config = await ServerConfigLoader.load({
 				environment: { NODE_ENV: 'production' },
 				optionsPath,
 			});
@@ -78,7 +78,7 @@ describe('loadServerConfig', () => {
 	});
 
 	it('accepts a Supervisor token for add-on discovery provisioning', async () => {
-		const config = await loadServerConfig({
+		const config = await ServerConfigLoader.load({
 			environment: { NODE_ENV: 'production', SUPERVISOR_TOKEN: 'supervisor-token' },
 			optionsPath: './data/fin-assist-options-not-found.json',
 		});
@@ -87,7 +87,7 @@ describe('loadServerConfig', () => {
 	});
 
 	it('accepts a valid Supervisor IP override', async () => {
-		const config = await loadServerConfig({
+		const config = await ServerConfigLoader.load({
 			environment: { NODE_ENV: 'production', SUPERVISOR_IP: '192.168.1.10' },
 			optionsPath: '/tmp/fin-assist-options-not-found.json',
 		});
@@ -98,7 +98,7 @@ describe('loadServerConfig', () => {
 	it('rejects an invalid Supervisor IP override', async () => {
 		let configError: unknown;
 		try {
-			await loadServerConfig({
+			await ServerConfigLoader.load({
 				environment: { NODE_ENV: 'production', SUPERVISOR_IP: '[invalid]' },
 				optionsPath: '/tmp/fin-assist-options-not-found.json',
 			});
@@ -113,7 +113,7 @@ describe('loadServerConfig', () => {
 	it('rejects development identity configuration outside development mode', async () => {
 		let configError: unknown;
 		try {
-			await loadServerConfig({
+			await ServerConfigLoader.load({
 				environment: { DEV_INGRESS_USER_ID: 'local-mario', NODE_ENV: 'production' },
 				optionsPath: '/tmp/fin-assist-options-not-found.json',
 			});
@@ -128,7 +128,7 @@ describe('loadServerConfig', () => {
 	});
 
 	it('uses configurable mock identity only when development is explicitly enabled', async () => {
-		const config = await loadServerConfig({
+		const config = await ServerConfigLoader.load({
 			development: true,
 			environment: {
 				DEV_INGRESS_DISPLAY_NAME: 'Local Mario',

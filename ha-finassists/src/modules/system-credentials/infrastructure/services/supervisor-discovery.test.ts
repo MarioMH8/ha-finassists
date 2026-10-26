@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test';
 
-import { createBootstrapCapability, publishSupervisorDiscovery } from './supervisor-discovery';
+import { BootstrapCapability, SupervisorDiscovery } from './supervisor-discovery';
 
 afterEach(() => {
 	mock.restore();
@@ -10,14 +10,14 @@ describe('Supervisor discovery provisioning', () => {
 	it('uses the global fetch when no fetcher is provided', async () => {
 		const fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(undefined, { status: 200 }));
 
-		await publishSupervisorDiscovery('supervisor-token', 'fa_bootstrap_capability');
+		await SupervisorDiscovery.publish('supervisor-token', 'fa_bootstrap_capability');
 
 		expect(fetchSpy.mock.calls[0]?.[0]).toBe('http://supervisor/discovery');
 	});
 
 	it('generates a unique URL-safe bootstrap capability', () => {
-		const first = createBootstrapCapability();
-		const second = createBootstrapCapability();
+		const first = BootstrapCapability.create();
+		const second = BootstrapCapability.create();
 
 		expect(first).toMatch(/^fa_bootstrap_[A-Za-z0-9_-]{43}$/);
 		expect(second).toMatch(/^fa_bootstrap_[A-Za-z0-9_-]{43}$/);
@@ -33,7 +33,7 @@ describe('Supervisor discovery provisioning', () => {
 		};
 		const capability = 'fa_bootstrap_discovery-capability';
 
-		await publishSupervisorDiscovery('supervisor-token', capability, fetcher);
+		await SupervisorDiscovery.publish('supervisor-token', capability, fetcher);
 
 		expect(request?.url).toBe('http://supervisor/discovery');
 		expect(request?.method).toBe('POST');
@@ -52,7 +52,7 @@ describe('Supervisor discovery provisioning', () => {
 		let failure: unknown;
 
 		try {
-			await publishSupervisorDiscovery('supervisor-token', capability, fetcher);
+			await SupervisorDiscovery.publish('supervisor-token', capability, fetcher);
 		} catch (error) {
 			failure = error;
 		}
@@ -69,7 +69,7 @@ describe('Supervisor discovery provisioning', () => {
 		let failure: unknown;
 
 		try {
-			await publishSupervisorDiscovery('supervisor-token', capability, fetcher);
+			await SupervisorDiscovery.publish('supervisor-token', capability, fetcher);
 		} catch (error) {
 			failure = error;
 		}

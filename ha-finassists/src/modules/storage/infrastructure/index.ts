@@ -1,1 +1,1 @@
-export { migrateDatabase } from './migrations';
+export { DatabaseMigrator } from './migrations';

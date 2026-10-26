@@ -1,13 +1,13 @@
 import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
-import { migrateDatabase } from './migrations';
+import { DatabaseMigrator } from './migrations';
 
-describe('migrateDatabase', () => {
+describe('DatabaseMigrator.migrate', () => {
 	it('creates the token schema and is idempotent', () => {
 		const database = new Database(':memory:');
-		migrateDatabase(database);
-		migrateDatabase(database);
+		DatabaseMigrator.migrate(database);
+		DatabaseMigrator.migrate(database);
 
 		expect(database.query('SELECT version FROM schema_migrations ORDER BY version').all()).toEqual([
 			{ version: 1 },
@@ -34,7 +34,7 @@ describe('migrateDatabase', () => {
 			.query('INSERT INTO api_tokens VALUES (?, ?, ?, ?, ?, ?)')
 			.run('id', 'owner', 'name', 'fa_', 'hash', 'now');
 
-		migrateDatabase(database);
+		DatabaseMigrator.migrate(database);
 
 		expect(database.query('SELECT id, owner_id, secret_hash FROM api_tokens').get()).toEqual({
 			id: 'id',
@@ -46,7 +46,7 @@ describe('migrateDatabase', () => {
 
 	it('creates the minimal transactions schema', () => {
 		const database = new Database(':memory:');
-		migrateDatabase(database);
+		DatabaseMigrator.migrate(database);
 
 		expect(
 			database
@@ -67,7 +67,7 @@ describe('migrateDatabase', () => {
 
 	it('adds an optional category to transactions and enforces the reference', () => {
 		const database = new Database(':memory:');
-		migrateDatabase(database);
+		DatabaseMigrator.migrate(database);
 
 		const columns = database
 			.query<{ name: string }, []>('PRAGMA table_info(transactions)')
@@ -95,7 +95,7 @@ describe('migrateDatabase', () => {
 
 	it('links posted transactions to scheduled occurrences idempotently', () => {
 		const database = new Database(':memory:');
-		migrateDatabase(database);
+		DatabaseMigrator.migrate(database);
 		database.run(
 			`INSERT INTO scheduled_transactions
 			 (id, kind, amount_minor, currency_code, description, start_date, frequency, interval, posting_mode, status, created_at)
@@ -139,7 +139,7 @@ describe('migrateDatabase', () => {
 		database.run('INSERT INTO books VALUES (?)', ['book']);
 		database.run('INSERT INTO transactions VALUES (?, ?)', ['t', 'book']);
 
-		migrateDatabase(database);
+		DatabaseMigrator.migrate(database);
 
 		expect(database.query('SELECT COUNT(*) AS count FROM api_tokens').get()).toEqual({ count: 1 });
 		expect(database.query('SELECT COUNT(*) AS count FROM transactions').get()).toEqual({ count: 0 });
@@ -153,7 +153,7 @@ describe('migrateDatabase', () => {
 		database.run(`CREATE TRIGGER fail_migration_record BEFORE INSERT ON schema_migrations
 			BEGIN SELECT RAISE(ABORT, 'migration insert failed'); END`);
 
-		expect(() => migrateDatabase(database)).toThrow('migration insert failed');
+		expect(() => DatabaseMigrator.migrate(database)).toThrow('migration insert failed');
 		expect(
 			database.query(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'api_tokens'`).get()
 		).toBeNull();

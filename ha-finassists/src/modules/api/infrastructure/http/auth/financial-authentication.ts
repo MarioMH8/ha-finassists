@@ -5,7 +5,7 @@ import type {
 	TokenManagementUseCases,
 } from '@modules/api/infrastructure/http/shared/request-context';
 import type { IngressActor } from '@modules/home-assistant';
-import { isTrustedIngressPeer, resolveIngressActor } from '@modules/home-assistant';
+import { IngressActorResolver, TrustedIngressPeer } from '@modules/home-assistant';
 
 type FinancialActor = IngressActor;
 
@@ -34,8 +34,8 @@ class FinancialAuthentication {
 			return context.developmentActor;
 		}
 
-		if (isTrustedIngressPeer(context.remoteAddress, context.trustedIngressIp)) {
-			return resolveIngressActor(request.headers, context.remoteAddress, context.trustedIngressIp);
+		if (TrustedIngressPeer.isTrusted(context.remoteAddress, context.trustedIngressIp)) {
+			return IngressActorResolver.resolve(request.headers, context.remoteAddress, context.trustedIngressIp);
 		}
 
 		return this.authenticateBearer(request, tokenUseCases, systemCredentialUseCases);

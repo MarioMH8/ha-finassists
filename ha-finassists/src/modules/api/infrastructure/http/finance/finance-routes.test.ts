@@ -24,7 +24,7 @@ import {
 	SqliteLedgerRepository,
 	SqliteScheduledTransactionRepository,
 } from '@modules/ledger/infrastructure';
-import { migrateDatabase } from '@modules/storage/infrastructure';
+import { DatabaseMigrator } from '@modules/storage/infrastructure';
 import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
 import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modules/tokens/infrastructure';
 import { Database } from 'bun:sqlite';
@@ -117,7 +117,7 @@ interface MCPScheduledJson {
 function createMigratedDatabase(): Database {
 	const database = new Database(':memory:');
 	databases.push(database);
-	migrateDatabase(database);
+	DatabaseMigrator.migrate(database);
 
 	return database;
 }

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test';
 
-import { DEFAULT_TRUSTED_INGRESS_IP, resolveIngressActor } from './resolve-ingress-actor';
+import { DEFAULT_TRUSTED_INGRESS_IP, IngressActorResolver } from './resolve-ingress-actor';
 
-describe('resolveIngressActor', () => {
+describe('IngressActorResolver.resolve', () => {
 	it('uses the stable Home Assistant user ID', () => {
-		const actor = resolveIngressActor(
+		const actor = IngressActorResolver.resolve(
 			new Headers({
 				'X-Remote-User-Display-Name': 'Mario',
 				'X-Remote-User-Id': 'user-123',
@@ -23,7 +23,7 @@ describe('resolveIngressActor', () => {
 	});
 
 	it('does not infer an identity from names when the stable ID is missing', () => {
-		const actor = resolveIngressActor(
+		const actor = IngressActorResolver.resolve(
 			new Headers({
 				'X-Remote-User-Display-Name': 'Mario',
 				'X-Remote-User-Name': 'mario',
@@ -37,7 +37,7 @@ describe('resolveIngressActor', () => {
 
 	it('does not trust identity headers from an untrusted peer', () => {
 		expect(
-			resolveIngressActor(
+			IngressActorResolver.resolve(
 				new Headers({ 'X-Remote-User-Id': 'spoofed-user' }),
 				'172.30.33.8',
 				DEFAULT_TRUSTED_INGRESS_IP
@@ -46,7 +46,9 @@ describe('resolveIngressActor', () => {
 	});
 
 	it('treats a blank stable ID as unknown', () => {
-		expect(resolveIngressActor(new Headers({ 'X-Remote-User-Id': '  ' }), '172.30.32.2', '172.30.32.2')).toEqual({
+		expect(
+			IngressActorResolver.resolve(new Headers({ 'X-Remote-User-Id': '  ' }), '172.30.32.2', '172.30.32.2')
+		).toEqual({
 			kind: 'unknown',
 		});
 	});
