@@ -306,6 +306,7 @@
   --ha-alert-padding: var(--ha-space-2);
   --ha-alert-icon-size: 24px;
   --ha-dialog-border-radius: var(--ha-border-radius-3xl);
+  --ha-dialog-scrim-background: rgb(0 0 0 / 25%);
 }
 
 @media (prefers-color-scheme: dark) {

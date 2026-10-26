@@ -2,7 +2,9 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(100% - var(--ha-space-8), 580px);
-  max-height: calc(100dvh - 80px);
+  /* Browsers without dynamic viewport units keep the static fallback. */
+  max-height: calc(100vh - var(--ha-space-20));
+  max-height: calc(100dvh - var(--ha-space-20));
   padding: 0;
   border: none;
   border-radius: var(--ha-dialog-border-radius);
@@ -16,7 +18,7 @@
 }
 
 .dialog::backdrop {
-  background: rgb(0 0 0 / 32%);
+  background: var(--ha-dialog-scrim-background);
 }
 
 .alert {
@@ -93,7 +95,9 @@
 
 .body {
   overflow-y: auto;
-  padding: var(--ha-space-2) var(--ha-space-6) var(--ha-space-4);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0 var(--ha-space-6) var(--ha-space-6);
 }
 
 .footer {
@@ -110,16 +114,21 @@
   }
 }
 
-@media (max-width: 600px) {
+/*
+ * Home Assistant fills the screen for a standard dialog at 450px wide or
+ * 500px high, without rounded corners, and keeps the footer reachable above
+ * the safe-area insets. Alert dialogs stay a rounded 320px dialog.
+ */
+@media all and (max-width: 450px), all and (max-height: 500px) {
   .dialog:not(.alert) {
     width: 100%;
+    max-width: none;
+    height: 100vh;
     height: 100dvh;
     max-height: none;
+    padding-block: var(--safe-area-inset-top) var(--safe-area-inset-bottom);
+    padding-inline: var(--safe-area-inset-left) var(--safe-area-inset-right);
     border-radius: 0;
-  }
-
-  .alert {
-    width: min(100% - var(--ha-space-6), 320px);
   }
 
   .footer {
