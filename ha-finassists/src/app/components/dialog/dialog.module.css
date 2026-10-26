@@ -1,6 +1,6 @@
 .dialog {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   width: min(100% - var(--ha-space-8), 580px);
   max-height: calc(100vh - var(--ha-space-20));
   max-height: calc(100dvh - var(--ha-space-20));
@@ -57,6 +57,7 @@
 
 .header {
   display: flex;
+  flex: none;
   align-items: flex-start;
   gap: var(--ha-space-2);
   min-height: var(--ha-space-12);
@@ -93,6 +94,8 @@
 }
 
 .body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -101,6 +104,7 @@
 
 .footer {
   display: flex;
+  flex: none;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--ha-space-3);
