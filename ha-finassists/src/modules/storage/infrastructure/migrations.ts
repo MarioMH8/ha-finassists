@@ -116,6 +116,45 @@ const MIGRATIONS: Migration[] = [
 		},
 		version: 6,
 	},
+	{
+		up(database) {
+			database.run(`
+				CREATE TABLE scheduled_transactions (
+					id TEXT PRIMARY KEY,
+					kind TEXT NOT NULL CHECK (kind IN ('expense', 'income')),
+					amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+					currency_code TEXT NOT NULL CHECK (length(currency_code) = 3),
+					description TEXT NOT NULL DEFAULT '' CHECK (length(description) <= 200),
+					category_id TEXT REFERENCES categories(id) ON DELETE RESTRICT,
+					start_date TEXT NOT NULL,
+					frequency TEXT NOT NULL CHECK (frequency IN ('once', 'daily', 'weekly', 'monthly', 'yearly')),
+					interval INTEGER NOT NULL DEFAULT 1 CHECK (interval > 0),
+					end_date TEXT,
+					next_due_date TEXT,
+					occurrence_number INTEGER NOT NULL DEFAULT 0 CHECK (occurrence_number >= 0),
+					posting_mode TEXT NOT NULL CHECK (posting_mode IN ('automatic', 'manual')),
+					status TEXT NOT NULL CHECK (status IN ('active', 'paused', 'completed')),
+					created_by TEXT,
+					created_at TEXT NOT NULL,
+					version INTEGER NOT NULL DEFAULT 0 CHECK (version >= 0),
+					CHECK (end_date IS NULL OR end_date >= start_date)
+				)
+			`);
+			database.run(
+				'CREATE INDEX scheduled_transactions_due_index ON scheduled_transactions(status, posting_mode, next_due_date)'
+			);
+			database.run('CREATE INDEX scheduled_transactions_category_index ON scheduled_transactions(category_id)');
+			database.run(
+				'ALTER TABLE transactions ADD COLUMN schedule_id TEXT REFERENCES scheduled_transactions(id) ON DELETE SET NULL'
+			);
+			database.run('ALTER TABLE transactions ADD COLUMN schedule_occurrence_number INTEGER');
+			database.run(
+				'CREATE UNIQUE INDEX transactions_schedule_occurrence_unique ON transactions(schedule_id, schedule_occurrence_number) WHERE schedule_id IS NOT NULL'
+			);
+			database.run('CREATE INDEX transactions_schedule_index ON transactions(schedule_id)');
+		},
+		version: 7,
+	},
 ];
 
 function migrateDatabase(database: Database): void {
