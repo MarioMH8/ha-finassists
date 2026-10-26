@@ -33,12 +33,25 @@ interface DialogProps {
  * it back inside this document keeps keyboard navigation and the Ingress iframe
  * outline in the state the app expects.
  */
-function restoreFocus(opener: HTMLElement | undefined): void {
+function hasDialogFocus(activeElement: Element | null, dialog: HTMLDialogElement): boolean {
+	return (
+		activeElement === null ||
+		activeElement === document.body ||
+		activeElement === document.documentElement ||
+		dialog.contains(activeElement)
+	);
+}
+
+function restoreFocus(opener: HTMLElement | undefined, dialog: HTMLDialogElement): void {
 	requestAnimationFrame(() => {
 		focus();
 		if (opener?.isConnected === true) {
 			opener.focus();
-		} else {
+		} else if (hasDialogFocus(document.activeElement, dialog)) {
+			/*
+			 * A list update may already have moved focus to the next row, so the
+			 * fallback only applies when nothing else outside the dialog holds it.
+			 */
 			document.querySelector<HTMLElement>(FALLBACK_FOCUS_SELECTOR)?.focus();
 		}
 		/*
@@ -85,7 +98,7 @@ function Dialog({
 			dialog.close();
 			const opener = openerReference.current;
 			openerReference.current = undefined;
-			restoreFocus(opener);
+			restoreFocus(opener, dialog);
 		}
 	}, [open]);
 
@@ -101,7 +114,7 @@ function Dialog({
 				return;
 			}
 			dialog.close();
-			restoreFocus(openerReference.current);
+			restoreFocus(openerReference.current, dialog);
 		};
 	}, []);
 
