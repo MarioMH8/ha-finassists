@@ -52,6 +52,9 @@
 - name: type:breaking-change
   color: 1d76db
   description: A change that is not backward compatible
+- name: internal:no-issue
+  color: ededed
+  description: Internal tooling that does not need a linked issue
 - name: scope:app
   color: c5def5
   description: Application server or web interface
