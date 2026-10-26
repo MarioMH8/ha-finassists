@@ -1,9 +1,3 @@
-/*
- * Home Assistant draws a focus-visible outline around the Ingress iframe when
- * the frame itself holds focus. The frame cannot style its own parent across a
- * cross-origin boundary, so this module clears the outline only when the parent
- * document is reachable and the frame that hosts this document can be found.
- */
 interface IngressFrame {
 	contentWindow: unknown;
 	style: {
@@ -40,12 +34,6 @@ function isIngressFrame(candidate: unknown): candidate is IngressFrame {
 	return typeof candidate === 'object' && candidate !== null && 'contentWindow' in candidate && 'style' in candidate;
 }
 
-/*
- * `Window.frameElement` is the primary path: it returns the iframe that hosts
- * this document even when Home Assistant renders that iframe inside shadow
- * roots, and Ingress is same-origin so the reference is accessible. The parent
- * document query remains a best-effort fallback for browsers that hide it.
- */
 function clearHostFrameOutline(frameWindow: IngressFrameHost): void {
 	try {
 		const frameElement = frameWindow.frameElement;
@@ -56,7 +44,7 @@ function clearHostFrameOutline(frameWindow: IngressFrameHost): void {
 		}
 		removeFrameOutline(frameWindow.parent.document.querySelectorAll('iframe'), frameWindow);
 	} catch {
-		// A cross-origin parent or a navigated frame cannot be styled from here.
+		// The parent is cross-origin or no longer reachable.
 	}
 }
 

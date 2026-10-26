@@ -83,6 +83,7 @@ Git hooks run through Husky: lint-staged before committing, Commitlint on the me
 - `main` is the default and only long-lived branch.
 - Create feature and maintenance branches from `main` and open pull requests back to `main`.
 - Commit messages follow Conventional Commits.
+- Keep comments to non-obvious constraints or workarounds; put design rationale in an ADR or task guide.
 - Link pull requests to an approved issue with `Closes #123` and add one `type:*` label.
 - Add a changeset with `bun changeset add` when the pull request changes what users get. Tooling, CI and documentation changes do not need one.
 

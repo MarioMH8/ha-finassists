@@ -2,7 +2,6 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(100% - var(--ha-space-8), 580px);
-  /* Browsers without dynamic viewport units keep the static fallback. */
   max-height: calc(100vh - var(--ha-space-20));
   max-height: calc(100dvh - var(--ha-space-20));
   padding: 0;
@@ -114,11 +113,6 @@
   }
 }
 
-/*
- * Home Assistant fills the screen for a standard dialog at 450px wide or
- * 500px high, without rounded corners, and keeps the footer reachable above
- * the safe-area insets. Alert dialogs stay a rounded 320px dialog.
- */
 @media all and (max-width: 450px), all and (max-height: 500px) {
   .dialog:not(.alert) {
     width: 100%;

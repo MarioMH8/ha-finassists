@@ -13,11 +13,6 @@ interface EmptyStateProps {
 	title: ReactNode;
 }
 
-/*
- * Mirrors the Home Assistant empty state: a centered icon, heading,
- * description and optional actions.
- * https://contributors.home-assistant.io/design/patterns/empty-states/
- */
 function EmptyState({ action, children, className, icon, title }: EmptyStateProps): ReactElement {
 	return (
 		<div className={classNames(styles.emptyState, className)}>

@@ -1,4 +1,3 @@
-/* Outlined appearance: 40 / 56px tall. */
 .input {
   width: 100%;
   min-width: 0;
@@ -35,18 +34,15 @@
   border-color: var(--ha-color-border-neutral-normal);
 }
 
-/* Home Assistant uses the primary border as the focus indicator, not a ring. */
 .input:focus-visible {
   border-color: var(--ha-color-border-primary-loud);
   outline: none;
 }
 
-/* WebKit centers the native value; Home Assistant aligns values at the start. */
 .input[type='date']::-webkit-date-and-time-value {
   text-align: start;
 }
 
-/* Keep the native date picker indicator visible and usable. */
 .input[type='date']::-webkit-calendar-picker-indicator {
   opacity: 1;
   cursor: pointer;
@@ -62,10 +58,6 @@
   cursor: not-allowed;
 }
 
-/*
- * iOS zooms the page when a field smaller than 16px receives focus. Raise both
- * sizes to the body-large size on touch pointers instead of blocking scaling.
- */
 @media (pointer: coarse) {
   .s,
   .m {

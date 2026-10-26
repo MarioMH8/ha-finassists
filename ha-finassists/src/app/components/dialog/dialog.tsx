@@ -28,11 +28,6 @@ interface DialogProps {
 	type?: DialogType;
 }
 
-/*
- * WebKit can leave focus on the parent page when a native dialog closes. Moving
- * it back inside this document keeps keyboard navigation and the Ingress iframe
- * outline in the state the app expects.
- */
 function hasDialogFocus(activeElement: Element | null, dialog: HTMLDialogElement): boolean {
 	return (
 		activeElement === null ||
@@ -48,25 +43,12 @@ function restoreFocus(opener: HTMLElement | undefined, dialog: HTMLDialogElement
 		if (opener?.isConnected === true) {
 			opener.focus();
 		} else if (hasDialogFocus(document.activeElement, dialog)) {
-			/*
-			 * A list update may already have moved focus to the next row, so the
-			 * fallback only applies when nothing else outside the dialog holds it.
-			 */
 			document.querySelector<HTMLElement>(FALLBACK_FOCUS_SELECTOR)?.focus();
 		}
-		/*
-		 * Moving focus back lets Home Assistant paint the iframe outline again,
-		 * so clear it once focus is inside this document.
-		 */
 		clearIngressFrameOutline();
 	});
 }
 
-/*
- * Native modal dialog following the Home Assistant guidance: a title, optional
- * description, scrollable body and the actions grouped in the footer.
- * https://contributors.home-assistant.io/design/components/dialog/
- */
 function Dialog({
 	children,
 	closeLabel,
@@ -106,10 +88,6 @@ function Dialog({
 		const dialog = dialogReference.current;
 
 		return () => {
-			/*
-			 * The passive cleanup runs after the ref is detached, so the dialog
-			 * captured at mount is the only way to tell whether it was still open.
-			 */
 			if (!dialog?.open) {
 				return;
 			}
@@ -133,11 +111,6 @@ function Dialog({
 				}
 			}}
 			onClose={() => {
-				/*
-				 * Calling `dialog.close()` emits a native close event. The `open`
-				 * prop already asked for that close, so only a close the app did
-				 * not initiate should reach `onClose`.
-				 */
 				if (open) {
 					onClose();
 				}

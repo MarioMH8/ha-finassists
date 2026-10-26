@@ -19,6 +19,5 @@ if (rootElement) {
 			settings={settings}
 		/>
 	);
-	// Home Assistant can focus the Ingress iframe while mounting the page.
 	clearIngressFrameOutline();
 }
