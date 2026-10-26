@@ -11,6 +11,9 @@ import {
 	ListScheduledTransactions,
 	ListTransactions,
 	ListUpcomingScheduledTransactions,
+	PostDueScheduledTransactions,
+	PostScheduledTransaction,
+	SkipScheduledTransaction,
 	UpdateCategory,
 	UpdateScheduledTransaction,
 	UpdateTransaction,
@@ -110,6 +113,11 @@ function buildLedgerUseCases(container: ReturnType<typeof buildCredentialUseCase
 				),
 				delete: new DeleteScheduledTransaction(c.get('scheduledTransactionRepository')),
 				list: new ListScheduledTransactions(c.get('scheduledTransactionRepository')),
+				post: new PostScheduledTransaction(c.get('scheduledTransactionRepository')),
+				postDue: new PostDueScheduledTransactions(c.get('scheduledTransactionRepository'), c.get('today'), () =>
+					new Date().toISOString()
+				),
+				skip: new SkipScheduledTransaction(c.get('scheduledTransactionRepository')),
 				upcoming: new ListUpcomingScheduledTransactions(
 					c.get('scheduledTransactionRepository'),
 					c.get('currencyCode')

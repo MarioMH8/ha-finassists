@@ -14,6 +14,16 @@ export {
 	type UpcomingScheduledTransactionItem,
 	type UpcomingScheduledTransactions,
 } from './list-upcoming-scheduled-transactions';
+export {
+	PostDueScheduledTransactions,
+	type PostDueScheduledTransactionsResult,
+} from './post-due-scheduled-transactions';
+export {
+	PostScheduledTransaction,
+	type PostScheduledTransactionInput,
+	type PostScheduledTransactionResult,
+} from './post-scheduled-transaction';
+export { SkipScheduledTransaction, type SkipScheduledTransactionInput } from './skip-scheduled-transaction';
 export { UpdateCategory, type UpdateCategoryInput } from './update-category';
 export { UpdateScheduledTransaction, type UpdateScheduledTransactionInput } from './update-scheduled-transaction';
 export { UpdateTransaction, type UpdateTransactionInput } from './update-transaction';
