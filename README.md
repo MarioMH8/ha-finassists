@@ -57,6 +57,7 @@ The card ships with the integration. In a storage-mode dashboard, add `/ha_finas
 ## What you get
 
 - **A dashboard that opens in one click.** The app runs behind Home Assistant Ingress and follows your light or dark theme, in Spanish or English.
+- **Categories** to group expenses and incomes by kind, both in the app and through the API.
 - **Sensors for your dashboard:** *Income this month* and *Expenses this month*.
 - **Services for automations:** `ha_finassists.add_expense`, `add_income`, `delete_transaction` and `refresh`.
 - **A REST API and an MCP server** (`/api/v1` and `/mcp`) for scripts, local tools and assistants. Each person manages their own revocable tokens from the **Administration** page.
@@ -64,7 +65,7 @@ The card ships with the integration. In a storage-mode dashboard, add `/ha_finas
 
 ## Where it is going
 
-Fin Assist starts with the essentials — recording expenses and incomes and seeing the month at a glance — because a ledger you can trust is the foundation for everything else. Household finance deserves more than one screen: categories, recurring payments, budgets and reports are on the roadmap, each landing as a deliberate, well-tested step.
+Fin Assist starts with the essentials — recording expenses and incomes and seeing the month at a glance — because a ledger you can trust is the foundation for everything else. Household finance deserves more than one screen: recurring payments, budgets and reports are on the roadmap, each landing as a deliberate, well-tested step.
 
 ## Contributing
 

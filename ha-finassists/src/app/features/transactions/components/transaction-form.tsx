@@ -2,6 +2,7 @@ import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/butto
 import { Dialog, DIALOG_TYPE } from '@app/components/dialog';
 import { Field, fieldDescriptionIds } from '@app/components/field';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
+import { Select, SELECT_SIZE } from '@app/components/select';
 import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
 import { currencyFractionDigits } from '@app/features/transactions/transaction-amount';
 import { DESCRIPTION_MAX_LENGTH } from '@app/features/transactions/transaction-validation';
@@ -18,6 +19,8 @@ type TransactionFormProps = Pick<
 	TransactionsState,
 	| 'amount'
 	| 'amountReference'
+	| 'categories'
+	| 'categoryId'
 	| 'closeEditor'
 	| 'copy'
 	| 'currencyCode'
@@ -30,6 +33,7 @@ type TransactionFormProps = Pick<
 	| 'isSubmitting'
 	| 'kind'
 	| 'setAmount'
+	| 'setCategoryId'
 	| 'setDate'
 	| 'setDescription'
 	| 'setKind'
@@ -76,6 +80,8 @@ function amountErrorMessage(
 function TransactionForm({
 	amount,
 	amountReference,
+	categories,
+	categoryId,
 	closeEditor,
 	copy,
 	currencyCode,
@@ -88,12 +94,14 @@ function TransactionForm({
 	isSubmitting,
 	kind,
 	setAmount,
+	setCategoryId,
 	setDate,
 	setDescription,
 	setKind,
 	submit,
 }: TransactionFormProps): ReactElement {
 	const isEditing = editingTransactionId !== undefined;
+	const kindCategories = categories.filter(category => category.kind === kind);
 	const amountHint = interpolate(copy.transactionAmountHint, {
 		currency: currencyCode,
 		digits: currencyFractionDigits(currencyCode),
@@ -199,6 +207,28 @@ function TransactionForm({
 							type='date'
 							value={date}
 						/>
+					</Field>
+					<Field
+						className={styles.description}
+						htmlFor='transaction-category'
+						label={copy.transactionCategoryLabel}>
+						<Select
+							id='transaction-category'
+							name='categoryId'
+							onChange={event => {
+								setCategoryId(event.currentTarget.value);
+							}}
+							size={SELECT_SIZE.SMALL}
+							value={categoryId}>
+							<option value=''>{copy.transactionCategoryNone}</option>
+							{kindCategories.map(category => (
+								<option
+									key={category.id}
+									value={category.id}>
+									{category.name}
+								</option>
+							))}
+						</Select>
 					</Field>
 					<Field
 						className={styles.description}

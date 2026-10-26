@@ -7,6 +7,7 @@ const DESCRIPTION_MAX_LENGTH = 200;
 
 interface TransactionFormValues {
 	amount: string;
+	categoryId: string;
 	date: string;
 	description: string;
 	kind: TransactionKind;
@@ -41,6 +42,9 @@ function validateTransactionForm(values: TransactionFormValues, currencyCode: st
 	return {
 		transaction: {
 			amountMinor: amount.minor,
+			// Clearing a category is an explicit null in the API contract.
+			// eslint-disable-next-line unicorn/no-null
+			categoryId: values.categoryId === '' ? null : values.categoryId,
 			description,
 			kind: values.kind,
 			transactionDate: values.date,

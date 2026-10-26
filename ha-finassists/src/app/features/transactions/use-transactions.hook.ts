@@ -1,3 +1,5 @@
+import type { Category } from '@app/features/categories/categories-api';
+import { fetchCategories } from '@app/features/categories/categories-api';
 import type { Copy } from '@app/i18n';
 import type { Language } from '@app/i18n/language';
 import { useLocale } from '@app/i18n/locale-context';
@@ -35,6 +37,8 @@ interface TransactionsState {
 	canGoNext: boolean;
 	canGoPrevious: boolean;
 	cancelDelete: () => void;
+	categories: Category[];
+	categoryId: string;
 	clearFilters: () => void;
 	closeEditor: () => void;
 	confirmingTransactionId: string | undefined;
@@ -64,6 +68,7 @@ interface TransactionsState {
 	pageIndex: number;
 	pageSize: PageSize;
 	setAmount: (event: ChangeEvent<HTMLInputElement>) => void;
+	setCategoryId: (categoryId: string) => void;
 	setConfirmingTransactionId: Dispatch<SetStateAction<string | undefined>>;
 	setDate: (event: ChangeEvent<HTMLInputElement>) => void;
 	setDescription: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -93,10 +98,12 @@ function useTransactions(currencyCode: string): TransactionsState {
 	const [listState, setListState] = useState<LoadState>(LOAD_STATE.LOADING);
 	const [summary, setSummary] = useState<TransactionSummary | undefined>(undefined);
 	const [summaryState, setSummaryState] = useState<LoadState>(LOAD_STATE.LOADING);
-	const [kind, setKind] = useState<TransactionKind>(TRANSACTION_KIND.EXPENSE);
+	const [kind, setKindValue] = useState<TransactionKind>(TRANSACTION_KIND.EXPENSE);
 	const [amount, setAmountValue] = useState('');
 	const [date, setDateValue] = useState('');
 	const [description, setDescriptionValue] = useState('');
+	const [categoryId, setCategoryIdValue] = useState('');
+	const [categories, setCategories] = useState<Category[]>([]);
 	const [errors, setErrors] = useState<TransactionFormErrors>({});
 	const [feedback, setFeedback] = useState<Feedback | undefined>(undefined);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,6 +113,7 @@ function useTransactions(currencyCode: string): TransactionsState {
 	const [isEditorOpen, setIsEditorOpen] = useState(false);
 	const [editingTransactionId, setEditingTransactionId] = useState<string | undefined>(undefined);
 	const [filters, setFilters] = useState<TransactionFilters>({
+		categoryId: '',
 		fromDate: '',
 		kind: FILTER_KIND.ALL,
 		search: '',
@@ -118,7 +126,11 @@ function useTransactions(currencyCode: string): TransactionsState {
 	const listGeneration = useRef(0);
 	const summaryGeneration = useRef(0);
 	const hasFilters =
-		filters.fromDate !== '' || filters.kind !== FILTER_KIND.ALL || filters.search !== '' || filters.toDate !== '';
+		filters.categoryId !== '' ||
+		filters.fromDate !== '' ||
+		filters.kind !== FILTER_KIND.ALL ||
+		filters.search !== '' ||
+		filters.toDate !== '';
 	const pageCount = Math.max(1, Math.ceil(total / pageSize));
 	const canGoPrevious = pageIndex > 0;
 	const canGoNext = (pageIndex + 1) * pageSize < total;
@@ -128,6 +140,7 @@ function useTransactions(currencyCode: string): TransactionsState {
 		setDateValue(current => current || todayIsoDate());
 		const controller = new AbortController();
 		void loadSummary(controller.signal);
+		void loadCategories(controller.signal);
 
 		return () => controller.abort();
 	}, []);
@@ -158,6 +171,7 @@ function useTransactions(currencyCode: string): TransactionsState {
 				{
 					limit: pageSize,
 					offset: pageIndex * pageSize,
+					...(filters.categoryId !== '' && { categoryId: filters.categoryId }),
 					...(filters.kind !== FILTER_KIND.ALL && { kind: filters.kind }),
 					...(filters.fromDate !== '' && { fromDate: filters.fromDate }),
 					...(filters.search !== '' && { search: filters.search }),
@@ -195,6 +209,17 @@ function useTransactions(currencyCode: string): TransactionsState {
 			if (generation === summaryGeneration.current && !signal?.aborted) {
 				setSummaryState(LOAD_STATE.ERROR);
 			}
+		}
+	}
+
+	async function loadCategories(signal?: AbortSignal): Promise<void> {
+		try {
+			const items = await fetchCategories(undefined, signal);
+			if (!signal?.aborted) {
+				setCategories(items);
+			}
+		} catch {
+			// The selector degrades to "no category" when the list cannot be loaded.
 		}
 	}
 
@@ -242,7 +267,8 @@ function useTransactions(currencyCode: string): TransactionsState {
 		setAmountValue('');
 		setDateValue(todayIsoDate());
 		setDescriptionValue('');
-		setKind(TRANSACTION_KIND.EXPENSE);
+		setCategoryIdValue('');
+		setKindValue(TRANSACTION_KIND.EXPENSE);
 		setErrors({});
 		setFeedback(undefined);
 		setIsEditorOpen(true);
@@ -253,7 +279,8 @@ function useTransactions(currencyCode: string): TransactionsState {
 		setAmountValue(amountInputValue(transaction, currencyCode, language));
 		setDateValue(transaction.transactionDate);
 		setDescriptionValue(transaction.description);
-		setKind(transaction.kind);
+		setCategoryIdValue(transaction.categoryId ?? '');
+		setKindValue(transaction.kind);
 		setErrors({});
 		setFeedback(undefined);
 		setIsEditorOpen(true);
@@ -271,8 +298,17 @@ function useTransactions(currencyCode: string): TransactionsState {
 	}
 
 	function clearFilters(): void {
-		setFilters({ fromDate: '', kind: FILTER_KIND.ALL, search: '', toDate: '' });
+		setFilters({ categoryId: '', fromDate: '', kind: FILTER_KIND.ALL, search: '', toDate: '' });
 		setPageIndex(0);
+	}
+
+	function changeKind(nextKind: TransactionKind): void {
+		setKindValue(nextKind);
+		setCategoryIdValue(current => {
+			const category = categories.find(item => item.id === current);
+
+			return category === undefined || category.kind === nextKind ? current : '';
+		});
 	}
 
 	function goToNextPage(): void {
@@ -293,7 +329,7 @@ function useTransactions(currencyCode: string): TransactionsState {
 		if (isSubmitting) {
 			return;
 		}
-		const validation = validateTransactionForm({ amount, date, description, kind }, currencyCode);
+		const validation = validateTransactionForm({ amount, categoryId, date, description, kind }, currencyCode);
 		setFeedback(undefined);
 		if (validation.errors) {
 			setErrors(validation.errors);
@@ -334,6 +370,8 @@ function useTransactions(currencyCode: string): TransactionsState {
 		cancelDelete,
 		canGoNext,
 		canGoPrevious,
+		categories,
+		categoryId,
 		clearFilters,
 		closeEditor,
 		confirmingTransactionId,
@@ -365,6 +403,7 @@ function useTransactions(currencyCode: string): TransactionsState {
 		setAmount: event => {
 			setAmountValue(event.currentTarget.value);
 		},
+		setCategoryId: setCategoryIdValue,
 		setConfirmingTransactionId,
 		setDate: event => {
 			setDateValue(event.currentTarget.value);
@@ -372,7 +411,7 @@ function useTransactions(currencyCode: string): TransactionsState {
 		setDescription: event => {
 			setDescriptionValue(event.currentTarget.value);
 		},
-		setKind,
+		setKind: changeKind,
 		setPageSize,
 		submit,
 		summary,
