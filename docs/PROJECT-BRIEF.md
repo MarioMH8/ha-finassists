@@ -4,24 +4,24 @@ A self-hosted household-finance app, distributed as one Home Assistant repositor
 
 ## Quick path
 
-- **Financial domain:** Expenses and incomes only. See [the glossary](../CONTEXT.md).
-- **Primary experience:** A theme-aware web app through Home Assistant Ingress to add transactions and see the month at a glance.
+- **Financial domain:** Expenses, incomes and scheduled movements. See [the glossary](../CONTEXT.md).
+- **Primary experience:** A theme-aware web app through Home Assistant Ingress to add transactions, plan scheduled movements and see the month at a glance.
 - **External interfaces:** A new REST API and a read/write MCP server using Streamable HTTP; both require a user-associated token.
 - **Persistence:** One SQLite database in the add-on's persistent storage, included in Home Assistant backups.
 - **Distribution:** One repository for the Home Assistant app, custom integration, and card. Use the Add-on Store for the app and HACS for the integration; the integration serves the card as a frontend resource.
 
 ## Product scope
 
-Included: creating, listing and deleting transactions, each with a kind (expense or income), a positive amount in minor units, an optional description, and a date. One installation-wide currency is set with the app's `currency` option.
+Included: creating, listing and deleting transactions, each with a kind (expense or income), a positive amount in minor units, an optional description, and a date; categories of one kind; and scheduled transactions with one-time or recurring dates, automatic or manual posting, and a separate forecast. One installation-wide currency is set with the app's `currency` option.
 
-Explicitly out of scope for now: accounts and balances, transfers, categories and classes, budgets, scheduled payments, shared expenses, statement imports, multiple books, editing transactions, and bank synchronization. Each can return later as its own iteration; earlier designs were removed from the code. The REST contract is new and does not need compatibility with the reference Python API.
+Explicitly out of scope for now: accounts and balances, transfers, budgets, shared expenses, statement imports, multiple books, and bank synchronization. Each can return later as its own iteration; earlier designs were removed from the code. The REST contract is new and does not need compatibility with the reference Python API.
 
 ## Product shape
 
 | Surface | Responsibility |
 | --- | --- |
-| Home Assistant Ingress app | Add-transaction form, monthly summary, recent transactions with per-row deletion, and the Administration page for personal-token management. |
-| Bun service | Transaction rules, persistent data, REST API, MCP tools (`create_transaction`, `list_transactions`, `delete_transaction`), token management, and audit attribution. |
+| Home Assistant Ingress app | Add-transaction form, monthly summary, recent transactions with per-row deletion, scheduled-movement form, next-30-days forecast, pending confirmations, and the Administration page for personal-token management. |
+| Bun service | Transaction and scheduled-transaction rules, the scheduled-posting job, persistent data, REST API, MCP tools, token management, and audit attribution. |
 | REST API | New contract for the native integration and external local-network clients. |
 | MCP | Read and write tools over Streamable HTTP, authenticated with the same personal-token model as REST. |
 | Custom Home Assistant integration | Native Home Assistant configuration, monthly income/expense sensors, and add-expense/add-income/delete-transaction services. It uses a separate system identity for audit attribution. |
@@ -46,7 +46,7 @@ The Ingress UI follows Home Assistant's visual patterns, supports its light/dark
 
 ## Delivery
 
-The current release contains only the minimal ledger described above. Further capabilities (for example categories, accounts, or scheduled payments) are added one iteration at a time, each recorded in its own ADR.
+The current release contains the ledger, categories and scheduled transactions described above. Further capabilities (for example accounts, budgets or reports) are added one iteration at a time, each recorded in its own ADR.
 
 ## Distribution constraints
 

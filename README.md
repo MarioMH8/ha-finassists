@@ -18,6 +18,7 @@ Log an expense from the dashboard, from an automation, or with the help of an AI
 | :-- | :-- |
 | 🧾 **Record in seconds** | An amount, a date, an optional note. That is the whole form. |
 | 📊 **See the month** | Income, expenses and net, compared with last month, plus a six-month chart. |
+| 🗓️ **Plan ahead** | Schedule a one-time or recurring expense or income, confirm it when due, and see the next 30 days separately from what is already recorded. |
 | 🔎 **Find anything** | Search, filter by type and date range, edit a transaction, or delete in bulk. |
 | 🤖 **Automate it** | Services and sensors let any automation record spending and read the totals. |
 | 🧠 **Ask your AI** | A built-in MCP server lets assistants read and write transactions with a token you control. |
@@ -58,6 +59,7 @@ The card ships with the integration. In a storage-mode dashboard, add `/ha_finas
 
 - **A dashboard that opens in one click.** The app runs behind Home Assistant Ingress and follows your light or dark theme, in Spanish or English.
 - **Categories** to group expenses and incomes by kind, both in the app and through the API.
+- **Scheduled movements** for one-time or recurring expenses and incomes, with automatic posting or manual confirmation, pausing and a next-30-days forecast.
 - **Sensors for your dashboard:** *Income this month* and *Expenses this month*.
 - **Services for automations:** `ha_finassists.add_expense`, `add_income`, `delete_transaction` and `refresh`.
 - **A REST API and an MCP server** (`/api/v1` and `/mcp`) for scripts, local tools and assistants. Each person manages their own revocable tokens from the **Administration** page.
@@ -65,7 +67,7 @@ The card ships with the integration. In a storage-mode dashboard, add `/ha_finas
 
 ## Where it is going
 
-Fin Assist starts with the essentials — recording expenses and incomes and seeing the month at a glance — because a ledger you can trust is the foundation for everything else. Household finance deserves more than one screen: recurring payments, budgets and reports are on the roadmap, each landing as a deliberate, well-tested step.
+Fin Assist started with recording expenses and incomes and seeing the month at a glance; scheduled one-time and recurring movements are now part of the ledger. Household finance deserves more than one screen: budgets, reports and accounts are still on the roadmap, each landing as a deliberate, well-tested step.
 
 ## Contributing
 
