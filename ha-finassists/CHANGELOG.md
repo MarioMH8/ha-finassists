@@ -1,5 +1,11 @@
 # ha-finassists
 
+## 0.2.5
+
+### Patch Changes
+
+- 52840ec: Keep the transaction toolbar inline and outside the horizontal table scroller, keep table cell text on one line, and stop the page-content focus outline from appearing after a dialog closes.
+
 ## 0.2.4
 
 ### Patch Changes
