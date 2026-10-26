@@ -1,5 +1,5 @@
 name: Fin Assist
-version: "0.2.2"
+version: "0.2.3"
 slug: ha-finassists
 description: Financial tools for Home Assistant
 arch:
