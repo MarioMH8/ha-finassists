@@ -1,5 +1,11 @@
 # ha-finassists
 
+## 0.2.4
+
+### Patch Changes
+
+- 192b932: Remove the duplicated top safe-area inset from full-screen dialogs inside the Home Assistant app, so iOS forms start right below the app header.
+
 ## 0.2.3
 
 ### Patch Changes
