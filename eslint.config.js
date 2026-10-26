@@ -91,6 +91,7 @@ const config = await hexadrop(
 			'**/*.test.tsx',
 			'**/*.mother.ts',
 			'ha-finassists/src/modules/api/**/*.ts',
+			'ha-finassists/src/modules/ledger/domain/scheduled-transaction.ts',
 			'ha-finassists/src/modules/ledger/infrastructure/**/*.ts',
 		],
 		rules: { 'unicorn/no-null': 'off' },

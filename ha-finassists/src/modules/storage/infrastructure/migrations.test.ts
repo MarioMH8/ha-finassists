@@ -16,6 +16,7 @@ describe('migrateDatabase', () => {
 			{ version: 4 },
 			{ version: 5 },
 			{ version: 6 },
+			{ version: 7 },
 		]);
 		expect(
 			database.query(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'api_tokens'`).get()
@@ -55,6 +56,7 @@ describe('migrateDatabase', () => {
 		).toEqual([
 			'api_tokens',
 			'categories',
+			'scheduled_transactions',
 			'schema_migrations',
 			'system_credential_bootstrap',
 			'system_credentials',
@@ -77,6 +79,8 @@ describe('migrateDatabase', () => {
 		);
 
 		expect(columns).toContain('category_id');
+		expect(columns).toContain('schedule_id');
+		expect(columns).toContain('schedule_occurrence_number');
 		expect(database.query('SELECT category_id FROM transactions WHERE id = ?').get('a')).toEqual({
 			category_id: null,
 		});
@@ -86,6 +90,35 @@ describe('migrateDatabase', () => {
 				 VALUES ('b', 'expense', 100, 'EUR', '', '2026-05-15', 'missing', NULL, '2026-05-15T10:00:00.000Z')`
 			)
 		).toThrow('FOREIGN KEY');
+		database.close();
+	});
+
+	it('links posted transactions to scheduled occurrences idempotently', () => {
+		const database = new Database(':memory:');
+		migrateDatabase(database);
+		database.run(
+			`INSERT INTO scheduled_transactions
+			 (id, kind, amount_minor, currency_code, description, start_date, frequency, interval, posting_mode, status, created_at)
+			 VALUES ('schedule-1', 'expense', 1000, 'EUR', 'Rent', '2026-05-01', 'monthly', 1, 'automatic', 'active', '2026-05-01T10:00:00.000Z')`
+		);
+		const insertTransaction = (id: string) => {
+			database
+				.query(
+					`INSERT INTO transactions
+					 (id, kind, amount_minor, currency_code, description, transaction_date, actor_id, created_at, schedule_id, schedule_occurrence_number)
+					 VALUES (?, 'expense', 1000, 'EUR', 'Rent', '2026-05-01', NULL, '2026-05-01T10:00:00.000Z', 'schedule-1', 0)`
+				)
+				.run(id);
+		};
+		insertTransaction('transaction-1');
+
+		expect(() => insertTransaction('transaction-2')).toThrow('UNIQUE');
+		expect(
+			database
+				.query<{ name: string }, []>(`PRAGMA index_list('transactions')`)
+				.all()
+				.map(row => row.name)
+		).toContain('transactions_schedule_occurrence_unique');
 		database.close();
 	});
 
