@@ -1,4 +1,5 @@
 import { Button, BUTTON_APPEARANCE, BUTTON_SIZE, BUTTON_VARIANT } from '@app/components/button';
+import { Card } from '@app/components/card';
 import { Chip } from '@app/components/chip';
 import { classNames } from '@app/components/class-names';
 import { DATA_ALIGN, DataCell, DataHeaderCell, DataRowActions, DataTable } from '@app/components/data-table';
@@ -315,9 +316,13 @@ function TransactionList({
 				) : listState === LOAD_STATE.LOADING && transactions.length === 0 ? (
 					<Notice>{copy.transactionLoading}</Notice>
 				) : transactions.length === 0 ? (
-					<EmptyState title={hasFilters ? copy.transactionEmptyFilteredTitle : copy.transactionEmptyTitle}>
-						{hasFilters ? copy.transactionEmptyFilteredDescription : copy.transactionEmptyDescription}
-					</EmptyState>
+					<Card bleed>
+						<EmptyState
+							icon={ICON_NAME.RECEIPT}
+							title={hasFilters ? copy.transactionEmptyFilteredTitle : copy.transactionEmptyTitle}>
+							{hasFilters ? copy.transactionEmptyFilteredDescription : copy.transactionEmptyDescription}
+						</EmptyState>
+					</Card>
 				) : (
 					<>
 						{feedback && !isEditorOpen ? (

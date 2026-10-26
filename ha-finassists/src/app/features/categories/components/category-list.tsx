@@ -1,5 +1,6 @@
 import { Badge, BADGE_TONE } from '@app/components/badge';
 import { Button, BUTTON_APPEARANCE, BUTTON_VARIANT } from '@app/components/button';
+import { Card } from '@app/components/card';
 import { DATA_ALIGN, DataCell, DataHeaderCell, DataRowActions, DataTable } from '@app/components/data-table';
 import { Dialog, DIALOG_TYPE } from '@app/components/dialog';
 import { EmptyState } from '@app/components/empty-state';
@@ -123,7 +124,13 @@ function CategoryList({
 			) : listState === LOAD_STATE.LOADING && categories.length === 0 ? (
 				<Notice>{copy.categoryLoading}</Notice>
 			) : categories.length === 0 ? (
-				<EmptyState title={copy.categoryEmptyTitle}>{copy.categoryEmptyDescription}</EmptyState>
+				<Card bleed>
+					<EmptyState
+						icon={ICON_NAME.TAG}
+						title={copy.categoryEmptyTitle}>
+						{copy.categoryEmptyDescription}
+					</EmptyState>
+				</Card>
 			) : (
 				<DataTable>
 					<thead>
