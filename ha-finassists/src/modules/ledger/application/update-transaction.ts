@@ -1,7 +1,7 @@
 import type { CategoryRepository, TransactionKind, TransactionRepository } from '@modules/ledger/domain';
 import { Transaction, TransactionNotFoundError } from '@modules/ledger/domain';
 
-import { loadCategory } from './load-category';
+import { requireCategory } from './require-category';
 
 interface UpdateTransactionInput {
 	amountMinor?: number;
@@ -25,7 +25,7 @@ export class UpdateTransaction {
 		}
 		const kind = input.kind ?? existing.kind;
 		const requestedCategoryId = 'categoryId' in input ? input.categoryId : existing.categoryId;
-		const category = await loadCategory(this.categoryRepository, requestedCategoryId);
+		const category = await requireCategory(this.categoryRepository, requestedCategoryId);
 		category?.assertAccepts(kind);
 		const transaction = Transaction.create({
 			actorId: existing.actorId,

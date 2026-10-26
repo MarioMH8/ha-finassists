@@ -6,6 +6,8 @@ import {
 	CategoryNotFoundError,
 } from '@modules/ledger/domain';
 
+import { requireCategory } from './require-category';
+
 interface UpdateCategoryInput {
 	id: string;
 	kind?: CategoryKind;
@@ -16,10 +18,7 @@ export class UpdateCategory {
 	constructor(private readonly repository: CategoryRepository) {}
 
 	async execute(input: UpdateCategoryInput): Promise<Category> {
-		const existing = await this.repository.findById(input.id);
-		if (existing === undefined) {
-			throw new CategoryNotFoundError(input.id);
-		}
+		const existing = await requireCategory(this.repository, input.id);
 		const category = Category.create({
 			createdAt: existing.createdAt,
 			id: existing.id,
