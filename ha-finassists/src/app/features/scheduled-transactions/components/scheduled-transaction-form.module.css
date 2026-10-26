@@ -1,0 +1,95 @@
+.form {
+  display: grid;
+  gap: var(--ha-space-3);
+}
+
+.kind {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: var(--ha-space-1);
+  font-size: var(--ha-font-size-m);
+  font-weight: var(--ha-font-weight-medium);
+}
+
+.options {
+  display: flex;
+  min-height: 40px;
+  padding: 2px;
+  border: var(--ha-border-width-sm) solid var(--ha-color-border-neutral-quiet);
+  border-radius: var(--ha-border-radius-md);
+  background: var(--ha-color-form-background);
+}
+
+.option {
+  position: relative;
+  display: inline-flex;
+  flex: 1;
+}
+
+.radio {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.optionLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 72px;
+  padding: 0 var(--ha-space-3);
+  border-radius: calc(var(--ha-border-radius-md) - 2px);
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-m);
+  font-weight: var(--ha-font-weight-medium);
+  text-align: center;
+  transition:
+    background-color var(--ha-animation-duration-fast) ease-out,
+    color var(--ha-animation-duration-fast) ease-out;
+}
+
+.radio:checked + .optionLabel {
+  background: var(--ha-color-fill-primary-loud-resting);
+  color: var(--ha-color-on-primary-loud);
+}
+
+.radio:focus-visible + .optionLabel {
+  outline: var(--ha-border-width-md) solid var(--ha-color-focus);
+  outline-offset: 2px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--ha-space-3);
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.hint {
+  margin: var(--ha-space-1) 0 0;
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-s);
+}
+
+.feedback:empty {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

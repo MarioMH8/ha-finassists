@@ -1,0 +1,33 @@
+.section {
+  display: grid;
+  gap: var(--ha-space-4);
+}
+
+.date {
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--ha-color-text-secondary);
+}
+
+.actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ha-space-1);
+}
+
+.income {
+  color: var(--ha-color-on-success-normal);
+  font-weight: var(--ha-font-weight-medium);
+}
+
+.expense {
+  color: var(--ha-color-on-danger-normal);
+  font-weight: var(--ha-font-weight-medium);
+}
