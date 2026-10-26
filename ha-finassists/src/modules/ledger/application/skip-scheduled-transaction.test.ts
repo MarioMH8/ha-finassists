@@ -32,7 +32,6 @@ describe('SkipScheduledTransaction', () => {
 			version: 1,
 		});
 		expect(repository.updated).toEqual([skipped]);
-		expect(repository.posted).toHaveLength(0);
 	});
 
 	it('completes a one-time schedule', async () => {

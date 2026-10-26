@@ -52,6 +52,9 @@ function buildRepositories(database: Database, { currencyCode, timeZone }: AppCo
 		.registerClass('categoryRepository', SqliteCategoryRepository, ['database'])
 		.registerClass('ledgerRepository', SqliteLedgerRepository, ['database'])
 		.registerClass('scheduledTransactionRepository', SqliteScheduledTransactionRepository, ['database'])
+		.registerFactory('scheduledPostingRepository', c => c.get('scheduledTransactionRepository'), [
+			'scheduledTransactionRepository',
+		])
 		.registerClass('systemCredentialRepository', SqliteSystemCredentialRepository, ['database'])
 		.registerClass('systemCredentialService', WebCryptoSystemCredentialService, [])
 		.registerClass('tokenCredentialService', WebCryptoTokenCredentialService, [])
@@ -113,8 +116,8 @@ function buildLedgerUseCases(container: ReturnType<typeof buildCredentialUseCase
 				),
 				delete: new DeleteScheduledTransaction(c.get('scheduledTransactionRepository')),
 				list: new ListScheduledTransactions(c.get('scheduledTransactionRepository')),
-				post: new PostScheduledTransaction(c.get('scheduledTransactionRepository')),
-				postDue: new PostDueScheduledTransactions(c.get('scheduledTransactionRepository'), c.get('today'), () =>
+				post: new PostScheduledTransaction(c.get('scheduledPostingRepository')),
+				postDue: new PostDueScheduledTransactions(c.get('scheduledPostingRepository'), c.get('today'), () =>
 					new Date().toISOString()
 				),
 				skip: new SkipScheduledTransaction(c.get('scheduledTransactionRepository')),
@@ -129,7 +132,14 @@ function buildLedgerUseCases(container: ReturnType<typeof buildCredentialUseCase
 			},
 			update: new UpdateTransaction(c.get('ledgerRepository'), c.get('categoryRepository')),
 		}),
-		['categoryRepository', 'ledgerRepository', 'scheduledTransactionRepository', 'currencyCode', 'today']
+		[
+			'categoryRepository',
+			'ledgerRepository',
+			'scheduledPostingRepository',
+			'scheduledTransactionRepository',
+			'currencyCode',
+			'today',
+		]
 	);
 }
 

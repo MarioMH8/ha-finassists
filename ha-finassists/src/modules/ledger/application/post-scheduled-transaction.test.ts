@@ -4,17 +4,17 @@ import {
 	ScheduledTransactionVersionConflictError,
 } from '@modules/ledger/domain';
 import { ScheduledTransactionMother } from '@modules/ledger/domain/scheduled-transaction.mother';
-import { MockScheduledTransactionRepository } from '@modules/ledger/infrastructure/repositories/mock-scheduled-transaction.repository';
+import { MockScheduledPostingRepository } from '@modules/ledger/infrastructure/repositories/mock-scheduled-posting.repository';
 import { beforeEach, describe, expect, it } from 'bun:test';
 
 import { PostScheduledTransaction } from './post-scheduled-transaction';
 
 describe('PostScheduledTransaction', () => {
-	let repository: MockScheduledTransactionRepository;
+	let repository: MockScheduledPostingRepository;
 	let useCase: PostScheduledTransaction;
 
 	beforeEach(() => {
-		repository = new MockScheduledTransactionRepository();
+		repository = new MockScheduledPostingRepository();
 		useCase = new PostScheduledTransaction(repository);
 	});
 
@@ -110,7 +110,7 @@ describe('PostScheduledTransaction', () => {
 	it('reports a stale schedule version', async () => {
 		const schedule = ScheduledTransactionMother.create({ startDate: '2026-05-01' });
 		repository.shouldFind(schedule);
-		repository.shouldSavePostedOccurrence(false);
+		repository.shouldPost(false);
 
 		let failure: unknown;
 		try {

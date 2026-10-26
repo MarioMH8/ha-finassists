@@ -1,4 +1,4 @@
-import type { ScheduledTransaction, ScheduledTransactionRepository, Transaction } from '@modules/ledger/domain';
+import type { ScheduledPostingRepository, ScheduledTransaction, Transaction } from '@modules/ledger/domain';
 import { ScheduledTransactionVersionConflictError } from '@modules/ledger/domain';
 
 import { createScheduledTransactionEntry } from './create-scheduled-transaction-entry';
@@ -16,7 +16,7 @@ interface PostScheduledTransactionResult {
 }
 
 export class PostScheduledTransaction {
-	constructor(private readonly repository: ScheduledTransactionRepository) {}
+	constructor(private readonly repository: ScheduledPostingRepository) {}
 
 	async execute(input: PostScheduledTransactionInput): Promise<PostScheduledTransactionResult> {
 		const schedule = await requireScheduledTransaction(this.repository, input.id);

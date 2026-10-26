@@ -1,6 +1,9 @@
-import type { ScheduledTransaction, ScheduledTransactionRepository } from '@modules/ledger/domain';
+import type { ScheduledPostingRepository, ScheduledTransaction } from '@modules/ledger/domain';
+import { SCHEDULED_TRANSACTION_POSTING_MODE, SCHEDULED_TRANSACTION_STATUS } from '@modules/ledger/domain';
 
 import { createScheduledTransactionEntry } from './create-scheduled-transaction-entry';
+
+const MAX_DUE_SCHEDULES = 1000;
 
 interface PostDueScheduledTransactionsResult {
 	posted: number;
@@ -9,7 +12,7 @@ interface PostDueScheduledTransactionsResult {
 
 export class PostDueScheduledTransactions {
 	constructor(
-		private readonly repository: ScheduledTransactionRepository,
+		private readonly repository: ScheduledPostingRepository,
 		private readonly today: () => string,
 		private readonly now: () => string,
 		private readonly maxOccurrencesPerSchedule = 100
@@ -17,7 +20,13 @@ export class PostDueScheduledTransactions {
 
 	async execute(): Promise<PostDueScheduledTransactionsResult> {
 		const today = this.today();
-		const dueSchedules = await this.repository.findDueAutomatic(today);
+		const page = await this.repository.search({
+			dueThrough: today,
+			limit: MAX_DUE_SCHEDULES,
+			postingMode: SCHEDULED_TRANSACTION_POSTING_MODE.AUTOMATIC,
+			status: SCHEDULED_TRANSACTION_STATUS.ACTIVE,
+		});
+		const dueSchedules = page.items;
 		let posted = 0;
 		for (const schedule of dueSchedules) {
 			// Schedules share the repository and optimistic versions, so posting stays sequential.

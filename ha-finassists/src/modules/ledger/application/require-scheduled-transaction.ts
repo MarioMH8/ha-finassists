@@ -1,8 +1,12 @@
-import type { ScheduledTransaction, ScheduledTransactionRepository } from '@modules/ledger/domain';
+import type { ScheduledTransaction } from '@modules/ledger/domain';
 import { ScheduledTransactionNotFoundError } from '@modules/ledger/domain';
 
+interface ScheduledTransactionReader {
+	findById(id: string): Promise<ScheduledTransaction | undefined>;
+}
+
 async function requireScheduledTransaction(
-	repository: ScheduledTransactionRepository,
+	repository: ScheduledTransactionReader,
 	id: string
 ): Promise<ScheduledTransaction> {
 	const schedule = await repository.findById(id);
@@ -13,4 +17,4 @@ async function requireScheduledTransaction(
 	return schedule;
 }
 
-export { requireScheduledTransaction };
+export { requireScheduledTransaction, type ScheduledTransactionReader };
