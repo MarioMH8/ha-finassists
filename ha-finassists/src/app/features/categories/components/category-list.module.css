@@ -25,3 +25,10 @@
   width: 1%;
   white-space: nowrap;
 }
+
+.scheduledCount {
+  display: block;
+  color: var(--ha-color-text-secondary);
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-weight-normal);
+}

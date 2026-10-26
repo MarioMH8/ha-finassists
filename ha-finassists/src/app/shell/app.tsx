@@ -1,5 +1,6 @@
 import { AdministrationManagement } from '@app/features/administration';
 import { CategoriesManagement } from '@app/features/categories';
+import { ScheduledTransactionsManagement } from '@app/features/scheduled-transactions';
 import { TransactionsManagement } from '@app/features/transactions';
 import { getCopy } from '@app/i18n';
 import type { Language } from '@app/i18n/language';
@@ -23,6 +24,7 @@ function App({ language, settings }: AppProps): ReactElement {
 	const labels: Record<Section, string> = {
 		[SECTION.ADMINISTRATION]: copy.navigationAdministration,
 		[SECTION.CATEGORIES]: copy.navigationCategories,
+		[SECTION.SCHEDULED]: copy.navigationScheduled,
 		[SECTION.TRANSACTIONS]: copy.navigationTransactions,
 	};
 
@@ -47,6 +49,9 @@ function App({ language, settings }: AppProps): ReactElement {
 					</h1>
 					{section === SECTION.TRANSACTIONS && (
 						<TransactionsManagement currencyCode={settings.currencyCode} />
+					)}
+					{section === SECTION.SCHEDULED && (
+						<ScheduledTransactionsManagement currencyCode={settings.currencyCode} />
 					)}
 					{section === SECTION.CATEGORIES && <CategoriesManagement />}
 					{section === SECTION.ADMINISTRATION && <AdministrationManagement />}

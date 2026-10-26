@@ -1,0 +1,27 @@
+.section {
+  display: grid;
+  gap: var(--ha-space-4);
+}
+
+.date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2);
+  white-space: nowrap;
+}
+
+.actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.income {
+  color: var(--ha-color-on-success-normal);
+  font-weight: var(--ha-font-weight-medium);
+}
+
+.expense {
+  color: var(--ha-color-on-danger-normal);
+  font-weight: var(--ha-font-weight-medium);
+}

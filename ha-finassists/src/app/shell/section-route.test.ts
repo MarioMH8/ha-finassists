@@ -5,6 +5,7 @@ import { DEFAULT_SECTION, formatSectionHash, parseSectionHash, SECTION } from '.
 describe('section route', () => {
 	test('parses known section hashes', () => {
 		expect(parseSectionHash('#/administration')).toBe(SECTION.ADMINISTRATION);
+		expect(parseSectionHash('#/scheduled')).toBe(SECTION.SCHEDULED);
 		expect(parseSectionHash('#/transactions')).toBe(SECTION.TRANSACTIONS);
 		expect(parseSectionHash('#administration')).toBe(SECTION.ADMINISTRATION);
 	});

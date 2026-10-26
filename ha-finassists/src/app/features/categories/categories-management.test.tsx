@@ -18,6 +18,7 @@ function category(overrides: Partial<Category> = {}): Category {
 		id: 'category-1',
 		kind: 'expense',
 		name: 'Food',
+		scheduledTransactionCount: 0,
 		transactionCount: 0,
 		...overrides,
 	};
@@ -116,6 +117,20 @@ describe('CategoryList', () => {
 		);
 
 		expect(markup).toContain('Categoría eliminada.');
+	});
+
+	test('shows scheduled usage separately from recorded movements', () => {
+		const markup = render(
+			'en',
+			<CategoryList
+				{...state('en', {
+					categories: [category({ scheduledTransactionCount: 2, transactionCount: 3 })],
+				})}
+			/>
+		);
+
+		expect(markup).toContain('3');
+		expect(markup).toContain('2 scheduled');
 	});
 });
 

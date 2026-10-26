@@ -37,6 +37,7 @@ function category(overrides: Partial<Category> = {}): Category {
 		id: 'category-1',
 		kind: 'expense',
 		name: 'Food',
+		scheduledTransactionCount: 0,
 		transactionCount: 0,
 		...overrides,
 	};
