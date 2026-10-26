@@ -227,6 +227,7 @@ function useScheduledTransactions(currencyCode: string): ScheduledTransactionsSt
 		setIsEditorOpen(false);
 		setEditingScheduleId(undefined);
 		setErrors({});
+		setFeedback(undefined);
 	}
 
 	function changeKind(nextKind: TransactionKind): void {
