@@ -1,5 +1,9 @@
 import { fixupPluginRules } from '@eslint/compat';
 import hexadrop from '@hexadrop/eslint-config';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
+import { createNodeResolver } from 'eslint-plugin-import-x';
+
+const typescriptProjects = ['./tsconfig.json', './ha-finassists/tsconfig.json'];
 
 const config = await hexadrop(
 	{
@@ -17,15 +21,20 @@ const config = await hexadrop(
 	},
 	{
 		/*
-		 * Typed linting resolves the project from the repository root, so point it
-		 * at both configs: the app package owns its own, and the root one covers
-		 * the release tooling.
+		 * Each workspace owns a tsconfig and the root one only covers the release
+		 * tooling, so typed linting and import resolution need both projects.
 		 */
 		files: ['**/*.ts', '**/*.tsx'],
 		languageOptions: {
 			parserOptions: {
-				project: ['./tsconfig.json', './ha-finassists/tsconfig.json'],
+				project: typescriptProjects,
 			},
+		},
+		settings: {
+			'import-x/resolver-next': [
+				createNodeResolver(),
+				createTypeScriptImportResolver({ bun: true, project: typescriptProjects }),
+			],
 		},
 	},
 	{

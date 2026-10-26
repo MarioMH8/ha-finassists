@@ -18,6 +18,6 @@ jobs:
         uses: hexadrop/validate-pr-action@v1.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          skip-validation-labels: release
+          skip-validation-labels: 'release,internal:*'
           changeset-required-for: 'type:bug,type:feature,type:refactor'
           linked-issue-keywords: closes
