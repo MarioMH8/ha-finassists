@@ -1,12 +1,5 @@
-import { jsonResponse, methodNotAllowed, noContent } from '@modules/api/infrastructure/http/shared/http-responses';
-import {
-	minorUnits,
-	nonNegativeInteger,
-	nullableReference,
-	optionalText,
-	parseInput,
-	readJsonBody,
-} from '@modules/api/infrastructure/http/shared/request-parsing';
+import { HttpResponses } from '@modules/api/infrastructure/http/shared/http-responses';
+import { RequestParsing } from '@modules/api/infrastructure/http/shared/request-parsing';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
@@ -27,26 +20,26 @@ const listTransactionsQuerySchema = z.object({
 	categoryId: z.string({ error: 'categoryId must be a string' }).optional(),
 	fromDate: dateParameter('fromDate'),
 	kind: z.enum(['expense', 'income'], { error: 'kind must be expense or income' }).optional(),
-	limit: nonNegativeInteger('limit', DEFAULT_LIMIT)
+	limit: RequestParsing.nonNegativeInteger('limit', DEFAULT_LIMIT)
 		.refine(value => value > 0, { error: 'limit must be greater than zero' })
 		.default(DEFAULT_LIMIT),
-	offset: nonNegativeInteger('offset', Number.MAX_SAFE_INTEGER).default(0),
-	search: optionalText('search'),
+	offset: RequestParsing.nonNegativeInteger('offset', Number.MAX_SAFE_INTEGER).default(0),
+	search: RequestParsing.optionalText('search'),
 	toDate: dateParameter('toDate'),
 });
 
 const newTransactionSchema = z.object({
-	amountMinor: minorUnits(),
-	categoryId: nullableReference('categoryId'),
-	description: optionalText('description'),
+	amountMinor: RequestParsing.minorUnits(),
+	categoryId: RequestParsing.nullableReference('categoryId'),
+	description: RequestParsing.optionalText('description'),
 	kind: z.enum(['expense', 'income'], { error: 'kind must be expense or income' }),
 	transactionDate: z.string({ error: 'transactionDate must use YYYY-MM-DD' }),
 });
 
 const updateTransactionSchema = z.object({
-	amountMinor: minorUnits().optional(),
-	categoryId: nullableReference('categoryId'),
-	description: optionalText('description'),
+	amountMinor: RequestParsing.minorUnits().optional(),
+	categoryId: RequestParsing.nullableReference('categoryId'),
+	description: RequestParsing.optionalText('description'),
 	kind: z.enum(['expense', 'income'], { error: 'kind must be expense or income' }).optional(),
 	transactionDate: z.string({ error: 'transactionDate must use YYYY-MM-DD' }).optional(),
 });
@@ -60,76 +53,78 @@ const transactionIdsSchema = z.object({
 		.max(100, { error: 'ids cannot contain more than 100 transactions' }),
 });
 
-function createTransactionRoutes(): Hono<FinanceEnvironment> {
-	const routes = new Hono<FinanceEnvironment>();
+class TransactionRoutes {
+	private constructor() {
+		// Static-only helper: instantiation is not part of the contract.
+	}
 
-	routes
-		.get('/transactions', async context => {
-			const { categoryId, fromDate, kind, limit, offset, search, toDate } = parseInput(
-				listTransactionsQuerySchema,
-				context.req.query()
-			);
-			const page = await context.var.useCases.ledger.list.execute({
-				...(categoryId !== undefined && { categoryId }),
-				...(fromDate !== undefined && { fromDate }),
-				...(kind !== undefined && { kind }),
-				...(search !== undefined && { search }),
-				...(toDate !== undefined && { toDate }),
-				limit,
-				offset,
-			});
+	static create(): Hono<FinanceEnvironment> {
+		const routes = new Hono<FinanceEnvironment>();
 
-			return jsonResponse({ items: page.items, limit, offset, total: page.total });
-		})
-		.post('/transactions', async context => {
-			const { amountMinor, categoryId, description, kind, transactionDate } = await readJsonBody(
-				context.req.raw,
-				newTransactionSchema
-			);
-
-			return jsonResponse(
-				await context.var.useCases.ledger.create.execute({
-					actorId: context.var.actor.id,
-					amountMinor,
+		routes
+			.get('/transactions', async context => {
+				const { categoryId, fromDate, kind, limit, offset, search, toDate } = RequestParsing.parseInput(
+					listTransactionsQuerySchema,
+					context.req.query()
+				);
+				const page = await context.var.useCases.ledger.list.execute({
 					...(categoryId !== undefined && { categoryId }),
-					kind,
-					transactionDate,
+					...(fromDate !== undefined && { fromDate }),
+					...(kind !== undefined && { kind }),
+					...(search !== undefined && { search }),
+					...(toDate !== undefined && { toDate }),
+					limit,
+					offset,
+				});
+
+				return HttpResponses.json({ items: page.items, limit, offset, total: page.total });
+			})
+			.post('/transactions', async context => {
+				const { amountMinor, categoryId, description, kind, transactionDate } =
+					await RequestParsing.readJsonBody(context.req.raw, newTransactionSchema);
+
+				return HttpResponses.json(
+					await context.var.useCases.ledger.create.execute({
+						actorId: context.var.actor.id,
+						amountMinor,
+						...(categoryId !== undefined && { categoryId }),
+						kind,
+						transactionDate,
+						...(description !== undefined && { description }),
+					}),
+					201
+				);
+			})
+			.delete('/transactions', async context => {
+				const { ids } = await RequestParsing.readJsonBody(context.req.raw, transactionIdsSchema);
+				await context.var.useCases.ledger.deleteMany.execute({ ids });
+
+				return HttpResponses.noContent();
+			})
+			.delete('/transactions/:id', async context => {
+				await context.var.useCases.ledger.delete.execute({ id: context.req.param('id') });
+
+				return HttpResponses.noContent();
+			})
+			.patch('/transactions/:id', async context => {
+				const { amountMinor, categoryId, description, kind, transactionDate } =
+					await RequestParsing.readJsonBody(context.req.raw, updateTransactionSchema);
+				const transaction = await context.var.useCases.ledger.update.execute({
+					id: context.req.param('id'),
+					...(amountMinor !== undefined && { amountMinor }),
+					...(categoryId !== undefined && { categoryId }),
 					...(description !== undefined && { description }),
-				}),
-				201
-			);
-		})
-		.delete('/transactions', async context => {
-			const { ids } = await readJsonBody(context.req.raw, transactionIdsSchema);
-			await context.var.useCases.ledger.deleteMany.execute({ ids });
+					...(kind !== undefined && { kind }),
+					...(transactionDate !== undefined && { transactionDate }),
+				});
 
-			return noContent();
-		})
-		.delete('/transactions/:id', async context => {
-			await context.var.useCases.ledger.delete.execute({ id: context.req.param('id') });
+				return HttpResponses.json(transaction);
+			})
+			.all('/transactions', () => HttpResponses.methodNotAllowed('GET, POST, DELETE'))
+			.all('/transactions/:id', () => HttpResponses.methodNotAllowed('DELETE, PATCH'));
 
-			return noContent();
-		})
-		.patch('/transactions/:id', async context => {
-			const { amountMinor, categoryId, description, kind, transactionDate } = await readJsonBody(
-				context.req.raw,
-				updateTransactionSchema
-			);
-			const transaction = await context.var.useCases.ledger.update.execute({
-				id: context.req.param('id'),
-				...(amountMinor !== undefined && { amountMinor }),
-				...(categoryId !== undefined && { categoryId }),
-				...(description !== undefined && { description }),
-				...(kind !== undefined && { kind }),
-				...(transactionDate !== undefined && { transactionDate }),
-			});
-
-			return jsonResponse(transaction);
-		})
-		.all('/transactions', () => methodNotAllowed('GET, POST, DELETE'))
-		.all('/transactions/:id', () => methodNotAllowed('DELETE, PATCH'));
-
-	return routes;
+		return routes;
+	}
 }
 
-export { createTransactionRoutes };
+export { TransactionRoutes };

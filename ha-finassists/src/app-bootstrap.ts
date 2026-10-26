@@ -2,7 +2,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
-import { createServer, prepareWebAssets } from '@modules/api';
+import { ApiServer, WebAssets } from '@modules/api';
 import { ScheduledPostingJob } from '@modules/ledger/application';
 import { BunCronScheduler } from '@modules/scheduling/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
@@ -12,9 +12,9 @@ import { Database } from 'bun:sqlite';
 import { createAppContainer } from './app-container';
 import { loadServerConfig } from './config';
 
-async function startApp(): Promise<ReturnType<typeof createServer>> {
+async function startApp(): Promise<ReturnType<typeof ApiServer.create>> {
 	const config = await loadServerConfig();
-	await prepareWebAssets(config.developmentMode);
+	await WebAssets.prepare(config.developmentMode);
 	await mkdir(path.dirname(config.databasePath), { recursive: true });
 	const database = new Database(config.databasePath);
 	database.run('PRAGMA journal_mode = WAL');
@@ -34,7 +34,7 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 				new Date(Date.now() + 15 * 60 * 1000).toISOString()
 			);
 
-	const server = createServer({
+	const server = ApiServer.create({
 		container,
 		developmentActor: config.developmentActor,
 		developmentMode: config.developmentMode,

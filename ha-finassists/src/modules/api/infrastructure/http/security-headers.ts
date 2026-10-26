@@ -12,16 +12,24 @@ const securityHeaders: Record<string, string> = {
 	'X-Frame-Options': 'SAMEORIGIN',
 };
 
-export function withSecurityHeaders(response: Response): Response {
-	const headers = new Headers(response.headers);
-
-	for (const [name, value] of Object.entries(securityHeaders)) {
-		headers.set(name, value);
+class SecurityHeaders {
+	private constructor() {
+		// Static-only helper: instantiation is not part of the contract.
 	}
 
-	return new Response(response.body, {
-		headers,
-		status: response.status,
-		statusText: response.statusText,
-	});
+	static apply(response: Response): Response {
+		const headers = new Headers(response.headers);
+
+		for (const [name, value] of Object.entries(securityHeaders)) {
+			headers.set(name, value);
+		}
+
+		return new Response(response.body, {
+			headers,
+			status: response.status,
+			statusText: response.statusText,
+		});
+	}
 }
+
+export { SecurityHeaders };

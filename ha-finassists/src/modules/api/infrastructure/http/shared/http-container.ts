@@ -22,16 +22,18 @@ interface HttpServiceInstances {
 	tokenUseCases: TokenManagementUseCases;
 }
 
-function createHttpContainer({
-	financeUseCases,
-	systemCredentialUseCases,
-	tokenUseCases,
-}: HttpServiceInstances): HttpContainer {
-	return new Container()
-		.registerValue('financeUseCases', financeUseCases)
-		.registerValue('systemCredentialUseCases', systemCredentialUseCases)
-		.registerValue('tokenUseCases', tokenUseCases);
+class HttpContainerBuilder {
+	private constructor() {
+		// Static-only helper: instantiation is not part of the contract.
+	}
+
+	static create({ financeUseCases, systemCredentialUseCases, tokenUseCases }: HttpServiceInstances): HttpContainer {
+		return new Container()
+			.registerValue('financeUseCases', financeUseCases)
+			.registerValue('systemCredentialUseCases', systemCredentialUseCases)
+			.registerValue('tokenUseCases', tokenUseCases);
+	}
 }
 
 export type { HttpContainer, HttpScope, HttpServices };
-export { createHttpContainer };
+export { HttpContainerBuilder };

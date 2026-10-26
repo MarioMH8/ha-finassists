@@ -1,22 +1,28 @@
-import { jsonResponse } from '@modules/api/infrastructure/http/shared/http-responses';
+import { HttpResponses } from '@modules/api/infrastructure/http/shared/http-responses';
 import { Hono } from 'hono';
 
-import { createCategoryRoutes } from './finance-category-routes';
+import { CategoryRoutes } from './finance-category-routes';
 import type { FinanceEnvironment, FinanceUseCases, RouteActor } from './finance-route-support';
-import { routeError } from './finance-route-support';
-import { createScheduledTransactionRoutes } from './finance-scheduled-transaction-routes';
-import { createTransactionRoutes } from './finance-transaction-routes';
+import { FinanceRouteError } from './finance-route-support';
+import { ScheduledTransactionRoutes } from './finance-scheduled-transaction-routes';
+import { TransactionRoutes } from './finance-transaction-routes';
 
-function createFinanceRoutes(): Hono<FinanceEnvironment> {
-	const routes = new Hono<FinanceEnvironment>({ strict: false });
+class FinanceRoutes {
+	private constructor() {
+		// Static-only helper: instantiation is not part of the contract.
+	}
 
-	routes.route('/', createCategoryRoutes());
-	routes.route('/', createScheduledTransactionRoutes());
-	routes.route('/', createTransactionRoutes());
-	routes.all('*', () => jsonResponse({ error: 'Not found' }, 404));
-	routes.onError(error => routeError(error));
+	static create(): Hono<FinanceEnvironment> {
+		const routes = new Hono<FinanceEnvironment>({ strict: false });
 
-	return routes;
+		routes.route('/', CategoryRoutes.create());
+		routes.route('/', ScheduledTransactionRoutes.create());
+		routes.route('/', TransactionRoutes.create());
+		routes.all('*', () => HttpResponses.json({ error: 'Not found' }, 404));
+		routes.onError(error => FinanceRouteError.toResponse(error));
+
+		return routes;
+	}
 }
 
 interface FacadeEnvironment {
@@ -24,30 +30,32 @@ interface FacadeEnvironment {
 	Variables: FinanceEnvironment['Variables'];
 }
 
-function createFacade(): Hono<FacadeEnvironment> {
-	const facade = new Hono<FacadeEnvironment>({ strict: false });
-	facade.use('*', async (context, next) => {
-		context.set('actor', context.env.actor);
-		context.set('useCases', context.env.useCases);
-		await next();
-	});
-	facade.route('/api/v1', createFinanceRoutes());
+class FinanceFacade {
+	private static facade: Hono<FacadeEnvironment> | undefined;
 
-	return facade;
-}
-
-const facades = new Map<'default', Hono<FacadeEnvironment>>();
-
-async function handleFinanceRequest(request: Request, actor: RouteActor, useCases: FinanceUseCases): Promise<Response> {
-	let facade = facades.get('default');
-	if (facade === undefined) {
-		facade = createFacade();
-		facades.set('default', facade);
+	private constructor() {
+		// Static-only helper: instantiation is not part of the contract.
 	}
 
-	return facade.fetch(request, { actor, useCases });
+	static create(): Hono<FacadeEnvironment> {
+		const facade = new Hono<FacadeEnvironment>({ strict: false });
+		facade.use('*', async (context, next) => {
+			context.set('actor', context.env.actor);
+			context.set('useCases', context.env.useCases);
+			await next();
+		});
+		facade.route('/api/v1', FinanceRoutes.create());
+
+		return facade;
+	}
+
+	static async handle(request: Request, actor: RouteActor, useCases: FinanceUseCases): Promise<Response> {
+		this.facade ??= this.create();
+
+		return this.facade.fetch(request, { actor, useCases });
+	}
 }
 
-export { createFinanceRoutes, handleFinanceRequest };
+export { FinanceFacade, FinanceRoutes };
 
 export { type FinanceUseCases } from './finance-route-support';

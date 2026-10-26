@@ -1,3 +1,11 @@
-export { createServer, type ServerOptions } from './create-server';
-export { createHttpContainer, handleRequest, type HttpContainer, type TokenManagementUseCases } from './routes';
-export { prepareWebAssets, serveWebAsset } from './web-assets';
+export { ApiServer, type ServerOptions } from './create-server';
+export {
+	HttpApplication,
+	type HttpContainer,
+	HttpContainerBuilder,
+	type HttpScope,
+	type HttpServices,
+	type SystemCredentialUseCases,
+	type TokenManagementUseCases,
+} from './routes';
+export { WebAssets } from './web-assets';

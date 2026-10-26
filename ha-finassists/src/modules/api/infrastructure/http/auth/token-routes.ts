@@ -1,4 +1,4 @@
-import { jsonResponse, methodNotAllowed, noContent } from '@modules/api/infrastructure/http/shared/http-responses';
+import { HttpResponses } from '@modules/api/infrastructure/http/shared/http-responses';
 import type { HttpEnvironment, TokenManagementUseCases } from '@modules/api/infrastructure/http/shared/request-context';
 import { isTrustedIngressPeer, resolveIngressActor } from '@modules/home-assistant';
 import { Hono } from 'hono';
@@ -36,63 +36,71 @@ const requireTokenActor = createMiddleware<TokenEnvironment>(async (context, nex
 	return next();
 });
 
-function tokenMetadata(token: Awaited<ReturnType<TokenManagementUseCases['list']['execute']>>[number]) {
-	return {
-		createdAt: token.createdAt,
-		id: token.id,
-		name: token.name,
-		prefix: token.prefix,
-	};
-}
+class TokenRoutes {
+	private constructor() {
+		// Static-only helper: instantiation is not part of the contract.
+	}
 
-export function createTokenRoutes(): Hono<TokenEnvironment> {
-	const routes = new Hono<TokenEnvironment>();
+	static create(): Hono<TokenEnvironment> {
+		const routes = new Hono<TokenEnvironment>();
 
-	routes
-		.get('/', requireTokenActor, async context => {
-			const tokens = await context.var.di.get('tokenUseCases').list.execute(context.var.actor.id);
+		routes
+			.get('/', requireTokenActor, async context => {
+				const tokens = await context.var.di.get('tokenUseCases').list.execute(context.var.actor.id);
 
-			return jsonResponse(tokens.map(token => tokenMetadata(token)));
-		})
-		.post('/', requireTokenActor, async context => {
-			let body: unknown;
-			try {
-				body = await context.req.json();
-			} catch {
-				return jsonResponse({ error: 'Invalid JSON body' }, 400);
-			}
-
-			const input = issueTokenSchema.safeParse(body);
-			if (!input.success) {
-				return jsonResponse({ error: INVALID_TOKEN_NAME }, 400);
-			}
-
-			try {
-				const issued = await context.var.di
-					.get('tokenUseCases')
-					.issue.execute({ name: input.data.name, ownerId: context.var.actor.id });
-
-				return jsonResponse({ ...tokenMetadata(issued.token), secret: issued.secret }, 201);
-			} catch (error) {
-				if (error instanceof Error && error.name === 'TokenNameRequiredError') {
-					return jsonResponse({ error: INVALID_TOKEN_NAME }, 400);
+				return HttpResponses.json(tokens.map(token => this.tokenMetadata(token)));
+			})
+			.post('/', requireTokenActor, async context => {
+				let body: unknown;
+				try {
+					body = await context.req.json();
+				} catch {
+					return HttpResponses.json({ error: 'Invalid JSON body' }, 400);
 				}
 
-				throw error;
-			}
-		})
-		.all('/', () => methodNotAllowed('GET, POST'));
+				const input = issueTokenSchema.safeParse(body);
+				if (!input.success) {
+					return HttpResponses.json({ error: INVALID_TOKEN_NAME }, 400);
+				}
 
-	routes
-		.delete('/:id', requireTokenActor, async context => {
-			const isRevoked = await context.var.di.get('tokenUseCases').revoke.execute({
-				id: context.req.param('id'),
-				ownerId: context.var.actor.id,
-			});
+				try {
+					const issued = await context.var.di
+						.get('tokenUseCases')
+						.issue.execute({ name: input.data.name, ownerId: context.var.actor.id });
 
-			return isRevoked ? noContent() : new Response('Not Found', { status: 404 });
-		})
-		.all('/:id', () => methodNotAllowed('DELETE'));
+					return HttpResponses.json({ ...this.tokenMetadata(issued.token), secret: issued.secret }, 201);
+				} catch (error) {
+					if (error instanceof Error && error.name === 'TokenNameRequiredError') {
+						return HttpResponses.json({ error: INVALID_TOKEN_NAME }, 400);
+					}
 
-	return routes;
+					throw error;
+				}
+			})
+			.all('/', () => HttpResponses.methodNotAllowed('GET, POST'));
+
+		routes
+			.delete('/:id', requireTokenActor, async context => {
+				const isRevoked = await context.var.di.get('tokenUseCases').revoke.execute({
+					id: context.req.param('id'),
+					ownerId: context.var.actor.id,
+				});
+
+				return isRevoked ? HttpResponses.noContent() : new Response('Not Found', { status: 404 });
+			})
+			.all('/:id', () => HttpResponses.methodNotAllowed('DELETE'));
+
+		return routes;
+	}
+
+	private static tokenMetadata(token: Awaited<ReturnType<TokenManagementUseCases['list']['execute']>>[number]) {
+		return {
+			createdAt: token.createdAt,
+			id: token.id,
+			name: token.name,
+			prefix: token.prefix,
+		};
+	}
 }
+
+export { TokenRoutes };

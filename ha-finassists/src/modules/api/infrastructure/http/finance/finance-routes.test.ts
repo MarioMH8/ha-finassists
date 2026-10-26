@@ -1,6 +1,6 @@
-import { handleMcpRequest, MCP_MAX_BODY_BYTES } from '@modules/api/infrastructure/http/mcp/mcp-transport';
-import { handleRequest } from '@modules/api/infrastructure/http/routes';
-import { createHttpContainer } from '@modules/api/infrastructure/http/shared/http-container';
+import { MCP_MAX_BODY_BYTES, McpTransport } from '@modules/api/infrastructure/http/mcp/mcp-transport';
+import { HttpApplication } from '@modules/api/infrastructure/http/routes';
+import { HttpContainerBuilder } from '@modules/api/infrastructure/http/shared/http-container';
 import {
 	CreateCategory,
 	CreateScheduledTransaction,
@@ -31,7 +31,7 @@ import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
 import type { FinanceUseCases } from './finance-routes';
-import { handleFinanceRequest } from './finance-routes';
+import { FinanceFacade } from './finance-routes';
 
 const databases: Database[] = [];
 
@@ -174,7 +174,7 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 async function send(useCases: FinanceUseCases, pathname: string, method = 'GET', body?: unknown): Promise<Response> {
-	return handleFinanceRequest(
+	return FinanceFacade.handle(
 		new Request(`http://localhost${pathname}`, {
 			method,
 			...(body !== undefined && { body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } }),
@@ -306,7 +306,7 @@ describe('transactions REST routes', () => {
 		const payloads = await Promise.all(responses.map(async response => response.text()));
 		expect(responses.map(response => response.status)).toEqual(invalidBodies.map(() => 400));
 		expect(payloads.join('')).not.toContain('SQLITE');
-		const malformed = await handleFinanceRequest(
+		const malformed = await FinanceFacade.handle(
 			new Request('http://localhost/api/v1/transactions', { body: '{', method: 'POST' }),
 			{ id: 'actor-123' },
 			useCases
@@ -420,16 +420,20 @@ describe('transactions REST routes', () => {
 				},
 				method: 'POST',
 			});
-		const container = createHttpContainer({ financeUseCases: useCases, tokenUseCases });
-		const unauthorized = await handleRequest(mcpRequest(), httpContext, container);
+		const container = HttpContainerBuilder.create({ financeUseCases: useCases, tokenUseCases });
+		const unauthorized = await HttpApplication.handle(mcpRequest(), httpContext, container);
 		expect(unauthorized.status).toBe(401);
 
 		const issued = await tokenUseCases.issue.execute({ name: 'MCP client', ownerId: 'mcp-owner' });
 		const authorization = `Bearer ${issued.secret}`;
-		const viaApp = await handleRequest(mcpRequest({ Authorization: authorization }), httpContext, container);
+		const viaApp = await HttpApplication.handle(
+			mcpRequest({ Authorization: authorization }),
+			httpContext,
+			container
+		);
 		expect(viaApp.status).toBe(200);
 		expect(viaApp.headers.get('content-security-policy')).toContain('default-src');
-		const rest = await handleRequest(
+		const rest = await HttpApplication.handle(
 			new Request('http://localhost/api/v1/transactions', { headers: { Authorization: authorization } }),
 			{ remoteAddress: '[IP_ADDRESS]', trustedIngressIp: '::1' },
 			container
@@ -439,7 +443,7 @@ describe('transactions REST routes', () => {
 		expect(restBody.total).toBe(0);
 
 		const call = async (message: unknown, extraHeaders: Record<string, string> = {}) =>
-			handleMcpRequest(
+			McpTransport.handle(
 				new Request('http://localhost/mcp', {
 					body: JSON.stringify(message),
 					headers: {
@@ -513,7 +517,7 @@ describe('transactions REST routes', () => {
 			{ Origin: 'https://untrusted.example' }
 		);
 		const unacceptable = await call({ id: 9, jsonrpc: '2.0', method: 'ping' }, { Accept: 'application/json' });
-		const responseToGet = await handleMcpRequest(new Request('http://localhost/mcp'), tokenUseCases, useCases);
+		const responseToGet = await McpTransport.handle(new Request('http://localhost/mcp'), tokenUseCases, useCases);
 
 		const initializedBody = await readJson<MCPJson>(initialized);
 		expect(initializedBody.result.serverInfo.name).toBe('fin-assist');
@@ -558,7 +562,7 @@ describe('transactions REST routes', () => {
 		const tokenUseCases = setupTokens();
 		const issued = await tokenUseCases.issue.execute({ name: 'Client', ownerId: 'token-owner' });
 		const post = (body: string, headers: Record<string, string> = {}) =>
-			handleMcpRequest(
+			McpTransport.handle(
 				new Request('http://localhost/mcp', {
 					body,
 					headers: {
@@ -730,7 +734,7 @@ describe('categories over MCP', () => {
 		const tokenUseCases = setupTokens();
 		const issued = await tokenUseCases.issue.execute({ name: 'Client', ownerId: 'mcp-owner' });
 		const call = async (message: unknown) =>
-			handleMcpRequest(
+			McpTransport.handle(
 				new Request('http://localhost/mcp', {
 					body: JSON.stringify(message),
 					headers: {
@@ -1022,7 +1026,7 @@ describe('scheduled transactions over MCP', () => {
 		const tokenUseCases = setupTokens();
 		const issued = await tokenUseCases.issue.execute({ name: 'Client', ownerId: 'mcp-owner' });
 		const call = async (message: unknown) =>
-			handleMcpRequest(
+			McpTransport.handle(
 				new Request('http://localhost/mcp', {
 					body: JSON.stringify(message),
 					headers: {

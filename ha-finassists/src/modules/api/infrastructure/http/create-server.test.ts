@@ -14,8 +14,8 @@ import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modu
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import { createServer } from './create-server';
-import { createHttpContainer } from './shared/http-container';
+import { ApiServer } from './create-server';
+import { HttpContainerBuilder } from './shared/http-container';
 
 interface TokenMetadataResponse {
 	createdAt: string;
@@ -72,8 +72,8 @@ function createTokenUseCases() {
 	};
 }
 
-describe('createServer', () => {
-	let server!: ReturnType<typeof createServer>;
+describe('ApiServer', () => {
+	let server!: ReturnType<typeof ApiServer.create>;
 	let systemDatabase: Database | undefined;
 
 	async function createSystemCredentialUseCases(capability: string) {
@@ -109,8 +109,8 @@ describe('createServer', () => {
 	});
 
 	it('uses the configured development actor and bypasses Ingress peer checks', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			developmentActor: {
 				displayName: 'Local Developer',
 				id: 'dev-user',
@@ -153,8 +153,8 @@ describe('createServer', () => {
 	it('exchanges, rotates, and revokes the dedicated system credential', async () => {
 		const capability = 'random-bootstrap-capability-value-of-at-least-32-characters';
 		const systemCredentialUseCases = await createSystemCredentialUseCases(capability);
-		server = createServer({
-			container: createHttpContainer({ systemCredentialUseCases, tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ systemCredentialUseCases, tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '[IP_ADDRESS]',
 		});
@@ -215,8 +215,8 @@ describe('createServer', () => {
 	});
 
 	it('serves the health endpoint', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '127.0.0.1',
 		});
@@ -232,8 +232,8 @@ describe('createServer', () => {
 	});
 
 	it('blocks the web interface for an untrusted peer', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '192.0.2.1',
 		});
@@ -248,8 +248,8 @@ describe('createServer', () => {
 	});
 
 	it('serves the web shell to a trusted Ingress peer', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '::1',
 		});
@@ -262,8 +262,8 @@ describe('createServer', () => {
 	});
 
 	it('server-renders the Spanish interface using the browser language preference', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '::1',
 		});
@@ -281,8 +281,8 @@ describe('createServer', () => {
 	});
 
 	it('serves matching CSS Module classes in the server HTML, hydration bundle, and stylesheet', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '::1',
 		});
@@ -317,8 +317,8 @@ describe('createServer', () => {
 	it('requires a valid bearer token for external financial API requests', async () => {
 		const tokenUseCases = createTokenUseCases();
 		const issued = await tokenUseCases.issue.execute({ name: 'External client', ownerId: 'token-owner' });
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases }),
 			port: 0,
 			trustedIngressIp: '192.0.2.1',
 		});
@@ -346,8 +346,8 @@ describe('createServer', () => {
 	});
 
 	it('keeps the MCP endpoint out of the web interface', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '::1',
 		});
@@ -358,8 +358,8 @@ describe('createServer', () => {
 	});
 
 	it('requires an identified Ingress actor to manage tokens', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '::1',
 		});
@@ -371,8 +371,8 @@ describe('createServer', () => {
 	});
 
 	it('issues, lists and revokes personal tokens through the trusted Ingress API', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '::1',
 		});
@@ -427,8 +427,8 @@ describe('createServer', () => {
 	});
 
 	it('reports the Home Assistant actor for a trusted Ingress peer', async () => {
-		server = createServer({
-			container: createHttpContainer({ tokenUseCases: createTokenUseCases() }),
+		server = ApiServer.create({
+			container: HttpContainerBuilder.create({ tokenUseCases: createTokenUseCases() }),
 			port: 0,
 			trustedIngressIp: '::1',
 		});
