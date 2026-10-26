@@ -1,5 +1,5 @@
-import type { CategoryKind, CategoryRepository } from '../domain';
-import { Category, CategoryNameAlreadyExistsError } from '../domain';
+import type { CategoryKind, CategoryRepository } from '@modules/ledger/domain';
+import { Category, CategoryNameAlreadyExistsError } from '@modules/ledger/domain';
 
 interface CreateCategoryInput {
 	kind: CategoryKind;

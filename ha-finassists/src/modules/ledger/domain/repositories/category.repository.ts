@@ -1,4 +1,4 @@
-import type { Category, CategoryKind } from '../category';
+import type { Category, CategoryKind } from '@modules/ledger/domain/category';
 
 interface CategoryCriteria {
 	kind?: CategoryKind;

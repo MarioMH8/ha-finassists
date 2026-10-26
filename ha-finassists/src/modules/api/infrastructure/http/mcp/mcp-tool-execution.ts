@@ -1,5 +1,5 @@
-import type { FinanceUseCases } from '../finance/finance-routes';
-import { handleFinanceRequest } from '../finance/finance-routes';
+import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-routes';
+import { handleFinanceRequest } from '@modules/api/infrastructure/http/finance/finance-routes';
 
 const LIST_FILTERS = ['fromDate', 'kind', 'limit', 'offset', 'search', 'toDate'] as const;
 

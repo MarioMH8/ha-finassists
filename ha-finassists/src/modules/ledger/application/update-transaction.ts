@@ -1,5 +1,6 @@
-import type { CategoryRepository, TransactionKind, TransactionRepository } from '../domain';
-import { Transaction, TransactionNotFoundError } from '../domain';
+import type { CategoryRepository, TransactionKind, TransactionRepository } from '@modules/ledger/domain';
+import { Transaction, TransactionNotFoundError } from '@modules/ledger/domain';
+
 import { loadCategory } from './load-category';
 
 interface UpdateTransactionInput {

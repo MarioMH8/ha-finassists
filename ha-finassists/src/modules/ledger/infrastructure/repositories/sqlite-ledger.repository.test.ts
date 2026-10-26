@@ -1,9 +1,9 @@
+import { CategoryMother } from '@modules/ledger/domain/category.mother';
+import { TransactionMother } from '@modules/ledger/domain/transaction.mother';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 
-import { CategoryMother } from '../../domain/category.mother';
-import { TransactionMother } from '../../domain/transaction.mother';
 import { SqliteCategoryRepository } from './sqlite-category.repository';
 import { SqliteLedgerRepository } from './sqlite-ledger.repository';
 

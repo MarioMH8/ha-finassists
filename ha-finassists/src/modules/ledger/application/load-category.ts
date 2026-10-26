@@ -1,5 +1,5 @@
-import type { Category, CategoryRepository } from '../domain';
-import { CategoryNotFoundError } from '../domain';
+import type { Category, CategoryRepository } from '@modules/ledger/domain';
+import { CategoryNotFoundError } from '@modules/ledger/domain';
 
 async function loadCategory(
 	repository: CategoryRepository,

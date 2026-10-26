@@ -1,7 +1,10 @@
+import type {
+	RequestContext,
+	SystemCredentialUseCases,
+	TokenManagementUseCases,
+} from '@modules/api/infrastructure/http/shared/request-context';
 import type { IngressActor } from '@modules/home-assistant';
 import { isTrustedIngressPeer, resolveIngressActor } from '@modules/home-assistant';
-
-import type { RequestContext, SystemCredentialUseCases, TokenManagementUseCases } from '../shared/request-context';
 
 type FinancialActor = IngressActor;
 

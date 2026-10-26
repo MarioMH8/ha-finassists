@@ -1,4 +1,4 @@
-import type { Transaction, TransactionKind } from '../transaction';
+import type { Transaction, TransactionKind } from '@modules/ledger/domain/transaction';
 
 interface TransactionCriteria {
 	categoryId?: string;

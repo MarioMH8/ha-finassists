@@ -3,15 +3,15 @@ import { Dialog, DIALOG_TYPE } from '@app/components/dialog';
 import { Field, fieldDescriptionIds } from '@app/components/field';
 import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
+import { currencyFractionDigits } from '@app/features/transactions/transaction-amount';
+import { DESCRIPTION_MAX_LENGTH } from '@app/features/transactions/transaction-validation';
+import type { TransactionKind } from '@app/features/transactions/transactions-api';
+import { TRANSACTION_KIND } from '@app/features/transactions/transactions-api';
+import type { TransactionsState } from '@app/features/transactions/use-transactions.hook';
 import type { Copy } from '@app/i18n';
 import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
 
-import { currencyFractionDigits } from '../transaction-amount';
-import { DESCRIPTION_MAX_LENGTH } from '../transaction-validation';
-import type { TransactionKind } from '../transactions-api';
-import { TRANSACTION_KIND } from '../transactions-api';
-import type { TransactionsState } from '../use-transactions.hook';
 import styles from './transaction-form.module.css';
 
 type TransactionFormProps = Pick<

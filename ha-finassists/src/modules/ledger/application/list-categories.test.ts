@@ -1,7 +1,7 @@
+import { CategoryMother } from '@modules/ledger/domain/category.mother';
+import { MockCategoryRepository } from '@modules/ledger/infrastructure/repositories/mock-category.repository';
 import { describe, expect, it } from 'bun:test';
 
-import { CategoryMother } from '../domain/category.mother';
-import { MockCategoryRepository } from '../infrastructure/repositories/mock-category.repository';
 import { ListCategories } from './list-categories';
 
 describe('ListCategories', () => {

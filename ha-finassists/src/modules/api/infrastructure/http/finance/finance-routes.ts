@@ -1,6 +1,6 @@
+import { jsonResponse } from '@modules/api/infrastructure/http/shared/http-responses';
 import { Hono } from 'hono';
 
-import { jsonResponse } from '../shared/http-responses';
 import type { FinanceEnvironment, FinanceUseCases, RouteActor } from './finance-route-support';
 import { routeError } from './finance-route-support';
 import { createTransactionRoutes } from './finance-transaction-routes';

@@ -1,4 +1,4 @@
-import type { TransactionCriteria, TransactionPage, TransactionRepository } from '../domain';
+import type { TransactionCriteria, TransactionPage, TransactionRepository } from '@modules/ledger/domain';
 
 export class ListTransactions {
 	constructor(private readonly repository: TransactionRepository) {}

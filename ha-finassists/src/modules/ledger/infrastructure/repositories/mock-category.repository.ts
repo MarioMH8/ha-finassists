@@ -1,6 +1,11 @@
+import type {
+	Category,
+	CategoryCriteria,
+	CategoryKind,
+	CategoryRepository,
+	CategorySummary,
+} from '@modules/ledger/domain';
 import { expect, mock } from 'bun:test';
-
-import type { Category, CategoryCriteria, CategoryKind, CategoryRepository, CategorySummary } from '../../domain';
 
 export class MockCategoryRepository implements CategoryRepository {
 	private readonly countTransactionsMock = mock<CategoryRepository['countTransactions']>(() => Promise.resolve(0));

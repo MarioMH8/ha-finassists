@@ -1,7 +1,10 @@
+import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-routes';
+import type {
+	SystemCredentialUseCases,
+	TokenManagementUseCases,
+} from '@modules/api/infrastructure/http/shared/request-context';
 import { APP_VERSION } from '@modules/version';
 
-import type { FinanceUseCases } from '../finance/finance-routes';
-import type { SystemCredentialUseCases, TokenManagementUseCases } from '../shared/request-context';
 import { invokeTool } from './mcp-tool-execution';
 import { TOOLS } from './mcp-tools';
 

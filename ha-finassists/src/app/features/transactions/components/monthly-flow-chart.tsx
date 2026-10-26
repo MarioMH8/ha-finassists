@@ -1,10 +1,10 @@
+import { currencyFractionDigits, formatMinorUnits } from '@app/features/transactions/transaction-amount';
+import type { MonthlyTransactionSummary } from '@app/features/transactions/transaction-summary';
 import type { Copy } from '@app/i18n';
 import type { Language } from '@app/i18n/language';
 import type { ReactElement, RefObject } from 'react';
 import { useLayoutEffect, useRef, useState } from 'react';
 
-import { currencyFractionDigits, formatMinorUnits } from '../transaction-amount';
-import type { MonthlyTransactionSummary } from '../transaction-summary';
 import styles from './monthly-flow-chart.module.css';
 
 interface MonthlyFlowChartProps {

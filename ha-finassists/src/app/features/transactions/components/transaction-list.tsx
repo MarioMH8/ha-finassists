@@ -11,15 +11,15 @@ import { Notice, NOTICE_TONE } from '@app/components/notice';
 import { SectionHeading } from '@app/components/section-heading';
 import { Select, SELECT_SIZE } from '@app/components/select';
 import { TEXT_INPUT_SIZE, TextInput } from '@app/components/text-input';
+import { formatDate, formatMinorUnits } from '@app/features/transactions/transaction-amount';
+import { TRANSACTION_KIND } from '@app/features/transactions/transactions-api';
+import type { FilterKind, PageSize, TransactionFilters } from '@app/features/transactions/transactions-constants';
+import { FILTER_KIND, LOAD_STATE, PAGE_SIZES } from '@app/features/transactions/transactions-constants';
+import type { TransactionsState } from '@app/features/transactions/use-transactions.hook';
 import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
-import { formatDate, formatMinorUnits } from '../transaction-amount';
-import { TRANSACTION_KIND } from '../transactions-api';
-import type { FilterKind, PageSize, TransactionFilters } from '../transactions-constants';
-import { FILTER_KIND, LOAD_STATE, PAGE_SIZES } from '../transactions-constants';
-import type { TransactionsState } from '../use-transactions.hook';
 import styles from './transaction-list.module.css';
 
 type TransactionListProps = Pick<

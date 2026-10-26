@@ -1,5 +1,5 @@
-import type { TransactionRepository } from '../domain';
-import { TransactionNotFoundError } from '../domain';
+import type { TransactionRepository } from '@modules/ledger/domain';
+import { TransactionNotFoundError } from '@modules/ledger/domain';
 
 interface DeleteTransactionInput {
 	id: string;

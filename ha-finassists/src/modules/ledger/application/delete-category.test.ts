@@ -1,8 +1,8 @@
+import { CategoryInUseError, CategoryNotFoundError } from '@modules/ledger/domain';
+import { CategoryMother } from '@modules/ledger/domain/category.mother';
+import { MockCategoryRepository } from '@modules/ledger/infrastructure/repositories/mock-category.repository';
 import { beforeEach, describe, expect, it } from 'bun:test';
 
-import { CategoryInUseError, CategoryNotFoundError } from '../domain';
-import { CategoryMother } from '../domain/category.mother';
-import { MockCategoryRepository } from '../infrastructure/repositories/mock-category.repository';
 import { DeleteCategory } from './delete-category';
 
 describe('DeleteCategory', () => {
