@@ -29,6 +29,22 @@ _Avoid_: Tag, label, bucket
 Whether a transaction is an **expense** (money out) or an **income** (money in). A category belongs to exactly one kind.
 _Avoid_: Type, direction
 
+**Scheduled transaction**:
+A planned expense or income that has not been recorded yet. It holds a kind, a positive amount, an optional category and description, a first date, an optional recurrence and a posting mode. It becomes a normal **transaction** when posted.
+_Avoid_: Future transaction, pending payment (when referring to the template)
+
+**Recurrence**:
+The rule that repeats a scheduled transaction: once, every N days, every N weeks, every N months or every N years, optionally until an end date. It is anchored to the first date, so month-end dates are clamped rather than drifting.
+_Avoid_: Period, interval alone
+
+**Posting**:
+Turning the next occurrence of a scheduled transaction into a transaction. It may happen automatically when the date arrives or manually when a person confirms it.
+_Avoid_: Executing, paying
+
+**Forecast**:
+The scheduled movements projected over a date range. It is shown separately from recorded totals and never counts as money already spent or received.
+_Avoid_: Budget, projection total
+
 **Amount**:
 A positive integer in the minor units of the installation currency (for example cents). The sign is carried by the kind, never by the amount.
 
