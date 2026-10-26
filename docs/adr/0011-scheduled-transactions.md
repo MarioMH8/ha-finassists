@@ -16,6 +16,10 @@ Manual schedules wait for confirmation. The next occurrence is exposed as pendin
 
 Posting writes the transaction and advances the schedule in one SQLite transaction. The `(schedule_id, schedule_occurrence_number)` unique index makes retries idempotent, and an optimistic version on the schedule prevents an edit from overwriting a concurrent posting.
 
+## Scheduling
+
+The posting job is an application service over a `Scheduler` port. The Bun adapter uses the in-process `Bun.cron` overload with the Home Assistant time zone, a 15-minute expression and `unref()`; it is not durable and dies with the process, so the startup immediate run and catch-up remain the recovery path. The OS-level cron overload is deliberately not used because it would write scheduler state outside the app's data and depend on a host daemon.
+
 ## Boundaries
 
 The scheduled forecast is separate from the recorded monthly totals. It includes active schedules in the installation currency only. A category referenced by a schedule cannot be deleted, and changing its kind is blocked while schedules use it. Deleting a schedule keeps its posted transactions.

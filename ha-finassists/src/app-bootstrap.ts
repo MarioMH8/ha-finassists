@@ -3,7 +3,8 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { createServer, prepareWebAssets } from '@modules/api';
-import { startScheduledPostingJob } from '@modules/ledger/infrastructure';
+import { ScheduledPostingJob } from '@modules/ledger/application';
+import { BunCronScheduler } from '@modules/scheduling/infrastructure';
 import { migrateDatabase } from '@modules/storage/infrastructure';
 import { createBootstrapCapability, publishSupervisorDiscovery } from '@modules/system-credentials/infrastructure';
 import { Database } from 'bun:sqlite';
@@ -53,12 +54,14 @@ async function startApp(): Promise<ReturnType<typeof createServer>> {
 		}
 	}
 
-	startScheduledPostingJob({
-		logger: error => {
+	const scheduledPostingJob = new ScheduledPostingJob(
+		container.get('ledgerUseCases').scheduled.postDue,
+		new BunCronScheduler(config.timeZone),
+		error => {
 			process.stderr.write(`Scheduled posting failed: ${String(error)}\n`);
-		},
-		run: () => container.get('ledgerUseCases').scheduled.postDue.execute(),
-	});
+		}
+	);
+	scheduledPostingJob.start();
 
 	return server;
 }

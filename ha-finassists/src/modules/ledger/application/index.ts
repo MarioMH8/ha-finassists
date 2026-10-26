@@ -23,6 +23,7 @@ export {
 	type PostScheduledTransactionInput,
 	type PostScheduledTransactionResult,
 } from './post-scheduled-transaction';
+export { SCHEDULED_POSTING_CRON, ScheduledPostingJob, type ScheduledPostingJobLogger } from './scheduled-posting-job';
 export { SkipScheduledTransaction, type SkipScheduledTransactionInput } from './skip-scheduled-transaction';
 export { UpdateCategory, type UpdateCategoryInput } from './update-category';
 export { UpdateScheduledTransaction, type UpdateScheduledTransactionInput } from './update-scheduled-transaction';
