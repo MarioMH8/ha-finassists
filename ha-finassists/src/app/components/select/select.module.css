@@ -65,11 +65,6 @@
   cursor: not-allowed;
 }
 
-/*
- * iOS zooms the page when a control smaller than 16px receives focus. Raise
- * every size to the body-large size on touch pointers instead of blocking
- * user scaling.
- */
 @media (pointer: coarse) {
   .select {
     font-size: var(--ha-font-size-l);

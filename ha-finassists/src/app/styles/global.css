@@ -1,8 +1,3 @@
-/* Home Assistant ships Roboto from its frontend static assets, which the
-   Ingress iframe resolves against the Home Assistant origin. Prefer an
-   installed copy, then the Home Assistant files. In local development without
-   Home Assistant the URL 404s and the font stack falls back to Noto or the
-   system sans-serif. */
 @font-face {
   font-family: Roboto;
   font-style: normal;
@@ -188,9 +183,6 @@
   --ha-animation-duration-slow: 350ms;
 
   /* --- Core: environment -------------------------------------------- */
-  /* The Home Assistant app WebViews report safe-area insets for the notch
-     and the home indicator. Browsers without support resolve to 0px, so
-     layouts can always add the inset without a feature query. */
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
