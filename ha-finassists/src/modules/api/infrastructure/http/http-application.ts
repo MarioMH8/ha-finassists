@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/name-replacements -- The adapter keeps its full domain name. */
 import { inferdiHono } from '@inferdi/hono';
 import { isTrustedIngressPeer } from '@modules/home-assistant';
 import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
@@ -5,10 +6,10 @@ import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 
-import { FinancialAuthentication } from './auth/authentication';
+import { FinancialAuthentication } from './auth/financial-authentication';
 import { SystemCredentialRoutes } from './auth/system-credential-routes';
 import { TokenRoutes } from './auth/token-routes';
-import type { FinanceEnvironment } from './finance/finance-route-support';
+import type { FinanceEnvironment } from './finance/finance-route-types';
 import { FinanceRoutes } from './finance/finance-routes';
 import { McpTransport } from './mcp/mcp-transport';
 import { SecurityHeaders } from './security-headers';
@@ -18,7 +19,6 @@ import { HttpResponses } from './shared/http-responses';
 import type { HttpEnvironment, RequestContext } from './shared/request-context';
 import { WebAssets } from './web-assets';
 
-// eslint-disable-next-line unicorn/name-replacements -- The adapter keeps its full domain name.
 class HttpApplication {
 	private constructor() {
 		// Static-only helper: instantiation is not part of the contract.
@@ -120,8 +120,7 @@ class HttpApplication {
 	}
 }
 
-export type { FinanceUseCases } from './finance/finance-routes';
+export type { FinanceUseCases } from './finance/finance-route-types';
 export type { HttpContainer, HttpScope, HttpServices } from './shared/http-container';
-export { HttpContainerBuilder } from './shared/http-container';
 export type { SystemCredentialUseCases, TokenManagementUseCases } from './shared/request-context';
 export { HttpApplication };

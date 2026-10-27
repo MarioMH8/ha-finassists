@@ -1,34 +1,9 @@
+import { McpSchemas } from './mcp-schemas';
+
 interface McpTool {
 	description: string;
 	inputSchema: { properties: Record<string, unknown>; required?: string[]; type: 'object' };
 	name: string;
-}
-
-class McpSchemas {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
-
-	static integerProperty(
-		description: string,
-		extra: Record<string, unknown> = {}
-	): { description: string; type: string } {
-		return { description, type: 'integer', ...extra };
-	}
-
-	static objectSchema(
-		properties: Record<string, unknown> = {},
-		required?: string[]
-	): { properties: Record<string, unknown>; required?: string[]; type: 'object' } {
-		return { properties, ...(required && { required }), type: 'object' as const };
-	}
-
-	static stringProperty(
-		description: string,
-		extra: Record<string, unknown> = {}
-	): { description: string; type: string } {
-		return { description, type: 'string', ...extra };
-	}
 }
 
 const KIND_VALUES = ['expense', 'income'];
@@ -231,4 +206,4 @@ const TOOLS: McpTool[] = [
 	},
 ];
 
-export { McpSchemas, TOOLS };
+export { TOOLS };

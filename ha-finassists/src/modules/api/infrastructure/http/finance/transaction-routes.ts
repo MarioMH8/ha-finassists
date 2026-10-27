@@ -3,7 +3,7 @@ import { RequestParsing } from '@modules/api/infrastructure/http/shared/request-
 import { Hono } from 'hono';
 import { z } from 'zod';
 
-import type { FinanceEnvironment } from './finance-route-support';
+import type { FinanceEnvironment } from './finance-route-types';
 
 const DEFAULT_LIMIT = 100;
 

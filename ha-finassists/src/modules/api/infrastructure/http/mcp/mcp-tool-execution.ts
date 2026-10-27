@@ -1,5 +1,5 @@
-import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-routes';
-import { FinanceFacade } from '@modules/api/infrastructure/http/finance/finance-routes';
+import { FinanceFacade } from '@modules/api/infrastructure/http/finance/finance-facade';
+import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-route-types';
 
 const LIST_FILTERS = ['categoryId', 'fromDate', 'kind', 'limit', 'offset', 'search', 'toDate'] as const;
 const SCHEDULED_LIST_FILTERS = [

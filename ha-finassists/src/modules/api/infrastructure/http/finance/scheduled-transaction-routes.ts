@@ -1,11 +1,11 @@
 import { HttpResponses } from '@modules/api/infrastructure/http/shared/http-responses';
 import { RequestParsing } from '@modules/api/infrastructure/http/shared/request-parsing';
-import type { ScheduledTransaction } from '@modules/ledger/domain';
 import { CalendarDate } from '@modules/ledger/domain';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
-import type { FinanceEnvironment } from './finance-route-support';
+import type { FinanceEnvironment } from './finance-route-types';
+import { ScheduledTransactionJsonMapper } from './mappers/scheduled-transaction-json.mapper';
 
 const DEFAULT_LIMIT = 100;
 const DEFAULT_UPCOMING_LIMIT = 100;
@@ -89,50 +89,6 @@ const upcomingScheduledTransactionQuerySchema = z.object({
 	offset: RequestParsing.nonNegativeInteger('offset', Number.MAX_SAFE_INTEGER).default(0),
 	toDate: requiredDate('toDate').optional(),
 });
-
-interface ScheduledTransactionJson {
-	amountMinor: number;
-	categoryId: null | string;
-	createdAt: string;
-	createdBy: null | string;
-	currencyCode: string;
-	description: string;
-	endDate: null | string;
-	frequency: string;
-	id: string;
-	interval: number;
-	kind: string;
-	nextDueDate: null | string;
-	postingMode: string;
-	startDate: string;
-	status: string;
-}
-
-class ScheduledTransactionJsonMapper {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
-
-	static toJson(schedule: ScheduledTransaction): ScheduledTransactionJson {
-		return {
-			amountMinor: schedule.amountMinor,
-			categoryId: schedule.categoryId,
-			createdAt: schedule.createdAt,
-			createdBy: schedule.createdBy,
-			currencyCode: schedule.currencyCode,
-			description: schedule.description,
-			endDate: schedule.endDate,
-			frequency: schedule.frequency,
-			id: schedule.id,
-			interval: schedule.interval,
-			kind: schedule.kind,
-			nextDueDate: schedule.nextDueDate,
-			postingMode: schedule.postingMode,
-			startDate: schedule.startDate,
-			status: schedule.status,
-		};
-	}
-}
 
 class ScheduledTransactionRoutes {
 	private constructor() {

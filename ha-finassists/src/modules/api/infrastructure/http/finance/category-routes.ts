@@ -1,10 +1,10 @@
 import { HttpResponses } from '@modules/api/infrastructure/http/shared/http-responses';
 import { RequestParsing } from '@modules/api/infrastructure/http/shared/request-parsing';
-import type { Category, CategorySummary } from '@modules/ledger/domain';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
-import type { FinanceEnvironment } from './finance-route-support';
+import type { FinanceEnvironment } from './finance-route-types';
+import { CategoryJsonMapper } from './mappers/category-json.mapper';
 
 const categoryKindSchema = z.enum(['expense', 'income'], {
 	error: 'kind must be expense or income',
@@ -23,37 +23,6 @@ const updateCategorySchema = z.object({
 	kind: categoryKindSchema.optional(),
 	name: RequestParsing.requiredText('name').optional(),
 });
-
-interface CategoryJson {
-	createdAt: string;
-	id: string;
-	kind: string;
-	name: string;
-}
-
-interface CategorySummaryJson extends CategoryJson {
-	scheduledTransactionCount: number;
-	transactionCount: number;
-}
-
-class CategoryJsonMapper {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
-
-	static toJson(category: Category): CategoryJson {
-		return {
-			createdAt: category.createdAt,
-			id: category.id,
-			kind: category.kind,
-			name: category.name,
-		};
-	}
-
-	static toSummary({ category, scheduledTransactionCount, transactionCount }: CategorySummary): CategorySummaryJson {
-		return { ...this.toJson(category), scheduledTransactionCount, transactionCount };
-	}
-}
 
 class CategoryRoutes {
 	private constructor() {

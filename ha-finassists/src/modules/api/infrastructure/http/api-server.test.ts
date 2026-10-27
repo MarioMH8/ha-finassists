@@ -14,8 +14,8 @@ import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modu
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import { ApiServer } from './create-server';
-import { HttpContainerBuilder } from './shared/http-container';
+import { ApiServer } from './api-server';
+import { HttpContainerBuilder } from './shared/http-container-builder';
 
 interface TokenMetadataResponse {
 	createdAt: string;

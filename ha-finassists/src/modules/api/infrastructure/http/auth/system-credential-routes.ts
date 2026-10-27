@@ -3,7 +3,7 @@ import type { HttpEnvironment } from '@modules/api/infrastructure/http/shared/re
 import { Hono } from 'hono';
 import { z } from 'zod';
 
-import { FinancialAuthentication } from './authentication';
+import { FinancialAuthentication } from './financial-authentication';
 
 const exchangeSchema = z.object({
 	bootstrapCapability: z.string().min(32).max(4096),

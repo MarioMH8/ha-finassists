@@ -1,4 +1,4 @@
-import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-routes';
+import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-route-types';
 import type {
 	SystemCredentialUseCases,
 	TokenManagementUseCases,

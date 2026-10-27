@@ -1,9 +1,9 @@
 import type { HomeAssistantActor } from '@modules/home-assistant';
 import type { ShellConfig } from '@modules/shell/domain';
 
-import type { HttpContainer } from './routes';
+import type { HttpContainer } from './http-application';
 // eslint-disable-next-line unicorn/name-replacements -- The adapter keeps its full domain name.
-import { HttpApplication } from './routes';
+import { HttpApplication } from './http-application';
 
 class ApiServer {
 	private constructor() {

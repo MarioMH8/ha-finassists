@@ -1,6 +1,6 @@
+import { HttpApplication } from '@modules/api/infrastructure/http/http-application';
 import { MCP_MAX_BODY_BYTES, McpTransport } from '@modules/api/infrastructure/http/mcp/mcp-transport';
-import { HttpApplication } from '@modules/api/infrastructure/http/routes';
-import { HttpContainerBuilder } from '@modules/api/infrastructure/http/shared/http-container';
+import { HttpContainerBuilder } from '@modules/api/infrastructure/http/shared/http-container-builder';
 import {
 	CreateCategory,
 	CreateScheduledTransaction,
@@ -30,8 +30,8 @@ import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modu
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import type { FinanceUseCases } from './finance-routes';
-import { FinanceFacade } from './finance-routes';
+import { FinanceFacade } from './finance-facade';
+import type { FinanceUseCases } from './finance-route-types';
 
 const databases: Database[] = [];
 
