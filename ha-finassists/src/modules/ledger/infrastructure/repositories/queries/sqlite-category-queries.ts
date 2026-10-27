@@ -2,9 +2,7 @@ import type { CategoryCriteria } from '@modules/ledger/domain';
 import type { SQLQueryBindings } from 'bun:sqlite';
 
 class SqliteCategoryQueries {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static where(criteria: CategoryCriteria): { parameters: SQLQueryBindings[]; sql: string } {
 		return criteria.kind === undefined

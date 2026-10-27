@@ -7,9 +7,7 @@ interface CalendarDateParts {
 const MILLISECONDS_PER_DAY = 86_400_000;
 
 class CalendarDate {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static addDays(value: string, amount: number): string | undefined {
 		if (!Number.isSafeInteger(amount)) {

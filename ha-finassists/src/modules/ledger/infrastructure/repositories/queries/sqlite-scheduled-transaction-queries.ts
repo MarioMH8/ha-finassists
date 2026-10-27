@@ -2,9 +2,7 @@ import type { ScheduledTransactionCriteria } from '@modules/ledger/domain';
 import type { SQLQueryBindings } from 'bun:sqlite';
 
 class SqliteScheduledTransactionQueries {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static where(criteria: ScheduledTransactionCriteria): { parameters: SQLQueryBindings[]; sql: string } {
 		const clauses: string[] = [];

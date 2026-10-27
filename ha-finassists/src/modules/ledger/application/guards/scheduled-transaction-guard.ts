@@ -6,9 +6,7 @@ interface ScheduledTransactionReader {
 }
 
 class ScheduledTransactionGuard {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static async require(repository: ScheduledTransactionReader, id: string): Promise<ScheduledTransaction> {
 		const schedule = await repository.findById(id);

@@ -7,9 +7,7 @@ import { CategoryNotFoundError } from '@modules/ledger/domain';
  * and both represent the absence, so the distinction lives here.
  */
 class CategoryGuard {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static require(repository: CategoryRepository, categoryId: string): Promise<Category>;
 	static require(
