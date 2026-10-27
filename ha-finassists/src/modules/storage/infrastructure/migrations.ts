@@ -158,9 +158,7 @@ const MIGRATIONS: Migration[] = [
 ];
 
 class DatabaseMigrator {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static migrate(database: Database): void {
 		database.run('PRAGMA foreign_keys = ON');

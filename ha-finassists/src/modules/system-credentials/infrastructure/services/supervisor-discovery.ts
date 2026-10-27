@@ -6,9 +6,7 @@ const SUPERVISOR_REQUEST_TIMEOUT_MS = 10_000;
 type SupervisorFetcher = (input: string, init: RequestInit) => Promise<Response>;
 
 class BootstrapCapability {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create(): string {
 		const randomBytes = crypto.getRandomValues(new Uint8Array(32));
@@ -18,9 +16,7 @@ class BootstrapCapability {
 }
 
 class SupervisorDiscovery {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static async publish(
 		supervisorToken: string,

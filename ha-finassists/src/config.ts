@@ -46,9 +46,7 @@ const homeAssistantOptionsSchema = z
 	.catch({});
 
 class ServerConfigLoader {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static async load({
 		development,

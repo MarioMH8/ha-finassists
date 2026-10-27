@@ -6,9 +6,7 @@ import { ACTOR_KIND } from '@modules/home-assistant/domain';
 const DEFAULT_TRUSTED_INGRESS_IP = '172.30.32.2';
 
 class TrustedIngressPeer {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static isTrusted(remoteAddress: string | undefined, trustedIngressIp: string): boolean {
 		return (
@@ -27,9 +25,7 @@ class TrustedIngressPeer {
 }
 
 class IngressActorResolver {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static resolve(headers: Headers, remoteAddress: string | undefined, trustedIngressIp: string): IngressActor {
 		if (!TrustedIngressPeer.isTrusted(remoteAddress, trustedIngressIp)) {

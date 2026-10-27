@@ -7,9 +7,7 @@ interface CheckpointResult {
 }
 
 class DatabaseBackup {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static checkpoint(database: Database): void {
 		database.run('PRAGMA busy_timeout = 5000');
