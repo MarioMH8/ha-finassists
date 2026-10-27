@@ -1,7 +1,7 @@
 import type { ScheduledPostingRepository, ScheduledTransaction, Transaction } from '@modules/ledger/domain';
 import { ScheduledTransactionVersionConflictError } from '@modules/ledger/domain';
 
-import { ScheduledTransactionGuard } from './require-scheduled-transaction';
+import { ScheduledTransactionGuard } from './guards/scheduled-transaction-guard';
 import { ScheduledTransactionEntry } from './scheduled-transaction-entry';
 
 interface PostScheduledTransactionInput {

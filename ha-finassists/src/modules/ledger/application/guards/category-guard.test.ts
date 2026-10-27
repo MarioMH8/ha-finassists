@@ -3,7 +3,7 @@ import { CategoryMother } from '@modules/ledger/domain/category.mother';
 import { MockCategoryRepository } from '@modules/ledger/infrastructure/repositories/mock-category.repository';
 import { beforeEach, describe, expect, it } from 'bun:test';
 
-import { CategoryGuard } from './require-category';
+import { CategoryGuard } from './category-guard';
 
 describe('CategoryGuard.require', () => {
 	let repository: MockCategoryRepository;

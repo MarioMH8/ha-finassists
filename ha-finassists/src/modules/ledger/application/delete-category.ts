@@ -1,7 +1,7 @@
 import type { CategoryRepository } from '@modules/ledger/domain';
 import { CategoryInUseError, CategoryNotFoundError } from '@modules/ledger/domain';
 
-import { CategoryGuard } from './require-category';
+import { CategoryGuard } from './guards/category-guard';
 
 interface DeleteCategoryInput {
 	id: string;

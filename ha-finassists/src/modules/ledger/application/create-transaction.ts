@@ -2,7 +2,7 @@ import type { CategoryRepository, TransactionKind, TransactionRepository } from 
 import { Transaction } from '@modules/ledger/domain';
 import { Currency } from '@modules/money/domain';
 
-import { CategoryGuard } from './require-category';
+import { CategoryGuard } from './guards/category-guard';
 
 interface CreateTransactionInput {
 	actorId: null | string;

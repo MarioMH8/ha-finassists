@@ -1,7 +1,7 @@
 import type { CategoryRepository, TransactionKind, TransactionRepository } from '@modules/ledger/domain';
 import { Transaction, TransactionNotFoundError } from '@modules/ledger/domain';
 
-import { CategoryGuard } from './require-category';
+import { CategoryGuard } from './guards/category-guard';
 
 interface UpdateTransactionInput {
 	amountMinor?: number;

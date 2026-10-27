@@ -4,18 +4,7 @@ import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
 import type { CategoryRow } from './mappers/sqlite-category.mapper';
 import { SqliteCategoryMapper } from './mappers/sqlite-category.mapper';
-
-class SqliteCategoryQueries {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
-
-	static where(criteria: CategoryCriteria): { parameters: SQLQueryBindings[]; sql: string } {
-		return criteria.kind === undefined
-			? { parameters: [], sql: '' }
-			: { parameters: [criteria.kind], sql: ' WHERE categories.kind = ?' };
-	}
-}
+import { SqliteCategoryQueries } from './queries/sqlite-category-queries';
 
 const SELECT_CATEGORY = `
 	SELECT categories.id, categories.name, categories.kind, categories.created_at,

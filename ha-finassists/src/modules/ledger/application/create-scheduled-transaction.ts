@@ -8,7 +8,7 @@ import type {
 import { ScheduledTransaction } from '@modules/ledger/domain';
 import { Currency } from '@modules/money/domain';
 
-import { CategoryGuard } from './require-category';
+import { CategoryGuard } from './guards/category-guard';
 
 interface CreateScheduledTransactionInput {
 	actorId: null | string;

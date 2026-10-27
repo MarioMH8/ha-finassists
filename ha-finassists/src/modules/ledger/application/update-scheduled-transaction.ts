@@ -12,8 +12,8 @@ import {
 	ScheduledTransactionVersionConflictError,
 } from '@modules/ledger/domain';
 
-import { CategoryGuard } from './require-category';
-import { ScheduledTransactionGuard } from './require-scheduled-transaction';
+import { CategoryGuard } from './guards/category-guard';
+import { ScheduledTransactionGuard } from './guards/scheduled-transaction-guard';
 
 interface UpdateScheduledTransactionInput {
 	amountMinor?: number;
