@@ -1,4 +1,5 @@
 import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-route-types';
+import { HttpResponses } from '@modules/api/infrastructure/http/shared/http-responses';
 import type {
 	SystemCredentialUseCases,
 	TokenManagementUseCases,
@@ -34,13 +35,13 @@ class McpTransport {
 		systemCredentialUseCases?: SystemCredentialUseCases
 	): Promise<Response> {
 		if (!this.hasValidOrigin(request)) {
-			return new Response('Forbidden', { status: 403 });
+			return HttpResponses.text('Forbidden', 403);
 		}
 		if (request.method !== 'POST') {
-			return new Response('Method Not Allowed', { headers: { Allow: 'POST' }, status: 405 });
+			return HttpResponses.text('Method Not Allowed', 405, { Allow: 'POST' });
 		}
 		if (!this.hasAcceptedMcpJson(request)) {
-			return new Response('Not Acceptable', { status: 406 });
+			return HttpResponses.text('Not Acceptable', 406);
 		}
 		const authorizationParts = (request.headers.get('authorization') ?? '').trim().split(/\s+/u, 3);
 		const [scheme = '', secret = ''] = authorizationParts;
@@ -62,7 +63,7 @@ class McpTransport {
 			actor = { id: token.ownerId, kind: 'home_assistant_user' };
 		}
 		if ((request.headers.get('content-type') ?? '').split(';', 1).join('').trim() !== 'application/json') {
-			return new Response('Unsupported Media Type', { status: 415 });
+			return HttpResponses.text('Unsupported Media Type', 415);
 		}
 
 		let message: unknown;
@@ -129,10 +130,7 @@ class McpTransport {
 	}
 
 	private static jsonResponse(body: unknown, status = 200): Response {
-		return Response.json(body, {
-			headers: { 'Cache-Control': 'no-store', 'MCP-Protocol-Version': MCP_PROTOCOL_VERSION.CURRENT },
-			status,
-		});
+		return HttpResponses.json(body, status, { 'MCP-Protocol-Version': MCP_PROTOCOL_VERSION.CURRENT });
 	}
 
 	private static async processRpc(
@@ -142,9 +140,9 @@ class McpTransport {
 		useCases: FinanceUseCases
 	): Promise<Response> {
 		if (message.id === undefined && message.method.startsWith('notifications/')) {
-			return new Response(JSON_RPC_NULL, {
-				headers: { 'Cache-Control': 'no-store', 'MCP-Protocol-Version': MCP_PROTOCOL_VERSION.CURRENT },
-				status: 202,
+			return HttpResponses.empty(202, {
+				'Cache-Control': 'no-store',
+				'MCP-Protocol-Version': MCP_PROTOCOL_VERSION.CURRENT,
 			});
 		}
 		if (message.method === 'ping') {

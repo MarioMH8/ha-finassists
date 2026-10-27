@@ -1,3 +1,5 @@
+import { HttpResponses } from './shared/http-responses';
+
 const contentSecurityPolicy = [
 	`default-src \u{27}self\u{27}`,
 	`object-src \u{27}none\u{27}`,
@@ -24,11 +26,7 @@ class SecurityHeaders {
 			headers.set(name, value);
 		}
 
-		return new Response(response.body, {
-			headers,
-			status: response.status,
-			statusText: response.statusText,
-		});
+		return HttpResponses.withHeaders(response, headers);
 	}
 }
 

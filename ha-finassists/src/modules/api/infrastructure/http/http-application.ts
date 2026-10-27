@@ -33,13 +33,13 @@ class HttpApplication {
 		});
 		app.use('*', inferdiHono({ container }));
 
-		app.get('/health', () => Response.json({ status: 'ok' }));
+		app.get('/health', () => HttpResponses.json({ status: 'ok' }));
 		app.route('/api/v1/tokens', TokenRoutes.create());
 		app.route('/api/v1/system-credentials', SystemCredentialRoutes.create());
 		app.get('/api/v1/session', SessionRoute.create());
 		app.route('/api/v1', this.createFinanceApp());
 		app.all('*', this.createFallbackRoute());
-		app.onError(() => SecurityHeaders.apply(new Response('Internal Server Error', { status: 500 })));
+		app.onError(() => SecurityHeaders.apply(HttpResponses.text('Internal Server Error', 500)));
 
 		return app;
 	}
@@ -57,7 +57,7 @@ class HttpApplication {
 				const financeUseCases = context.var.di.get('financeUseCases');
 
 				return financeUseCases === undefined
-					? new Response(undefined, { status: 404 })
+					? HttpResponses.empty(404)
 					: McpTransport.handle(
 							context.req.raw,
 							context.var.di.get('tokenUseCases'),
@@ -70,11 +70,11 @@ class HttpApplication {
 				requestContext.developmentActor === undefined &&
 				!isTrustedIngressPeer(requestContext.remoteAddress, requestContext.trustedIngressIp)
 			) {
-				return new Response('Forbidden', { status: 403 });
+				return HttpResponses.text('Forbidden', 403);
 			}
 
 			if (context.req.method !== 'GET') {
-				return new Response('Method Not Allowed', { status: 405 });
+				return HttpResponses.text('Method Not Allowed', 405);
 			}
 
 			return WebAssets.serve(
@@ -106,7 +106,7 @@ class HttpApplication {
 				}
 				const financeUseCases = context.var.di.get('financeUseCases');
 				if (financeUseCases === undefined) {
-					return new Response(undefined, { status: 404 });
+					return HttpResponses.empty(404);
 				}
 				context.set('actor', actor);
 				context.set('useCases', financeUseCases);

@@ -48,7 +48,7 @@ class SystemCredentialRoutes {
 			.put('/current', async context => {
 				const useCases = context.var.di.get('systemCredentialUseCases');
 				if (useCases === undefined) {
-					return new Response(undefined, { status: 404 });
+					return HttpResponses.empty(404);
 				}
 				const authenticated = await FinancialAuthentication.authenticateSystemBearer(context.req.raw, useCases);
 				if (authenticated instanceof Response) {
@@ -63,7 +63,7 @@ class SystemCredentialRoutes {
 			.delete('/current', async context => {
 				const useCases = context.var.di.get('systemCredentialUseCases');
 				if (useCases === undefined) {
-					return new Response(undefined, { status: 404 });
+					return HttpResponses.empty(404);
 				}
 				const authenticated = await FinancialAuthentication.authenticateSystemBearer(context.req.raw, useCases);
 				if (authenticated instanceof Response) {
@@ -72,7 +72,7 @@ class SystemCredentialRoutes {
 
 				return (await useCases.revoke.execute(authenticated.secret))
 					? HttpResponses.noContent()
-					: new Response('Not Found', { status: 404 });
+					: HttpResponses.text('Not Found', 404);
 			})
 			.all('/current', () => HttpResponses.methodNotAllowed('PUT, DELETE'));
 

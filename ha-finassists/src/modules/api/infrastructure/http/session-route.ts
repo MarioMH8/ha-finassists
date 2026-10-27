@@ -1,6 +1,7 @@
 import { isTrustedIngressPeer, resolveIngressActor } from '@modules/home-assistant';
 import type { Context } from 'hono';
 
+import { HttpResponses } from './shared/http-responses';
 import type { HttpEnvironment } from './shared/request-context';
 
 class SessionRoute {
@@ -15,10 +16,10 @@ class SessionRoute {
 				requestContext.developmentActor === undefined &&
 				!isTrustedIngressPeer(requestContext.remoteAddress, requestContext.trustedIngressIp)
 			) {
-				return new Response('Forbidden', { headers: { 'Cache-Control': 'no-store' }, status: 403 });
+				return HttpResponses.text('Forbidden', 403, { 'Cache-Control': 'no-store' });
 			}
 
-			return Response.json(
+			return HttpResponses.json(
 				requestContext.developmentActor ??
 					resolveIngressActor(
 						context.req.raw.headers,

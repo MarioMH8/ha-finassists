@@ -7,6 +7,8 @@ import type { Language } from '@app/i18n/language';
 import { LANGUAGE } from '@app/i18n/language';
 import type { ShellConfig } from '@modules/shell/domain';
 
+import { HttpResponses } from './shared/http-responses';
+
 interface ServerRenderer {
 	renderPage(
 		language: Language,
@@ -57,29 +59,31 @@ class WebAssets {
 		settings: ShellConfig
 	): Promise<Response> {
 		if (isDevelopmentMode && pathname.endsWith('/__dev/version')) {
-			return new Response(`${developmentVersion}:${await this.getSourceVersion(sourceDirectory)}`, {
-				headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain; charset=utf-8' },
+			return HttpResponses.text(`${developmentVersion}:${await this.getSourceVersion(sourceDirectory)}`, 200, {
+				'Cache-Control': 'no-store',
+				'Content-Type': 'text/plain; charset=utf-8',
 			});
 		}
 
 		if (isDevelopmentMode && pathname.endsWith('/__dev/reload.js')) {
-			return new Response(
+			return HttpResponses.text(
 				`let currentVersion;\nconst checkVersion = async () => {\n  try {\n    const response = await fetch('./__dev/version', { cache: 'no-store' });\n    const nextVersion = await response.text();\n    if (currentVersion && currentVersion !== nextVersion) location.reload();\n    currentVersion = nextVersion;\n  } catch {}\n};\nvoid checkVersion();\nsetInterval(checkVersion, 1500);`,
-				{ headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/javascript; charset=utf-8' } }
+				200,
+				{ 'Cache-Control': 'no-store', 'Content-Type': 'text/javascript; charset=utf-8' }
 			);
 		}
 
 		if (pathname.endsWith('/styles.css')) {
 			if (!isDevelopmentMode && Bun.env.NODE_ENV === 'production') {
-				return new Response(Bun.file(productionStylesheet), {
-					headers: { 'Content-Type': 'text/css; charset=utf-8' },
+				return HttpResponses.body(Bun.file(productionStylesheet), 200, {
+					'Content-Type': 'text/css; charset=utf-8',
 				});
 			}
 
 			const assets = await this.getDevelopmentAssets();
 
-			return new Response(assets.stylesheet, {
-				headers: { 'Content-Type': 'text/css; charset=utf-8' },
+			return HttpResponses.text(assets.stylesheet, 200, {
+				'Content-Type': 'text/css; charset=utf-8',
 			});
 		}
 
@@ -88,8 +92,8 @@ class WebAssets {
 				!isDevelopmentMode && Bun.env.NODE_ENV === 'production' ? undefined : await this.getDevelopmentAssets();
 			const clientScript = assets?.clientScript ?? (await Bun.file(productionClientBundle).text());
 
-			return new Response(clientScript, {
-				headers: { 'Content-Type': 'text/javascript; charset=utf-8' },
+			return HttpResponses.text(clientScript, 200, {
+				'Content-Type': 'text/javascript; charset=utf-8',
 			});
 		}
 
@@ -201,11 +205,9 @@ class WebAssets {
 				: await this.getDevelopmentRenderer();
 		const stream = await renderer.renderPage(language, isDevelopmentMode, settings);
 
-		return new Response(stream, {
-			headers: {
-				'Content-Type': 'text/html; charset=utf-8',
-				Vary: 'Accept-Language',
-			},
+		return HttpResponses.body(stream, 200, {
+			'Content-Type': 'text/html; charset=utf-8',
+			Vary: 'Accept-Language',
 		});
 	}
 }

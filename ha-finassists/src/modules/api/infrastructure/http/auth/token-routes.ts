@@ -24,12 +24,12 @@ const requireTokenActor = createMiddleware<TokenEnvironment>(async (context, nex
 	}
 
 	if (!isTrustedIngressPeer(remoteAddress, trustedIngressIp)) {
-		return new Response('Forbidden', { headers: { 'Cache-Control': 'no-store' }, status: 403 });
+		return HttpResponses.text('Forbidden', 403, { 'Cache-Control': 'no-store' });
 	}
 
 	const actor = resolveIngressActor(context.req.raw.headers, remoteAddress, trustedIngressIp);
 	if (actor.kind === 'unknown') {
-		return new Response('Unauthorized', { headers: { 'Cache-Control': 'no-store' }, status: 401 });
+		return HttpResponses.text('Unauthorized', 401, { 'Cache-Control': 'no-store' });
 	}
 	context.set('actor', { id: actor.id });
 
@@ -86,7 +86,7 @@ class TokenRoutes {
 					ownerId: context.var.actor.id,
 				});
 
-				return isRevoked ? HttpResponses.noContent() : new Response('Not Found', { status: 404 });
+				return isRevoked ? HttpResponses.noContent() : HttpResponses.text('Not Found', 404);
 			})
 			.all('/:id', () => HttpResponses.methodNotAllowed('DELETE'));
 
