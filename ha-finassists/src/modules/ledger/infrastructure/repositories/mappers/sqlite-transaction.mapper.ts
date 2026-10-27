@@ -14,9 +14,7 @@ export interface TransactionRow {
 }
 
 export class SqliteTransactionMapper {
-	private constructor() {
-		// Static-only mapper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static toDomain(row: TransactionRow): Transaction {
 		return Transaction.create({

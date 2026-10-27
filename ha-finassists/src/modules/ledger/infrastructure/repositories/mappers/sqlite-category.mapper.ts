@@ -11,9 +11,7 @@ export interface CategoryRow {
 }
 
 export class SqliteCategoryMapper {
-	private constructor() {
-		// Static-only mapper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static toDomain(row: CategoryRow): Category {
 		return Category.create({

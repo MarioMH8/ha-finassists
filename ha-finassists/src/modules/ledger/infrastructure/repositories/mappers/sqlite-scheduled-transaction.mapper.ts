@@ -27,9 +27,7 @@ export interface ScheduledTransactionRow {
 }
 
 export class SqliteScheduledTransactionMapper {
-	private constructor() {
-		// Static-only mapper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static toDomain(row: ScheduledTransactionRow): ScheduledTransaction {
 		return ScheduledTransaction.restore({
