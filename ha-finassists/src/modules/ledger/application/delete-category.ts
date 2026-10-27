@@ -1,7 +1,7 @@
 import type { CategoryRepository } from '@modules/ledger/domain';
 import { CategoryInUseError, CategoryNotFoundError } from '@modules/ledger/domain';
 
-import { requireCategory } from './require-category';
+import { CategoryGuard } from './guards/category-guard';
 
 interface DeleteCategoryInput {
 	id: string;
@@ -11,7 +11,7 @@ export class DeleteCategory {
 	constructor(private readonly repository: CategoryRepository) {}
 
 	async execute({ id }: DeleteCategoryInput): Promise<void> {
-		await requireCategory(this.repository, id);
+		await CategoryGuard.require(this.repository, id);
 		const [transactionCount, scheduledTransactionCount] = await Promise.all([
 			this.repository.countTransactions(id),
 			this.repository.countScheduledTransactions(id),

@@ -1,8 +1,6 @@
 import type { ScheduledPostingRepository, ScheduledTransaction } from '@modules/ledger/domain';
 import { SCHEDULED_TRANSACTION_POSTING_MODE, SCHEDULED_TRANSACTION_STATUS } from '@modules/ledger/domain';
 
-import { createScheduledTransactionEntry } from './create-scheduled-transaction-entry';
-
 const MAX_DUE_SCHEDULES = 1000;
 
 interface PostDueScheduledTransactionsResult {
@@ -42,7 +40,7 @@ export class PostDueScheduledTransactions {
 		let posted = 0;
 		while (current.isDue(today) && posted < this.maxOccurrencesPerSchedule) {
 			const occurrenceNumber = current.occurrenceNumber;
-			const transaction = createScheduledTransactionEntry(current, current.createdBy, this.now());
+			const transaction = current.createEntry(current.createdBy, this.now(), crypto.randomUUID());
 			const advanced = current.advance();
 			// The version check must complete before the next occurrence uses the new version.
 			// eslint-disable-next-line no-await-in-loop

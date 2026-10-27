@@ -1,4 +1,4 @@
-import { addDays, addMonths, addYears, daysBetween, isCalendarDate, parseCalendarDate } from './calendar-date';
+import { CalendarDate } from './calendar-date';
 import {
 	ScheduledTransactionAmountInvalidError,
 	ScheduledTransactionCompletedError,
@@ -19,7 +19,7 @@ import {
 	ScheduledTransactionTransitionError,
 } from './scheduled-transaction.error';
 import type { TransactionKind } from './transaction';
-import { DESCRIPTION_MAX_LENGTH, TRANSACTION_KINDS } from './transaction';
+import { DESCRIPTION_MAX_LENGTH, Transaction } from './transaction';
 
 const SCHEDULED_TRANSACTION_FREQUENCY = {
 	DAILY: 'daily',
@@ -156,7 +156,7 @@ class ScheduledTransaction {
 			status: SCHEDULED_TRANSACTION_STATUS.COMPLETED,
 			version: 0,
 		});
-		const nextDueDate = dueDateAtOccurrence(base, 0);
+		const nextDueDate = this.dueDateAtOccurrence(base, 0);
 		if (nextDueDate === undefined) {
 			throw new ScheduledTransactionDateRangeInvalidError();
 		}
@@ -167,6 +167,18 @@ class ScheduledTransaction {
 			occurrenceNumber: 0,
 			status: SCHEDULED_TRANSACTION_STATUS.ACTIVE,
 		});
+	}
+
+	static isFrequency(value: string): value is ScheduledTransactionFrequency {
+		return (SCHEDULED_TRANSACTION_FREQUENCIES as readonly string[]).includes(value);
+	}
+
+	static isPostingMode(value: string): value is ScheduledTransactionPostingMode {
+		return (SCHEDULED_TRANSACTION_POSTING_MODES as readonly string[]).includes(value);
+	}
+
+	static isStatus(value: string): value is ScheduledTransactionStatus {
+		return (SCHEDULED_TRANSACTION_STATUSES as readonly string[]).includes(value);
 	}
 
 	static restore(properties: ScheduledTransactionProperties): ScheduledTransaction {
@@ -204,8 +216,117 @@ class ScheduledTransaction {
 		return schedule;
 	}
 
+	private static dueDateAtOccurrence(schedule: ScheduledTransaction, occurrenceNumber: number): string | undefined {
+		if (!Number.isSafeInteger(occurrenceNumber) || occurrenceNumber < 0) {
+			return undefined;
+		}
+		if (schedule.frequency === SCHEDULED_TRANSACTION_FREQUENCY.ONCE) {
+			return occurrenceNumber === 0 ? schedule.startDate : undefined;
+		}
+		const step = occurrenceNumber * schedule.interval;
+		if (!Number.isSafeInteger(step)) {
+			return undefined;
+		}
+		let dueDate: string | undefined;
+		switch (schedule.frequency) {
+			case SCHEDULED_TRANSACTION_FREQUENCY.DAILY: {
+				dueDate = CalendarDate.addDays(schedule.startDate, step);
+				break;
+			}
+			case SCHEDULED_TRANSACTION_FREQUENCY.MONTHLY: {
+				dueDate = CalendarDate.addMonths(schedule.startDate, step);
+				break;
+			}
+			case SCHEDULED_TRANSACTION_FREQUENCY.WEEKLY: {
+				dueDate = CalendarDate.addDays(schedule.startDate, step * 7);
+				break;
+			}
+			case SCHEDULED_TRANSACTION_FREQUENCY.YEARLY: {
+				dueDate = CalendarDate.addYears(schedule.startDate, step);
+				break;
+			}
+		}
+		if (dueDate === undefined) {
+			return undefined;
+		}
+
+		return schedule.endDate !== null && dueDate > schedule.endDate ? undefined : dueDate;
+	}
+
+	private static firstOccurrenceOnOrAfter(
+		schedule: ScheduledTransaction,
+		date: string,
+		minimumIndex: number
+	): ScheduledOccurrence | undefined {
+		const occurrenceNumber = this.occurrenceIndexOnOrAfter(schedule, date, minimumIndex);
+		if (occurrenceNumber === undefined) {
+			return undefined;
+		}
+		const dueDate = this.dueDateAtOccurrence(schedule, occurrenceNumber);
+
+		return dueDate === undefined ? undefined : { dueDate, occurrenceNumber };
+	}
+
+	private static occurrenceIndexOnOrAfter(
+		schedule: ScheduledTransaction,
+		date: string,
+		minimumIndex: number
+	): number | undefined {
+		if (!CalendarDate.isValid(date) || !Number.isSafeInteger(minimumIndex) || minimumIndex < 0) {
+			return undefined;
+		}
+		if (schedule.frequency === SCHEDULED_TRANSACTION_FREQUENCY.ONCE) {
+			return minimumIndex === 0 && schedule.startDate >= date ? 0 : undefined;
+		}
+		const start = CalendarDate.parse(schedule.startDate);
+		const target = CalendarDate.parse(date);
+		if (start === undefined || target === undefined) {
+			return undefined;
+		}
+		let estimate = 0;
+		switch (schedule.frequency) {
+			case SCHEDULED_TRANSACTION_FREQUENCY.DAILY: {
+				const difference = CalendarDate.daysBetween(schedule.startDate, date) ?? 0;
+				estimate = Math.ceil(difference / schedule.interval);
+				break;
+			}
+			case SCHEDULED_TRANSACTION_FREQUENCY.MONTHLY: {
+				const difference = (target.year - start.year) * 12 + target.month - start.month;
+				estimate = Math.ceil(difference / schedule.interval);
+				break;
+			}
+			case SCHEDULED_TRANSACTION_FREQUENCY.WEEKLY: {
+				const difference = CalendarDate.daysBetween(schedule.startDate, date) ?? 0;
+				estimate = Math.ceil(difference / (schedule.interval * 7));
+				break;
+			}
+			case SCHEDULED_TRANSACTION_FREQUENCY.YEARLY: {
+				const difference = target.year - start.year;
+				estimate = Math.ceil(difference / schedule.interval);
+				break;
+			}
+		}
+		let index = Math.max(0, minimumIndex, estimate);
+		let dueDate = this.dueDateAtOccurrence(schedule, index);
+		while (dueDate !== undefined && dueDate < date) {
+			index += 1;
+			dueDate = this.dueDateAtOccurrence(schedule, index);
+		}
+		while (index > minimumIndex) {
+			const previous = this.dueDateAtOccurrence(schedule, index - 1);
+			if (previous !== undefined && previous >= date) {
+				index -= 1;
+				dueDate = previous;
+			} else {
+				break;
+			}
+		}
+
+		return dueDate === undefined ? undefined : index;
+	}
+
 	private static validateDefinition(schedule: ScheduledTransaction): void {
-		if (!TRANSACTION_KINDS.includes(schedule.kind)) {
+		if (!Transaction.isKind(schedule.kind)) {
 			throw new ScheduledTransactionKindInvalidError();
 		}
 		if (!Number.isSafeInteger(schedule.amountMinor) || schedule.amountMinor <= 0) {
@@ -217,10 +338,10 @@ class ScheduledTransaction {
 		if (schedule.description.length > DESCRIPTION_MAX_LENGTH) {
 			throw new ScheduledTransactionDescriptionTooLongError(DESCRIPTION_MAX_LENGTH);
 		}
-		if (!isCalendarDate(schedule.startDate)) {
+		if (!CalendarDate.isValid(schedule.startDate)) {
 			throw new ScheduledTransactionStartDateInvalidError();
 		}
-		if (!SCHEDULED_TRANSACTION_FREQUENCIES.includes(schedule.frequency)) {
+		if (!this.isFrequency(schedule.frequency)) {
 			throw new ScheduledTransactionFrequencyInvalidError();
 		}
 		if (
@@ -234,7 +355,7 @@ class ScheduledTransaction {
 			throw new ScheduledTransactionIntervalInvalidError(1);
 		}
 		if (schedule.endDate !== null) {
-			if (!isCalendarDate(schedule.endDate)) {
+			if (!CalendarDate.isValid(schedule.endDate)) {
 				throw new ScheduledTransactionEndDateInvalidError();
 			}
 			if (schedule.endDate < schedule.startDate) {
@@ -244,10 +365,10 @@ class ScheduledTransaction {
 				throw new ScheduledTransactionEndDateInvalidError();
 			}
 		}
-		if (!SCHEDULED_TRANSACTION_POSTING_MODES.includes(schedule.postingMode)) {
+		if (!this.isPostingMode(schedule.postingMode)) {
 			throw new ScheduledTransactionPostingModeInvalidError();
 		}
-		if (!SCHEDULED_TRANSACTION_STATUSES.includes(schedule.status)) {
+		if (!this.isStatus(schedule.status)) {
 			throw new ScheduledTransactionStatusInvalidError();
 		}
 		if (!Number.isSafeInteger(schedule.occurrenceNumber) || schedule.occurrenceNumber < 0) {
@@ -266,10 +387,10 @@ class ScheduledTransaction {
 
 			return;
 		}
-		if (schedule.nextDueDate === null || !isCalendarDate(schedule.nextDueDate)) {
+		if (schedule.nextDueDate === null || !CalendarDate.isValid(schedule.nextDueDate)) {
 			throw new ScheduledTransactionStateInvalidError();
 		}
-		const expected = dueDateAtOccurrence(schedule, schedule.occurrenceNumber);
+		const expected = this.dueDateAtOccurrence(schedule, schedule.occurrenceNumber);
 		if (expected !== schedule.nextDueDate) {
 			throw new ScheduledTransactionStateInvalidError();
 		}
@@ -280,7 +401,7 @@ class ScheduledTransaction {
 			throw new ScheduledTransactionTransitionError('advance', this.status);
 		}
 		const occurrenceNumber = this.occurrenceNumber + 1;
-		const nextDueDate = dueDateAtOccurrence(this, occurrenceNumber);
+		const nextDueDate = ScheduledTransaction.dueDateAtOccurrence(this, occurrenceNumber);
 
 		return ScheduledTransaction.restore({
 			...this.toProperties(),
@@ -298,6 +419,24 @@ class ScheduledTransaction {
 		if (!this.isDue(today)) {
 			throw new ScheduledTransactionNotDueError(this.id, this.nextDueDate);
 		}
+	}
+
+	createEntry(actorId: null | string, createdAt: string, id: string): Transaction {
+		if (this.nextDueDate === null) {
+			throw new ScheduledTransactionNotDueError(this.id, null);
+		}
+
+		return Transaction.create({
+			actorId,
+			amountMinor: this.amountMinor,
+			categoryId: this.categoryId,
+			createdAt,
+			currencyCode: this.currencyCode,
+			description: this.description,
+			id,
+			kind: this.kind,
+			transactionDate: this.nextDueDate,
+		});
 	}
 
 	isDue(today: string): boolean {
@@ -325,7 +464,7 @@ class ScheduledTransaction {
 		toDate: string,
 		maxOccurrences = SCHEDULED_TRANSACTION_MAX_PROJECTED_OCCURRENCES
 	): ScheduledOccurrence[] {
-		if (!isCalendarDate(fromDate) || !isCalendarDate(toDate) || fromDate > toDate) {
+		if (!CalendarDate.isValid(fromDate) || !CalendarDate.isValid(toDate) || fromDate > toDate) {
 			throw new ScheduledTransactionProjectionRangeInvalidError();
 		}
 		if (
@@ -335,17 +474,17 @@ class ScheduledTransaction {
 		) {
 			throw new ScheduledTransactionProjectionLimitInvalidError(SCHEDULED_TRANSACTION_MAX_PROJECTED_OCCURRENCES);
 		}
-		const firstIndex = occurrenceIndexOnOrAfter(this, fromDate, this.occurrenceNumber);
+		const firstIndex = ScheduledTransaction.occurrenceIndexOnOrAfter(this, fromDate, this.occurrenceNumber);
 		if (firstIndex === undefined) {
 			return [];
 		}
 		const occurrences: ScheduledOccurrence[] = [];
 		let occurrenceNumber = firstIndex;
-		let dueDate = dueDateAtOccurrence(this, occurrenceNumber);
+		let dueDate = ScheduledTransaction.dueDateAtOccurrence(this, occurrenceNumber);
 		while (dueDate !== undefined && dueDate <= toDate && occurrences.length < maxOccurrences) {
 			occurrences.push({ dueDate, occurrenceNumber });
 			occurrenceNumber += 1;
-			dueDate = dueDateAtOccurrence(this, occurrenceNumber);
+			dueDate = ScheduledTransaction.dueDateAtOccurrence(this, occurrenceNumber);
 		}
 
 		return occurrences;
@@ -362,7 +501,7 @@ class ScheduledTransaction {
 				version: this.version + 1,
 			});
 		}
-		const first = firstOccurrenceOnOrAfter(this, today, this.occurrenceNumber);
+		const first = ScheduledTransaction.firstOccurrenceOnOrAfter(this, today, this.occurrenceNumber);
 		if (first === undefined) {
 			return ScheduledTransaction.restore({
 				...this.toProperties(),
@@ -410,7 +549,7 @@ class ScheduledTransaction {
 			candidate.frequency !== this.frequency ||
 			candidate.interval !== this.interval;
 		if (isRecurrenceChanged) {
-			const first = firstOccurrenceOnOrAfter(candidate, today, 0);
+			const first = ScheduledTransaction.firstOccurrenceOnOrAfter(candidate, today, 0);
 			if (first === undefined) {
 				return ScheduledTransaction.restore({
 					...candidate.toProperties(),
@@ -482,118 +621,8 @@ class ScheduledTransaction {
 	}
 }
 
-function dueDateAtOccurrence(schedule: ScheduledTransaction, occurrenceNumber: number): string | undefined {
-	if (!Number.isSafeInteger(occurrenceNumber) || occurrenceNumber < 0) {
-		return undefined;
-	}
-	if (schedule.frequency === SCHEDULED_TRANSACTION_FREQUENCY.ONCE) {
-		return occurrenceNumber === 0 ? schedule.startDate : undefined;
-	}
-	const step = occurrenceNumber * schedule.interval;
-	if (!Number.isSafeInteger(step)) {
-		return undefined;
-	}
-	let dueDate: string | undefined;
-	switch (schedule.frequency) {
-		case SCHEDULED_TRANSACTION_FREQUENCY.DAILY: {
-			dueDate = addDays(schedule.startDate, step);
-			break;
-		}
-		case SCHEDULED_TRANSACTION_FREQUENCY.MONTHLY: {
-			dueDate = addMonths(schedule.startDate, step);
-			break;
-		}
-		case SCHEDULED_TRANSACTION_FREQUENCY.WEEKLY: {
-			dueDate = addDays(schedule.startDate, step * 7);
-			break;
-		}
-		case SCHEDULED_TRANSACTION_FREQUENCY.YEARLY: {
-			dueDate = addYears(schedule.startDate, step);
-			break;
-		}
-	}
-	if (dueDate === undefined) {
-		return undefined;
-	}
-
-	return schedule.endDate !== null && dueDate > schedule.endDate ? undefined : dueDate;
-}
-
-function occurrenceIndexOnOrAfter(
-	schedule: ScheduledTransaction,
-	date: string,
-	minimumIndex: number
-): number | undefined {
-	if (!isCalendarDate(date) || !Number.isSafeInteger(minimumIndex) || minimumIndex < 0) {
-		return undefined;
-	}
-	if (schedule.frequency === SCHEDULED_TRANSACTION_FREQUENCY.ONCE) {
-		return minimumIndex === 0 && schedule.startDate >= date ? 0 : undefined;
-	}
-	const start = parseCalendarDate(schedule.startDate);
-	const target = parseCalendarDate(date);
-	if (start === undefined || target === undefined) {
-		return undefined;
-	}
-	let estimate = 0;
-	switch (schedule.frequency) {
-		case SCHEDULED_TRANSACTION_FREQUENCY.DAILY: {
-			const difference = daysBetween(schedule.startDate, date) ?? 0;
-			estimate = Math.ceil(difference / schedule.interval);
-			break;
-		}
-		case SCHEDULED_TRANSACTION_FREQUENCY.MONTHLY: {
-			const difference = (target.year - start.year) * 12 + target.month - start.month;
-			estimate = Math.ceil(difference / schedule.interval);
-			break;
-		}
-		case SCHEDULED_TRANSACTION_FREQUENCY.WEEKLY: {
-			const difference = daysBetween(schedule.startDate, date) ?? 0;
-			estimate = Math.ceil(difference / (schedule.interval * 7));
-			break;
-		}
-		case SCHEDULED_TRANSACTION_FREQUENCY.YEARLY: {
-			const difference = target.year - start.year;
-			estimate = Math.ceil(difference / schedule.interval);
-			break;
-		}
-	}
-	let index = Math.max(0, minimumIndex, estimate);
-	let dueDate = dueDateAtOccurrence(schedule, index);
-	while (dueDate !== undefined && dueDate < date) {
-		index += 1;
-		dueDate = dueDateAtOccurrence(schedule, index);
-	}
-	while (index > minimumIndex) {
-		const previous = dueDateAtOccurrence(schedule, index - 1);
-		if (previous !== undefined && previous >= date) {
-			index -= 1;
-			dueDate = previous;
-		} else {
-			break;
-		}
-	}
-
-	return dueDate === undefined ? undefined : index;
-}
-
-function firstOccurrenceOnOrAfter(
-	schedule: ScheduledTransaction,
-	date: string,
-	minimumIndex: number
-): ScheduledOccurrence | undefined {
-	const occurrenceNumber = occurrenceIndexOnOrAfter(schedule, date, minimumIndex);
-	if (occurrenceNumber === undefined) {
-		return undefined;
-	}
-	const dueDate = dueDateAtOccurrence(schedule, occurrenceNumber);
-
-	return dueDate === undefined ? undefined : { dueDate, occurrenceNumber };
-}
-
 export {
 	type CreateScheduledTransactionProperties,
-	firstOccurrenceOnOrAfter,
 	SCHEDULED_TRANSACTION_FREQUENCIES,
 	SCHEDULED_TRANSACTION_FREQUENCY,
 	SCHEDULED_TRANSACTION_INTERVAL_MAX,

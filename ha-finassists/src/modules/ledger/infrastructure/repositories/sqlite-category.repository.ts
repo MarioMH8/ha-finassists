@@ -4,12 +4,7 @@ import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
 import type { CategoryRow } from './mappers/sqlite-category.mapper';
 import { SqliteCategoryMapper } from './mappers/sqlite-category.mapper';
-
-function where(criteria: CategoryCriteria): { parameters: SQLQueryBindings[]; sql: string } {
-	return criteria.kind === undefined
-		? { parameters: [], sql: '' }
-		: { parameters: [criteria.kind], sql: ' WHERE categories.kind = ?' };
-}
+import { SqliteCategoryQueries } from './queries/sqlite-category-queries';
 
 const SELECT_CATEGORY = `
 	SELECT categories.id, categories.name, categories.kind, categories.created_at,
@@ -80,7 +75,7 @@ export class SqliteCategoryRepository implements CategoryRepository {
 	}
 
 	async search(criteria: CategoryCriteria = {}): Promise<CategorySummary[]> {
-		const { parameters, sql } = where(criteria);
+		const { parameters, sql } = SqliteCategoryQueries.where(criteria);
 		const rows = this.database
 			.query<CategoryRow, SQLQueryBindings[]>(
 				`${SELECT_CATEGORY}${sql} GROUP BY categories.id ORDER BY categories.kind DESC, categories.name COLLATE NOCASE ASC`

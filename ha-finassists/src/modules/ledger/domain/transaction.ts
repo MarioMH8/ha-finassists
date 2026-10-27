@@ -1,3 +1,4 @@
+import { CalendarDate } from './calendar-date';
 import {
 	TransactionAmountInvalidError,
 	TransactionDateCalendarInvalidError,
@@ -26,12 +27,6 @@ interface TransactionProperties {
 	transactionDate: string;
 }
 
-function isCalendarDate(value: string): boolean {
-	const parsed = new Date(`${value}T00:00:00.000Z`);
-
-	return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
-}
-
 class Transaction {
 	private constructor(
 		readonly id: string,
@@ -46,7 +41,7 @@ class Transaction {
 	) {}
 
 	static create(properties: TransactionProperties): Transaction {
-		if (!TRANSACTION_KINDS.includes(properties.kind)) {
+		if (!this.isKind(properties.kind)) {
 			throw new TransactionKindInvalidError();
 		}
 		if (!Number.isSafeInteger(properties.amountMinor) || properties.amountMinor <= 0) {
@@ -55,7 +50,7 @@ class Transaction {
 		if (!/^\d{4}-\d{2}-\d{2}$/u.test(properties.transactionDate)) {
 			throw new TransactionDateFormatInvalidError();
 		}
-		if (!isCalendarDate(properties.transactionDate)) {
+		if (!CalendarDate.isValid(properties.transactionDate)) {
 			throw new TransactionDateCalendarInvalidError();
 		}
 		const description = properties.description.trim();
@@ -77,6 +72,10 @@ class Transaction {
 			properties.actorId,
 			properties.createdAt
 		);
+	}
+
+	static isKind(value: string): value is TransactionKind {
+		return (TRANSACTION_KINDS as readonly string[]).includes(value);
 	}
 }
 

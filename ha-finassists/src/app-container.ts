@@ -18,7 +18,7 @@ import {
 	UpdateScheduledTransaction,
 	UpdateTransaction,
 } from '@modules/ledger/application';
-import { todayInTimeZone } from '@modules/ledger/domain';
+import { CalendarDate } from '@modules/ledger/domain';
 import {
 	SqliteCategoryRepository,
 	SqliteLedgerRepository,
@@ -48,7 +48,7 @@ function buildRepositories(database: Database, { currencyCode, timeZone }: AppCo
 		.registerValue('currencyCode', currencyCode)
 		.registerValue('database', database)
 		.registerValue('timeZone', timeZone)
-		.registerValue('today', () => todayInTimeZone(timeZone))
+		.registerValue('today', () => CalendarDate.todayInTimeZone(timeZone))
 		.registerClass('categoryRepository', SqliteCategoryRepository, ['database'])
 		.registerClass('ledgerRepository', SqliteLedgerRepository, ['database'])
 		.registerClass('scheduledTransactionRepository', SqliteScheduledTransactionRepository, ['database'])

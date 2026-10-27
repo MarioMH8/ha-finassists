@@ -12,8 +12,8 @@ import {
 	ScheduledTransactionVersionConflictError,
 } from '@modules/ledger/domain';
 
-import { requireCategory } from './require-category';
-import { requireScheduledTransaction } from './require-scheduled-transaction';
+import { CategoryGuard } from './guards/category-guard';
+import { ScheduledTransactionGuard } from './guards/scheduled-transaction-guard';
 
 interface UpdateScheduledTransactionInput {
 	amountMinor?: number;
@@ -37,13 +37,13 @@ export class UpdateScheduledTransaction {
 	) {}
 
 	async execute(input: UpdateScheduledTransactionInput): Promise<ScheduledTransaction> {
-		const existing = await requireScheduledTransaction(this.repository, input.id);
+		const existing = await ScheduledTransactionGuard.require(this.repository, input.id);
 		if (existing.status === SCHEDULED_TRANSACTION_STATUS.COMPLETED) {
 			throw new ScheduledTransactionCompletedError(existing.id);
 		}
 		const kind = input.kind ?? existing.kind;
 		const requestedCategoryId = input.categoryId === undefined ? existing.categoryId : input.categoryId;
-		const category = await requireCategory(this.categoryRepository, requestedCategoryId);
+		const category = await CategoryGuard.require(this.categoryRepository, requestedCategoryId);
 		category?.assertAccepts(kind);
 		const hasChanges =
 			input.amountMinor !== undefined ||
