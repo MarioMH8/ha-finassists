@@ -31,66 +31,56 @@ const intervalSchema = z
 	})
 	.optional();
 
-function requiredDate(name: string) {
-	const error = `${name} must use YYYY-MM-DD`;
-
-	return z.string({ error }).regex(/^\d{4}-\d{2}-\d{2}$/u, { error });
-}
-
-function optionalDate(name: string) {
-	return requiredDate(name).nullable().optional();
-}
-
-const listScheduledTransactionQuerySchema = z.object({
-	categoryId: z.string({ error: 'categoryId must be a string' }).optional(),
-	dueThrough: requiredDate('dueThrough').optional(),
-	kind: kindSchema.optional(),
-	limit: RequestParsing.nonNegativeInteger('limit', DEFAULT_LIMIT)
-		.refine(value => value > 0, { error: 'limit must be greater than zero' })
-		.default(DEFAULT_LIMIT),
-	offset: RequestParsing.nonNegativeInteger('offset', Number.MAX_SAFE_INTEGER).default(0),
-	postingMode: postingModeSchema.optional(),
-	search: RequestParsing.optionalText('search'),
-	status: scheduledStatusSchema.optional(),
-});
-
-const newScheduledTransactionSchema = z.object({
-	amountMinor: RequestParsing.minorUnits(),
-	categoryId: RequestParsing.nullableReference('categoryId'),
-	description: RequestParsing.optionalText('description'),
-	endDate: optionalDate('endDate'),
-	frequency: frequencySchema,
-	interval: intervalSchema,
-	kind: kindSchema,
-	postingMode: postingModeSchema.optional(),
-	startDate: requiredDate('startDate'),
-});
-
-const updateScheduledTransactionSchema = z.object({
-	amountMinor: RequestParsing.minorUnits().optional(),
-	categoryId: RequestParsing.nullableReference('categoryId'),
-	description: RequestParsing.optionalText('description'),
-	endDate: optionalDate('endDate'),
-	frequency: frequencySchema.optional(),
-	interval: intervalSchema,
-	kind: kindSchema.optional(),
-	postingMode: postingModeSchema.optional(),
-	startDate: requiredDate('startDate').optional(),
-	status: updateStatusSchema.optional(),
-});
-
-const upcomingScheduledTransactionQuerySchema = z.object({
-	categoryId: z.string({ error: 'categoryId must be a string' }).optional(),
-	fromDate: requiredDate('fromDate').optional(),
-	kind: kindSchema.optional(),
-	limit: RequestParsing.nonNegativeInteger('limit', MAX_UPCOMING_LIMIT)
-		.refine(value => value > 0, { error: 'limit must be greater than zero' })
-		.default(DEFAULT_UPCOMING_LIMIT),
-	offset: RequestParsing.nonNegativeInteger('offset', Number.MAX_SAFE_INTEGER).default(0),
-	toDate: requiredDate('toDate').optional(),
-});
-
 class ScheduledTransactionRoutes {
+	private static readonly listScheduledTransactionQuerySchema = z.object({
+		categoryId: z.string({ error: 'categoryId must be a string' }).optional(),
+		dueThrough: ScheduledTransactionRoutes.requiredDate('dueThrough').optional(),
+		kind: kindSchema.optional(),
+		limit: RequestParsing.nonNegativeInteger('limit', DEFAULT_LIMIT)
+			.refine(value => value > 0, { error: 'limit must be greater than zero' })
+			.default(DEFAULT_LIMIT),
+		offset: RequestParsing.nonNegativeInteger('offset', Number.MAX_SAFE_INTEGER).default(0),
+		postingMode: postingModeSchema.optional(),
+		search: RequestParsing.optionalText('search'),
+		status: scheduledStatusSchema.optional(),
+	});
+
+	private static readonly newScheduledTransactionSchema = z.object({
+		amountMinor: RequestParsing.minorUnits(),
+		categoryId: RequestParsing.nullableReference('categoryId'),
+		description: RequestParsing.optionalText('description'),
+		endDate: ScheduledTransactionRoutes.optionalDate('endDate'),
+		frequency: frequencySchema,
+		interval: intervalSchema,
+		kind: kindSchema,
+		postingMode: postingModeSchema.optional(),
+		startDate: ScheduledTransactionRoutes.requiredDate('startDate'),
+	});
+
+	private static readonly upcomingScheduledTransactionQuerySchema = z.object({
+		categoryId: z.string({ error: 'categoryId must be a string' }).optional(),
+		fromDate: ScheduledTransactionRoutes.requiredDate('fromDate').optional(),
+		kind: kindSchema.optional(),
+		limit: RequestParsing.nonNegativeInteger('limit', MAX_UPCOMING_LIMIT)
+			.refine(value => value > 0, { error: 'limit must be greater than zero' })
+			.default(DEFAULT_UPCOMING_LIMIT),
+		offset: RequestParsing.nonNegativeInteger('offset', Number.MAX_SAFE_INTEGER).default(0),
+		toDate: ScheduledTransactionRoutes.requiredDate('toDate').optional(),
+	});
+
+	private static readonly updateScheduledTransactionSchema = z.object({
+		amountMinor: RequestParsing.minorUnits().optional(),
+		categoryId: RequestParsing.nullableReference('categoryId'),
+		description: RequestParsing.optionalText('description'),
+		endDate: ScheduledTransactionRoutes.optionalDate('endDate'),
+		frequency: frequencySchema.optional(),
+		interval: intervalSchema,
+		kind: kindSchema.optional(),
+		postingMode: postingModeSchema.optional(),
+		startDate: ScheduledTransactionRoutes.requiredDate('startDate').optional(),
+		status: updateStatusSchema.optional(),
+	});
+
 	private constructor() {}
 
 	static create(): Hono<FinanceEnvironment> {
@@ -99,7 +89,7 @@ class ScheduledTransactionRoutes {
 		routes
 			.get('/scheduled-transactions', async context => {
 				const { categoryId, dueThrough, kind, limit, offset, postingMode, search, status } =
-					RequestParsing.parseInput(listScheduledTransactionQuerySchema, context.req.query());
+					RequestParsing.parseInput(this.listScheduledTransactionQuerySchema, context.req.query());
 				const page = await context.var.useCases.ledger.scheduled.list.execute({
 					...(categoryId !== undefined && { categoryId }),
 					...(dueThrough !== undefined && { dueThrough }),
@@ -130,7 +120,7 @@ class ScheduledTransactionRoutes {
 					kind,
 					postingMode,
 					startDate,
-				} = await RequestParsing.readJsonBody(context.req.raw, newScheduledTransactionSchema);
+				} = await RequestParsing.readJsonBody(context.req.raw, this.newScheduledTransactionSchema);
 
 				return HttpResponses.json(
 					ScheduledTransactionJsonMapper.toJson(
@@ -152,7 +142,7 @@ class ScheduledTransactionRoutes {
 			})
 			.get('/scheduled-transactions/upcoming', async context => {
 				const { categoryId, fromDate, kind, limit, offset, toDate } = RequestParsing.parseInput(
-					upcomingScheduledTransactionQuerySchema,
+					this.upcomingScheduledTransactionQuerySchema,
 					context.req.query()
 				);
 				const today = context.var.useCases.today();
@@ -191,7 +181,7 @@ class ScheduledTransactionRoutes {
 					postingMode,
 					startDate,
 					status,
-				} = await RequestParsing.readJsonBody(context.req.raw, updateScheduledTransactionSchema);
+				} = await RequestParsing.readJsonBody(context.req.raw, this.updateScheduledTransactionSchema);
 				const schedule = await context.var.useCases.ledger.scheduled.update.execute({
 					...(amountMinor !== undefined && { amountMinor }),
 					...(categoryId !== undefined && { categoryId }),
@@ -236,6 +226,16 @@ class ScheduledTransactionRoutes {
 			.all('/scheduled-transactions/:id/skip', () => HttpResponses.methodNotAllowed('POST'));
 
 		return routes;
+	}
+
+	private static optionalDate(name: string) {
+		return this.requiredDate(name).nullable().optional();
+	}
+
+	private static requiredDate(name: string) {
+		const error = `${name} must use YYYY-MM-DD`;
+
+		return z.string({ error }).regex(/^\d{4}-\d{2}-\d{2}$/u, { error });
 	}
 }
 
