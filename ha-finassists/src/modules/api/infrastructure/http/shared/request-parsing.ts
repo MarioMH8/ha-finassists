@@ -8,9 +8,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 class RequestParsing {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	/**
 	 *Drops keys whose value is `undefined`, so partial updates only carry fields the client sent.

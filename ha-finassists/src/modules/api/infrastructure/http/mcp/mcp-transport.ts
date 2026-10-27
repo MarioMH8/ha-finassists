@@ -24,9 +24,7 @@ interface JsonRpcRequest {
 }
 
 class McpTransport {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static async handle(
 		request: Request,

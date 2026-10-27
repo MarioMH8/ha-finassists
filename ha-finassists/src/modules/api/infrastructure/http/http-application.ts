@@ -20,9 +20,7 @@ import type { HttpEnvironment, RequestContext } from './shared/request-context';
 import { WebAssets } from './web-assets';
 
 class HttpApplication {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create(container: HttpContainer): Hono<HttpEnvironment> {
 		const app = new Hono<HttpEnvironment>({ strict: false });

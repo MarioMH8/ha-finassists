@@ -15,9 +15,7 @@ const securityHeaders: Record<string, string> = {
 };
 
 class SecurityHeaders {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static apply(response: Response): Response {
 		const headers = new Headers(response.headers);

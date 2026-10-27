@@ -15,9 +15,7 @@ const SCHEDULED_LIST_FILTERS = [
 const UPCOMING_FILTERS = ['categoryId', 'fromDate', 'kind', 'limit', 'offset', 'toDate'] as const;
 
 class McpToolExecution {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static async invokeTool(
 		name: string,

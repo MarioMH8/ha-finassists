@@ -10,9 +10,7 @@ const exchangeSchema = z.object({
 });
 
 class SystemCredentialRoutes {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create(): Hono<HttpEnvironment> {
 		const routes = new Hono<HttpEnvironment>();

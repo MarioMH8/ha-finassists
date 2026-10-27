@@ -19,9 +19,7 @@ interface ScheduledTransactionJson {
 }
 
 class ScheduledTransactionJsonMapper {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static toJson(schedule: ScheduledTransaction): ScheduledTransactionJson {
 		return {

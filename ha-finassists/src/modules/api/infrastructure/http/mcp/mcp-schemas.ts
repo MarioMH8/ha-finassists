@@ -1,7 +1,5 @@
 class McpSchemas {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static integerProperty(
 		description: string,

@@ -8,9 +8,7 @@ import { ScheduledTransactionRoutes } from './scheduled-transaction-routes';
 import { TransactionRoutes } from './transaction-routes';
 
 class FinanceRoutes {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create(): Hono<FinanceEnvironment> {
 		const routes = new Hono<FinanceEnvironment>({ strict: false });

@@ -13,9 +13,7 @@ interface CategorySummaryJson extends CategoryJson {
 }
 
 class CategoryJsonMapper {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static toJson(category: Category): CategoryJson {
 		return {

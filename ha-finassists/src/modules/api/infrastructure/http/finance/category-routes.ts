@@ -25,9 +25,7 @@ const updateCategorySchema = z.object({
 });
 
 class CategoryRoutes {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create(): Hono<FinanceEnvironment> {
 		const routes = new Hono<FinanceEnvironment>();

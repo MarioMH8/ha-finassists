@@ -3,9 +3,7 @@ import { HttpResponses } from '@modules/api/infrastructure/http/shared/http-resp
 class RequestTooLargeError extends Error {}
 
 class FinanceRouteError {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static toResponse(error: unknown): Response {
 		if (error instanceof RequestTooLargeError) {

@@ -11,9 +11,7 @@ interface FacadeEnvironment {
 class FinanceFacade {
 	private static facade: Hono<FacadeEnvironment> | undefined;
 
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create(): Hono<FacadeEnvironment> {
 		const facade = new Hono<FacadeEnvironment>({ strict: false });

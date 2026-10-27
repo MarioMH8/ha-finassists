@@ -15,9 +15,7 @@ interface AuthenticatedSystemBearer {
 }
 
 class FinancialAuthentication {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static async authenticate(
 		request: Request,

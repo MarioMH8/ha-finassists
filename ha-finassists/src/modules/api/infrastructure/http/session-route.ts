@@ -5,9 +5,7 @@ import { HttpResponses } from './shared/http-responses';
 import type { HttpEnvironment } from './shared/request-context';
 
 class SessionRoute {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create(): (context: Context<HttpEnvironment>) => Response {
 		return context => {

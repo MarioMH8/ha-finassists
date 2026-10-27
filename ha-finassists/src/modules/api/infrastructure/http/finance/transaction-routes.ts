@@ -54,9 +54,7 @@ const transactionIdsSchema = z.object({
 });
 
 class TransactionRoutes {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create(): Hono<FinanceEnvironment> {
 		const routes = new Hono<FinanceEnvironment>();

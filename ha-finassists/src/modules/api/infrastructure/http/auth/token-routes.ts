@@ -37,9 +37,7 @@ const requireTokenActor = createMiddleware<TokenEnvironment>(async (context, nex
 });
 
 class TokenRoutes {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create(): Hono<TokenEnvironment> {
 		const routes = new Hono<TokenEnvironment>();

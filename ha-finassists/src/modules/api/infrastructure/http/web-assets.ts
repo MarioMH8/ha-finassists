@@ -34,9 +34,7 @@ const assetCache: {
 } = { development: {} };
 
 class WebAssets {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static async prepare(isDevelopmentMode: boolean): Promise<void> {
 		if (isDevelopmentMode || Bun.env.NODE_ENV !== 'production') {

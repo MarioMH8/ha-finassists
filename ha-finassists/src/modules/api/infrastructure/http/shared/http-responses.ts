@@ -1,9 +1,7 @@
 const JSON_NULL = JSON.parse('null') as null;
 
 class HttpResponses {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static body(value: BodyInit, status = 200, headers: HeadersInit = {}): Response {
 		return new Response(value, { headers, status });

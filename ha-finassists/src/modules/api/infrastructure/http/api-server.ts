@@ -6,9 +6,7 @@ import type { HttpContainer } from './http-application';
 import { HttpApplication } from './http-application';
 
 class ApiServer {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create({
 		container,

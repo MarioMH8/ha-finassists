@@ -11,9 +11,7 @@ interface HttpServiceInstances {
 }
 
 class HttpContainerBuilder {
-	private constructor() {
-		// Static-only helper: instantiation is not part of the contract.
-	}
+	private constructor() {}
 
 	static create({ financeUseCases, systemCredentialUseCases, tokenUseCases }: HttpServiceInstances): HttpContainer {
 		return new Container()
