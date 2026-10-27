@@ -45,6 +45,12 @@ const config = await hexadrop(
 		},
 	},
 	{
+		files: ['ha-finassists/src/**/*.ts', 'ha-finassists/src/**/*.tsx'],
+		rules: {
+			'typescript/no-empty-function': ['error', { allow: ['constructors'] }],
+		},
+	},
+	{
 		/*
 		 * The version constant is the only app file that reaches outside src, and
 		 * no alias points at the package manifest.

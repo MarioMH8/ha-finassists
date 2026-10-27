@@ -1,24 +1,14 @@
 import type {
 	TransactionCriteria,
 	TransactionDeleteCriteria,
-	TransactionKind,
 	TransactionPage,
 	TransactionRepository,
 } from '@modules/ledger/domain';
 import { Transaction } from '@modules/ledger/domain';
 import type { Database, SQLQueryBindings } from 'bun:sqlite';
 
-interface TransactionRow {
-	actor_id: null | string;
-	amount_minor: number;
-	category_id: null | string;
-	created_at: string;
-	currency_code: string;
-	description: string;
-	id: string;
-	kind: TransactionKind;
-	transaction_date: string;
-}
+import type { TransactionRow } from './mappers/sqlite-transaction.mapper';
+import { SqliteTransactionMapper } from './mappers/sqlite-transaction.mapper';
 
 const DEFAULT_LIMIT = 100;
 
@@ -58,20 +48,6 @@ function where(criteria: TransactionCriteria): { parameters: SQLQueryBindings[];
 	return { parameters, sql: clauses.length > 0 ? ` WHERE ${clauses.join(' AND ')}` : '' };
 }
 
-function toTransaction(row: TransactionRow): Transaction {
-	return Transaction.create({
-		actorId: row.actor_id,
-		amountMinor: row.amount_minor,
-		categoryId: row.category_id,
-		createdAt: row.created_at,
-		currencyCode: row.currency_code,
-		description: row.description,
-		id: row.id,
-		kind: row.kind,
-		transactionDate: row.transaction_date,
-	});
-}
-
 export class SqliteLedgerRepository implements TransactionRepository {
 	constructor(private readonly database: Database) {}
 
@@ -102,7 +78,7 @@ export class SqliteLedgerRepository implements TransactionRepository {
 			.get(id);
 		await Promise.resolve();
 
-		return row === null ? undefined : toTransaction(row);
+		return row === null ? undefined : SqliteTransactionMapper.toDomain(row);
 	}
 
 	async save(transaction: Transaction): Promise<void> {
@@ -141,7 +117,7 @@ export class SqliteLedgerRepository implements TransactionRepository {
 			.all(...parameters, criteria.limit ?? DEFAULT_LIMIT, criteria.offset ?? 0);
 		await Promise.resolve();
 
-		return { items: rows.map(row => toTransaction(row)), total };
+		return { items: rows.map(row => SqliteTransactionMapper.toDomain(row)), total };
 	}
 
 	async update(transaction: Transaction): Promise<boolean> {
