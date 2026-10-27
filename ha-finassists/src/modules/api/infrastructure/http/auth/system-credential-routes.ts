@@ -1,76 +1,81 @@
-import { jsonResponse, methodNotAllowed, noContent } from '@modules/api/infrastructure/http/shared/http-responses';
+import { HttpResponses } from '@modules/api/infrastructure/http/shared/http-responses';
 import type { HttpEnvironment } from '@modules/api/infrastructure/http/shared/request-context';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
-import { authenticateSystemBearer, bearerSecret } from './authentication';
+import { FinancialAuthentication } from './financial-authentication';
 
 const exchangeSchema = z.object({
 	bootstrapCapability: z.string().min(32).max(4096),
 });
 
-export function createSystemCredentialRoutes(): Hono<HttpEnvironment> {
-	const routes = new Hono<HttpEnvironment>();
+class SystemCredentialRoutes {
+	private constructor() {}
 
-	routes
-		.post('/exchange', async context => {
-			const useCases = context.var.di.get('systemCredentialUseCases');
-			if (useCases === undefined) {
-				return jsonResponse({ error: 'System credential bootstrap is not configured' }, 503);
-			}
+	static create(): Hono<HttpEnvironment> {
+		const routes = new Hono<HttpEnvironment>();
 
-			let body: unknown;
-			try {
-				body = await context.req.json();
-			} catch {
-				return jsonResponse({ error: 'Invalid JSON body' }, 400);
-			}
+		routes
+			.post('/exchange', async context => {
+				const useCases = context.var.di.get('systemCredentialUseCases');
+				if (useCases === undefined) {
+					return HttpResponses.json({ error: 'System credential bootstrap is not configured' }, 503);
+				}
 
-			const input = exchangeSchema.safeParse(body);
-			if (!input.success) {
-				return jsonResponse({ error: 'A valid bootstrapCapability is required' }, 400);
-			}
+				let body: unknown;
+				try {
+					body = await context.req.json();
+				} catch {
+					return HttpResponses.json({ error: 'Invalid JSON body' }, 400);
+				}
 
-			const issued = await useCases.exchange.execute(input.data.bootstrapCapability);
+				const input = exchangeSchema.safeParse(body);
+				if (!input.success) {
+					return HttpResponses.json({ error: 'A valid bootstrapCapability is required' }, 400);
+				}
 
-			return issued
-				? jsonResponse(issued, 201)
-				: jsonResponse({ error: 'Bootstrap capability is invalid or expired' }, 401);
-		})
-		.all('/exchange', () => methodNotAllowed('POST'));
+				const issued = await useCases.exchange.execute(input.data.bootstrapCapability);
 
-	routes
-		.put('/current', async context => {
-			const useCases = context.var.di.get('systemCredentialUseCases');
-			if (useCases === undefined) {
-				return new Response(undefined, { status: 404 });
-			}
-			const actor = await authenticateSystemBearer(context.req.raw, useCases);
-			if (actor instanceof Response) {
-				return actor;
-			}
-			const secret = bearerSecret(context.req.raw);
-			const rotated = secret === undefined ? undefined : await useCases.rotate.execute(secret);
+				return issued
+					? HttpResponses.json(issued, 201)
+					: HttpResponses.json({ error: 'Bootstrap capability is invalid or expired' }, 401);
+			})
+			.all('/exchange', () => HttpResponses.methodNotAllowed('POST'));
 
-			return rotated ? jsonResponse(rotated) : jsonResponse({ error: 'Authentication required' }, 401);
-		})
-		.delete('/current', async context => {
-			const useCases = context.var.di.get('systemCredentialUseCases');
-			if (useCases === undefined) {
-				return new Response(undefined, { status: 404 });
-			}
-			const actor = await authenticateSystemBearer(context.req.raw, useCases);
-			if (actor instanceof Response) {
-				return actor;
-			}
-			const secret = bearerSecret(context.req.raw);
-			if (secret === undefined) {
-				return jsonResponse({ error: 'Authentication required' }, 401);
-			}
+		routes
+			.put('/current', async context => {
+				const useCases = context.var.di.get('systemCredentialUseCases');
+				if (useCases === undefined) {
+					return HttpResponses.empty(404);
+				}
+				const authenticated = await FinancialAuthentication.authenticateSystemBearer(context.req.raw, useCases);
+				if (authenticated instanceof Response) {
+					return authenticated;
+				}
+				const rotated = await useCases.rotate.execute(authenticated.secret);
 
-			return (await useCases.revoke.execute(secret)) ? noContent() : new Response('Not Found', { status: 404 });
-		})
-		.all('/current', () => methodNotAllowed('PUT, DELETE'));
+				return rotated
+					? HttpResponses.json(rotated)
+					: HttpResponses.json({ error: 'Authentication required' }, 401);
+			})
+			.delete('/current', async context => {
+				const useCases = context.var.di.get('systemCredentialUseCases');
+				if (useCases === undefined) {
+					return HttpResponses.empty(404);
+				}
+				const authenticated = await FinancialAuthentication.authenticateSystemBearer(context.req.raw, useCases);
+				if (authenticated instanceof Response) {
+					return authenticated;
+				}
 
-	return routes;
+				return (await useCases.revoke.execute(authenticated.secret))
+					? HttpResponses.noContent()
+					: HttpResponses.text('Not Found', 404);
+			})
+			.all('/current', () => HttpResponses.methodNotAllowed('PUT, DELETE'));
+
+		return routes;
+	}
 }
+
+export { SystemCredentialRoutes };

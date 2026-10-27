@@ -1,3 +1,5 @@
+import { HttpResponses } from './shared/http-responses';
+
 const contentSecurityPolicy = [
 	`default-src \u{27}self\u{27}`,
 	`object-src \u{27}none\u{27}`,
@@ -12,16 +14,18 @@ const securityHeaders: Record<string, string> = {
 	'X-Frame-Options': 'SAMEORIGIN',
 };
 
-export function withSecurityHeaders(response: Response): Response {
-	const headers = new Headers(response.headers);
+class SecurityHeaders {
+	private constructor() {}
 
-	for (const [name, value] of Object.entries(securityHeaders)) {
-		headers.set(name, value);
+	static apply(response: Response): Response {
+		const headers = new Headers(response.headers);
+
+		for (const [name, value] of Object.entries(securityHeaders)) {
+			headers.set(name, value);
+		}
+
+		return HttpResponses.withHeaders(response, headers);
 	}
-
-	return new Response(response.body, {
-		headers,
-		status: response.status,
-		statusText: response.statusText,
-	});
 }
+
+export { SecurityHeaders };
