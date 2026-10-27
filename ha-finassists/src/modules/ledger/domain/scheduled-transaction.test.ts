@@ -283,6 +283,38 @@ describe('ScheduledTransaction', () => {
 		expect(() => schedule.assertDue('2026-05-01')).not.toThrow();
 	});
 
+	it('creates the entry transaction from the next due occurrence', () => {
+		const schedule = ScheduledTransactionMother.create({
+			categoryId: 'category-1',
+			startDate: '2026-05-01',
+		});
+
+		const entry = schedule.createEntry('user-1', '2026-05-01T10:00:00.000Z', 'transaction-1');
+
+		expect(entry).toMatchObject({
+			actorId: 'user-1',
+			amountMinor: 1250,
+			categoryId: 'category-1',
+			createdAt: '2026-05-01T10:00:00.000Z',
+			currencyCode: 'EUR',
+			description: 'Rent',
+			id: 'transaction-1',
+			kind: 'expense',
+			transactionDate: '2026-05-01',
+		});
+	});
+
+	it('refuses to create an entry without a next due occurrence', () => {
+		const completed = ScheduledTransactionMother.create({
+			frequency: 'once',
+			startDate: '2026-05-01',
+		}).advance();
+
+		expect(() => completed.createEntry('user-1', '2026-05-01T10:00:00.000Z', 'transaction-1')).toThrow(
+			ScheduledTransactionNotDueError
+		);
+	});
+
 	it('projects occurrences from a date range without replaying past ones', () => {
 		const schedule = ScheduledTransactionMother.restore({
 			nextDueDate: '2026-03-31',

@@ -2,7 +2,6 @@ import type { ScheduledPostingRepository, ScheduledTransaction, Transaction } fr
 import { ScheduledTransactionVersionConflictError } from '@modules/ledger/domain';
 
 import { ScheduledTransactionGuard } from './guards/scheduled-transaction-guard';
-import { ScheduledTransactionEntry } from './scheduled-transaction-entry';
 
 interface PostScheduledTransactionInput {
 	actorId: null | string;
@@ -22,7 +21,7 @@ export class PostScheduledTransaction {
 		const schedule = await ScheduledTransactionGuard.require(this.repository, input.id);
 		schedule.assertDue(input.today);
 		const occurrenceNumber = schedule.occurrenceNumber;
-		const transaction = ScheduledTransactionEntry.create(schedule, input.actorId, new Date().toISOString());
+		const transaction = schedule.createEntry(input.actorId, new Date().toISOString(), crypto.randomUUID());
 		const advanced = schedule.advance();
 		const isSaved = await this.repository.savePostedOccurrence({
 			expectedVersion: schedule.version,

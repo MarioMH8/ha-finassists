@@ -421,6 +421,24 @@ class ScheduledTransaction {
 		}
 	}
 
+	createEntry(actorId: null | string, createdAt: string, id: string): Transaction {
+		if (this.nextDueDate === null) {
+			throw new ScheduledTransactionNotDueError(this.id, null);
+		}
+
+		return Transaction.create({
+			actorId,
+			amountMinor: this.amountMinor,
+			categoryId: this.categoryId,
+			createdAt,
+			currencyCode: this.currencyCode,
+			description: this.description,
+			id,
+			kind: this.kind,
+			transactionDate: this.nextDueDate,
+		});
+	}
+
 	isDue(today: string): boolean {
 		return (
 			this.status === SCHEDULED_TRANSACTION_STATUS.ACTIVE &&
