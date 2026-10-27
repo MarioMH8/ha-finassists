@@ -11,6 +11,7 @@ import type { ReactElement } from 'react';
 import { useState } from 'react';
 
 import styles from './month-summary.module.css';
+import { MonthSummarySkeleton } from './month-summary-skeleton';
 import { MonthlyFlowChart } from './monthly-flow-chart';
 
 type MonthSummaryProps = Pick<TransactionsState, 'copy' | 'currencyCode' | 'language' | 'summary' | 'summaryState'>;
@@ -103,8 +104,6 @@ function MonthSummary({ copy, currencyCode, language, summary, summaryState }: M
 			/>
 			{summaryState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.monthSummaryError}</Notice>
-			) : !summary && summaryState === LOAD_STATE.LOADING ? (
-				<Notice>{copy.monthSummaryLoading}</Notice>
 			) : summary ? (
 				<>
 					<dl className={styles.kpis}>
@@ -170,7 +169,7 @@ function MonthSummary({ copy, currencyCode, language, summary, summaryState }: M
 					</section>
 				</>
 			) : (
-				<Notice>{copy.monthSummaryLoading}</Notice>
+				<MonthSummarySkeleton copy={copy} />
 			)}
 		</Card>
 	);

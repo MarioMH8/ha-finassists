@@ -500,6 +500,29 @@ textarea {
   outline-offset: var(--ha-border-width-md);
 }
 
+/* Bun renames @keyframes in CSS modules without rewriting the animation
+   references, so keyframes shared with a module are declared unscoped here. */
+@keyframes ha-skeleton-reveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ha-skeleton-pulse {
+  0%,
+  100% {
+    background-color: var(--skeleton-fill);
+  }
+
+  50% {
+    background-color: var(--skeleton-pulse-fill);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --ha-animation-duration-none: 1ms;

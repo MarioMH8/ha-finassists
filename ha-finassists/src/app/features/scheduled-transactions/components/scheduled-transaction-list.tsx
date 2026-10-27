@@ -17,6 +17,7 @@ import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
 
 import styles from './scheduled-transaction-list.module.css';
+import { ScheduledTransactionListSkeleton } from './scheduled-transaction-list-skeleton';
 
 type ScheduledTransactionListProps = Pick<
 	ScheduledTransactionsState,
@@ -93,6 +94,20 @@ function ScheduledTransactionList({
 		</>
 	);
 
+	const tableHead = (
+		<thead>
+			<tr>
+				<DataHeaderCell>{copy.scheduledColumnNextDate}</DataHeaderCell>
+				<DataHeaderCell>{copy.scheduledColumnDescription}</DataHeaderCell>
+				<DataHeaderCell>{copy.scheduledColumnCategory}</DataHeaderCell>
+				<DataHeaderCell>{copy.scheduledColumnRecurrence}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.scheduledColumnAmount}</DataHeaderCell>
+				<DataHeaderCell>{copy.scheduledColumnStatus}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.scheduledColumnActions}</DataHeaderCell>
+			</tr>
+		</thead>
+	);
+
 	return (
 		<section
 			aria-labelledby='scheduled-list-title'
@@ -106,7 +121,10 @@ function ScheduledTransactionList({
 			{listState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.scheduledLoadError}</Notice>
 			) : listState === LOAD_STATE.LOADING && schedules.length === 0 ? (
-				<Notice>{copy.scheduledLoading}</Notice>
+				<ScheduledTransactionListSkeleton
+					copy={copy}
+					head={tableHead}
+				/>
 			) : schedules.length === 0 ? (
 				<Card bleed>
 					<EmptyState
@@ -117,17 +135,7 @@ function ScheduledTransactionList({
 				</Card>
 			) : (
 				<DataTable aria-busy={listState === LOAD_STATE.LOADING || undefined}>
-					<thead>
-						<tr>
-							<DataHeaderCell>{copy.scheduledColumnNextDate}</DataHeaderCell>
-							<DataHeaderCell>{copy.scheduledColumnDescription}</DataHeaderCell>
-							<DataHeaderCell>{copy.scheduledColumnCategory}</DataHeaderCell>
-							<DataHeaderCell>{copy.scheduledColumnRecurrence}</DataHeaderCell>
-							<DataHeaderCell align={DATA_ALIGN.END}>{copy.scheduledColumnAmount}</DataHeaderCell>
-							<DataHeaderCell>{copy.scheduledColumnStatus}</DataHeaderCell>
-							<DataHeaderCell align={DATA_ALIGN.END}>{copy.scheduledColumnActions}</DataHeaderCell>
-						</tr>
-					</thead>
+					{tableHead}
 					<tbody>
 						{schedules.map(schedule => {
 							const isBusy = busyScheduleId === schedule.id;

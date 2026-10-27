@@ -66,6 +66,15 @@
   font-size: var(--ha-font-size-s);
 }
 
+.labelSkeleton {
+  width: var(--ha-space-16);
+}
+
+.valueSkeleton {
+  width: 55%;
+  height: calc(var(--ha-font-size-2xl) * var(--ha-line-height-condensed));
+}
+
 @media (max-width: 700px) {
   .card {
     gap: var(--ha-space-3);
@@ -92,5 +101,9 @@
 
   .value {
     font-size: var(--ha-font-size-m);
+  }
+
+  .valueSkeleton {
+    height: calc(var(--ha-font-size-m) * var(--ha-line-height-condensed));
   }
 }

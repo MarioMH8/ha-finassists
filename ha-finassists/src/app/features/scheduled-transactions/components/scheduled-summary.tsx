@@ -9,6 +9,7 @@ import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
 
 import styles from './scheduled-summary.module.css';
+import { ScheduledSummarySkeleton } from './scheduled-summary-skeleton';
 
 type ScheduledSummaryProps = Pick<
 	ScheduledTransactionsState,
@@ -61,8 +62,6 @@ function ScheduledSummary({
 			/>
 			{forecastState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.scheduledSummaryError}</Notice>
-			) : !forecast && forecastState === LOAD_STATE.LOADING ? (
-				<Notice>{copy.scheduledSummaryLoading}</Notice>
 			) : forecast ? (
 				<>
 					<dl className={styles.kpis}>
@@ -101,7 +100,7 @@ function ScheduledSummary({
 					) : undefined}
 				</>
 			) : (
-				<Notice>{copy.scheduledSummaryLoading}</Notice>
+				<ScheduledSummarySkeleton copy={copy} />
 			)}
 		</Card>
 	);

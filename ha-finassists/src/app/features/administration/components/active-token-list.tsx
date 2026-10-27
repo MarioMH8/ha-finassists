@@ -14,6 +14,7 @@ import { useLocale } from '@app/i18n/locale-context';
 import type { ReactElement } from 'react';
 
 import styles from './active-token-list.module.css';
+import { ActiveTokenListSkeleton } from './active-token-list-skeleton';
 
 type ActiveTokenListProps = Pick<
 	AdministrationState,
@@ -126,7 +127,7 @@ function ActiveTokenList({
 						{listError ? (
 							<Notice tone={NOTICE_TONE.ERROR}>{copy.errorLoadingTokens}</Notice>
 						) : isLoading && tokens.length === 0 ? (
-							<Notice>{copy.loadingTokens}</Notice>
+							<ActiveTokenListSkeleton copy={copy} />
 						) : tokens.length === 0 ? (
 							<EmptyState
 								icon={ICON_NAME.WALLET}

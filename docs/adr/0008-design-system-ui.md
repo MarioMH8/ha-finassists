@@ -57,7 +57,7 @@ The web interface uses a local design-token layer and local React components tha
 
 - Forms use `Field` for labels, hints, and errors; inputs use the small 40px size in dialogs.
 - Field validation stays next to the field. Form-level success or failure uses `Notice`.
-- Loading, error, and empty states use `Notice` and `EmptyState` instead of ad-hoc paragraphs.
+- Loading states use skeletons that stay invisible for a short delay, so a fast load never flashes a placeholder ([delayed skeleton loading](0012-delayed-skeleton-loading.md)). Errors and empty states use `Notice` and `EmptyState` instead of ad-hoc paragraphs.
 - Filters and long-running tables use server-side pagination and an explicit result count.
 
 ### Charts and dashboards

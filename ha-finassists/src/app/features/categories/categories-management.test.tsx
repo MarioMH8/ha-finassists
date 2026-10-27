@@ -76,9 +76,10 @@ describe('CategoryList', () => {
 	});
 
 	test('shows loading and error states', () => {
-		expect(render('en', <CategoryList {...state('en', { listState: LOAD_STATE.LOADING })} />)).toContain(
-			'Loading categories…'
-		);
+		const loadingMarkup = render('en', <CategoryList {...state('en', { listState: LOAD_STATE.LOADING })} />);
+
+		expect(loadingMarkup).toContain('Loading categories…');
+		expect(loadingMarkup).toContain('data-skeleton="rows"');
 		expect(render('es', <CategoryList {...state('es', { listState: LOAD_STATE.ERROR })} />)).toContain(
 			'No se pudieron cargar las categorías.'
 		);

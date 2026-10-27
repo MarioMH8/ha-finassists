@@ -18,6 +18,7 @@ import { interpolate } from '@app/i18n';
 import type { ReactElement } from 'react';
 
 import styles from './category-list.module.css';
+import { CategoryListSkeleton } from './category-list-skeleton';
 
 type CategoryListProps = Pick<
 	CategoriesState,
@@ -106,6 +107,16 @@ function CategoryList({
 			</Button>
 		</>
 	);
+	const tableHead = (
+		<thead>
+			<tr>
+				<DataHeaderCell>{copy.categoryColumnName}</DataHeaderCell>
+				<DataHeaderCell>{copy.categoryColumnKind}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.categoryColumnTransactions}</DataHeaderCell>
+				<DataHeaderCell align={DATA_ALIGN.END}>{copy.categoryColumnActions}</DataHeaderCell>
+			</tr>
+		</thead>
+	);
 
 	return (
 		<section
@@ -125,7 +136,11 @@ function CategoryList({
 			{listState === LOAD_STATE.ERROR ? (
 				<Notice tone={NOTICE_TONE.ERROR}>{copy.categoryLoadError}</Notice>
 			) : listState === LOAD_STATE.LOADING && categories.length === 0 ? (
-				<Notice>{copy.categoryLoading}</Notice>
+				<CategoryListSkeleton
+					copy={copy}
+					head={tableHead}
+					header={filterToolbar}
+				/>
 			) : categories.length === 0 ? (
 				<Card bleed>
 					{hasFilter ? <div className={styles.cardHeader}>{filterToolbar}</div> : undefined}
@@ -137,14 +152,7 @@ function CategoryList({
 				</Card>
 			) : (
 				<DataTable header={filterToolbar}>
-					<thead>
-						<tr>
-							<DataHeaderCell>{copy.categoryColumnName}</DataHeaderCell>
-							<DataHeaderCell>{copy.categoryColumnKind}</DataHeaderCell>
-							<DataHeaderCell align={DATA_ALIGN.END}>{copy.categoryColumnTransactions}</DataHeaderCell>
-							<DataHeaderCell align={DATA_ALIGN.END}>{copy.categoryColumnActions}</DataHeaderCell>
-						</tr>
-					</thead>
+					{tableHead}
 					<tbody>
 						{categories.map(category => (
 							<tr key={category.id}>
