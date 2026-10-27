@@ -6,30 +6,34 @@ interface CheckpointResult {
 	log: number;
 }
 
-function checkpointDatabase(database: Database): void {
-	database.run('PRAGMA busy_timeout = 5000');
-	const checkpoint = database.query('PRAGMA wal_checkpoint(TRUNCATE)').get() as CheckpointResult | null;
-	if (checkpoint?.busy !== 0) {
-		throw new Error('SQLite WAL checkpoint could not complete before backup');
-	}
-}
+class DatabaseBackup {
+	private constructor() {}
 
-async function prepareBackup(): Promise<void> {
-	const databasePath = Bun.env.DATABASE_PATH ?? '/data/fin-assist.sqlite';
-	if (!(await Bun.file(databasePath).exists())) {
-		return;
+	static checkpoint(database: Database): void {
+		database.run('PRAGMA busy_timeout = 5000');
+		const checkpoint = database.query('PRAGMA wal_checkpoint(TRUNCATE)').get() as CheckpointResult | null;
+		if (checkpoint?.busy !== 0) {
+			throw new Error('SQLite WAL checkpoint could not complete before backup');
+		}
 	}
 
-	const database = new Database(databasePath);
-	try {
-		checkpointDatabase(database);
-	} finally {
-		database.close();
+	static async prepare(): Promise<void> {
+		const databasePath = Bun.env.DATABASE_PATH ?? '/data/fin-assist.sqlite';
+		if (!(await Bun.file(databasePath).exists())) {
+			return;
+		}
+
+		const database = new Database(databasePath);
+		try {
+			this.checkpoint(database);
+		} finally {
+			database.close();
+		}
 	}
 }
 
 if (import.meta.main) {
-	await prepareBackup();
+	await DatabaseBackup.prepare();
 }
 
-export { checkpointDatabase, prepareBackup };
+export { DatabaseBackup };

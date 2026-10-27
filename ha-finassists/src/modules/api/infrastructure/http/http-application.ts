@@ -1,6 +1,6 @@
 /* eslint-disable unicorn/name-replacements -- The adapter keeps its full domain name. */
 import { inferdiHono } from '@inferdi/hono';
-import { isTrustedIngressPeer } from '@modules/home-assistant';
+import { TrustedIngressPeer } from '@modules/home-assistant';
 import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import type { Context } from 'hono';
 import { Hono } from 'hono';
@@ -66,7 +66,7 @@ class HttpApplication {
 
 			if (
 				requestContext.developmentActor === undefined &&
-				!isTrustedIngressPeer(requestContext.remoteAddress, requestContext.trustedIngressIp)
+				!TrustedIngressPeer.isTrusted(requestContext.remoteAddress, requestContext.trustedIngressIp)
 			) {
 				return HttpResponses.text('Forbidden', 403);
 			}

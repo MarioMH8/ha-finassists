@@ -5,4 +5,4 @@ export {
 	type IngressActor,
 	type UnknownActor,
 } from './domain';
-export { DEFAULT_TRUSTED_INGRESS_IP, isTrustedIngressPeer, resolveIngressActor } from './infrastructure';
+export { DEFAULT_TRUSTED_INGRESS_IP, IngressActorResolver, TrustedIngressPeer } from './infrastructure';

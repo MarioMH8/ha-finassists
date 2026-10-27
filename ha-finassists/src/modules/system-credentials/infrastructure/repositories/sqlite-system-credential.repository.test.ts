@@ -1,4 +1,4 @@
-import { migrateDatabase } from '@modules/storage/infrastructure';
+import { DatabaseMigrator } from '@modules/storage/infrastructure';
 import {
 	AuthenticateSystemCredential,
 	ExchangeSystemCredential,
@@ -18,7 +18,7 @@ describe('SqliteSystemCredentialRepository', () => {
 
 	function setup(now = new Date('2025-02-01T00:00:00.000Z')) {
 		database = new Database(':memory:');
-		migrateDatabase(database);
+		DatabaseMigrator.migrate(database);
 		const repository = new SqliteSystemCredentialRepository(database);
 		const service = new WebCryptoSystemCredentialService();
 		const useCases = {

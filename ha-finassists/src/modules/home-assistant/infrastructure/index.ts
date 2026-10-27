@@ -1,1 +1,1 @@
-export { DEFAULT_TRUSTED_INGRESS_IP, isTrustedIngressPeer, resolveIngressActor } from './ingress';
+export { DEFAULT_TRUSTED_INGRESS_IP, IngressActorResolver, TrustedIngressPeer } from './ingress';

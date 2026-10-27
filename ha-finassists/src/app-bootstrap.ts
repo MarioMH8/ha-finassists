@@ -5,26 +5,26 @@ import process from 'node:process';
 import { ApiServer, WebAssets } from '@modules/api';
 import { ScheduledPostingJob } from '@modules/ledger/application';
 import { BunCronScheduler } from '@modules/scheduling/infrastructure';
-import { migrateDatabase } from '@modules/storage/infrastructure';
-import { createBootstrapCapability, publishSupervisorDiscovery } from '@modules/system-credentials/infrastructure';
+import { DatabaseMigrator } from '@modules/storage/infrastructure';
+import { BootstrapCapability, SupervisorDiscovery } from '@modules/system-credentials/infrastructure';
 import { Database } from 'bun:sqlite';
 
 import { createAppContainer } from './app-container';
-import { loadServerConfig } from './config';
+import { ServerConfigLoader } from './config';
 
 async function startApp(): Promise<ReturnType<typeof ApiServer.create>> {
-	const config = await loadServerConfig();
+	const config = await ServerConfigLoader.load();
 	await WebAssets.prepare(config.developmentMode);
 	await mkdir(path.dirname(config.databasePath), { recursive: true });
 	const database = new Database(config.databasePath);
 	database.run('PRAGMA journal_mode = WAL');
-	migrateDatabase(database);
+	DatabaseMigrator.migrate(database);
 	const container = createAppContainer(database, {
 		currencyCode: config.shellConfig.currencyCode,
 		timeZone: config.timeZone,
 	});
 	const bootstrapCapability =
-		config.supervisorToken === undefined ? config.bootstrapCapability : createBootstrapCapability();
+		config.supervisorToken === undefined ? config.bootstrapCapability : BootstrapCapability.create();
 	const isBootstrapCapabilityConfigured =
 		bootstrapCapability !== undefined &&
 		container
@@ -45,7 +45,7 @@ async function startApp(): Promise<ReturnType<typeof ApiServer.create>> {
 
 	if (isBootstrapCapabilityConfigured && config.supervisorToken !== undefined) {
 		try {
-			await publishSupervisorDiscovery(config.supervisorToken, bootstrapCapability);
+			await SupervisorDiscovery.publish(config.supervisorToken, bootstrapCapability);
 		} catch {
 			await server.stop(true);
 			await container.dispose();

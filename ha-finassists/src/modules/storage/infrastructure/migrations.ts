@@ -157,27 +157,31 @@ const MIGRATIONS: Migration[] = [
 	},
 ];
 
-function migrateDatabase(database: Database): void {
-	database.run('PRAGMA foreign_keys = ON');
-	database.run(`
-		CREATE TABLE IF NOT EXISTS schema_migrations (
-			version INTEGER PRIMARY KEY,
-			applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-		)
-	`);
+class DatabaseMigrator {
+	private constructor() {}
 
-	for (const migration of MIGRATIONS) {
-		const applied = database.query('SELECT 1 FROM schema_migrations WHERE version = ?').get(migration.version);
-		if (applied) {
-			continue;
+	static migrate(database: Database): void {
+		database.run('PRAGMA foreign_keys = ON');
+		database.run(`
+			CREATE TABLE IF NOT EXISTS schema_migrations (
+				version INTEGER PRIMARY KEY,
+				applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)
+		`);
+
+		for (const migration of MIGRATIONS) {
+			const applied = database.query('SELECT 1 FROM schema_migrations WHERE version = ?').get(migration.version);
+			if (applied) {
+				continue;
+			}
+
+			const apply = database.transaction(() => {
+				migration.up(database);
+				database.query('INSERT INTO schema_migrations (version) VALUES (?)').run(migration.version);
+			});
+			apply();
 		}
-
-		const apply = database.transaction(() => {
-			migration.up(database);
-			database.query('INSERT INTO schema_migrations (version) VALUES (?)').run(migration.version);
-		});
-		apply();
 	}
 }
 
-export { migrateDatabase };
+export { DatabaseMigrator };

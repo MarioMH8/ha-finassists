@@ -1,6 +1,6 @@
 import { HttpResponses } from '@modules/api/infrastructure/http/shared/http-responses';
 import type { HttpEnvironment, TokenManagementUseCases } from '@modules/api/infrastructure/http/shared/request-context';
-import { isTrustedIngressPeer, resolveIngressActor } from '@modules/home-assistant';
+import { IngressActorResolver, TrustedIngressPeer } from '@modules/home-assistant';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
 import { z } from 'zod';
@@ -23,11 +23,11 @@ const requireTokenActor = createMiddleware<TokenEnvironment>(async (context, nex
 		return next();
 	}
 
-	if (!isTrustedIngressPeer(remoteAddress, trustedIngressIp)) {
+	if (!TrustedIngressPeer.isTrusted(remoteAddress, trustedIngressIp)) {
 		return HttpResponses.text('Forbidden', 403, { 'Cache-Control': 'no-store' });
 	}
 
-	const actor = resolveIngressActor(context.req.raw.headers, remoteAddress, trustedIngressIp);
+	const actor = IngressActorResolver.resolve(context.req.raw.headers, remoteAddress, trustedIngressIp);
 	if (actor.kind === 'unknown') {
 		return HttpResponses.text('Unauthorized', 401, { 'Cache-Control': 'no-store' });
 	}

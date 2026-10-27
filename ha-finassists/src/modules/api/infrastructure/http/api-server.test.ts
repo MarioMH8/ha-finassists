@@ -1,4 +1,4 @@
-import { migrateDatabase } from '@modules/storage/infrastructure';
+import { DatabaseMigrator } from '@modules/storage/infrastructure';
 import {
 	AuthenticateSystemCredential,
 	ExchangeSystemCredential,
@@ -53,7 +53,7 @@ function isTokenMetadataList(value: unknown): value is TokenMetadataResponse[] {
 
 function createMigratedDatabase(): Database {
 	const database = new Database(':memory:');
-	migrateDatabase(database);
+	DatabaseMigrator.migrate(database);
 
 	return database;
 }
@@ -78,7 +78,7 @@ describe('ApiServer', () => {
 
 	async function createSystemCredentialUseCases(capability: string) {
 		systemDatabase = new Database(':memory:');
-		migrateDatabase(systemDatabase);
+		DatabaseMigrator.migrate(systemDatabase);
 		const repository = new SqliteSystemCredentialRepository(systemDatabase);
 		const service = new WebCryptoSystemCredentialService();
 		repository.configureBootstrapCapability(

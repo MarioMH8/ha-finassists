@@ -1,7 +1,7 @@
 import { CategoryMother } from '@modules/ledger/domain/category.mother';
 import { ScheduledTransactionMother } from '@modules/ledger/domain/scheduled-transaction.mother';
 import { TransactionMother } from '@modules/ledger/domain/transaction.mother';
-import { migrateDatabase } from '@modules/storage/infrastructure';
+import { DatabaseMigrator } from '@modules/storage/infrastructure';
 import { Database } from 'bun:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 
@@ -15,7 +15,7 @@ describe('SqliteCategoryRepository', () => {
 
 	beforeEach(() => {
 		database = new Database(':memory:');
-		migrateDatabase(database);
+		DatabaseMigrator.migrate(database);
 		repository = new SqliteCategoryRepository(database);
 	});
 
