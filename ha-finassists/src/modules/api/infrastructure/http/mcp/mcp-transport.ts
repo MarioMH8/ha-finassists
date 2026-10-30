@@ -133,7 +133,7 @@ class McpTransport {
 
 	private static async processRpc(
 		message: JsonRpcRequest,
-		protocolVersion: string,
+		_protocolVersion: string,
 		actor: { id: string; kind: 'home_assistant_integration' | 'home_assistant_user' },
 		useCases: FinanceUseCases
 	): Promise<Response> {
@@ -182,7 +182,6 @@ class McpTransport {
 				? this.rpcError(message.id ?? JSON_RPC_NULL, -32_602, `Unknown tool: ${parameters.name}`)
 				: this.jsonResponse({ id: message.id ?? JSON_RPC_NULL, jsonrpc: '2.0', result });
 		}
-		void protocolVersion;
 
 		return this.rpcError(message.id ?? JSON_RPC_NULL, -32_601, `Method not found: ${message.method}`);
 	}
