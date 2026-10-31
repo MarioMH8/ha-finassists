@@ -26,8 +26,19 @@ The app needs the Home Assistant Supervisor. It does not run on Home Assistant C
 | `supervisor_ip` | Home Assistant's Supervisor address (`172.30.32.2`) | The only address whose Ingress headers the app trusts. Set it when the Supervisor runs somewhere unusual. |
 | `application_name` | Fin Assist | Name shown in the interface and in the browser tab. |
 | `currency` | EUR | ISO 4217 code applied to every amount. Changing it does not convert amounts that are already recorded. |
+| `administration` | `true` | Show the Administration section and personal API token management. Existing tokens keep working when hidden. |
+| `month_summary` | `true` | Show the “This month” summary in Transactions. |
+| `month_summary_chart` | `true` | Show the six-month chart inside the summary. It is hidden when `month_summary` is off. |
+| `scheduled_summary` | `true` | Show the “Upcoming 30 days” forecast in Scheduled. |
+| `scheduled_pending` | `true` | Show the list of manual scheduled movements waiting for confirmation. |
 
 `SUPERVISOR_IP` overrides `supervisor_ip` when the container runs outside Home Assistant. An invalid address stops startup.
+
+### Interface flags
+
+The interface flags hide parts of the web app without deleting data or changing the API, MCP server or Home Assistant integration. They default to `true`, so updating the app does not change the interface until you turn one off. Save the options and restart the app for a change to apply.
+
+Hiding Administration removes the place where you create and revoke personal API tokens. Those tokens, the REST API and MCP keep working; turn the option back on when you need to manage them. Hiding the summary or the chart only affects the web interface. Scheduled movements remain managed by the app, its API and the integration; these flags do not stop automatic posting.
 
 ## Network
 

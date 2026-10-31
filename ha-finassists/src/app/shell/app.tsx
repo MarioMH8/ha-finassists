@@ -10,8 +10,9 @@ import type { ReactElement } from 'react';
 
 import styles from './app.module.css';
 import { AppNavigation } from './components';
+import { FeatureFlagsProvider } from './feature-flags-context';
 import type { Section } from './section-route';
-import { SECTION, SECTIONS, useSectionRoute } from './section-route';
+import { SECTION, useSectionRoute, visibleSections } from './section-route';
 
 interface AppProps {
 	language: Language;
@@ -19,7 +20,8 @@ interface AppProps {
 }
 
 function App({ language, settings }: AppProps): ReactElement {
-	const [section, setSection] = useSectionRoute();
+	const sections = visibleSections(settings.features);
+	const [section, setSection] = useSectionRoute(sections);
 	const copy = getCopy(language);
 	const labels: Record<Section, string> = {
 		[SECTION.ADMINISTRATION]: copy.navigationAdministration,
@@ -29,35 +31,37 @@ function App({ language, settings }: AppProps): ReactElement {
 	};
 
 	return (
-		<LocaleProvider language={language}>
-			<div className={styles['app-shell']}>
-				<AppNavigation
-					ariaLabel={copy.navigationAriaLabel}
-					items={SECTIONS.map(item => ({ label: labels[item], value: item }))}
-					onChange={setSection}
-					value={section}
-				/>
-				<main
-					className={styles['main-content']}
-					id='main-content'
-					tabIndex={-1}>
-					<h1
-						className={styles['visually-hidden']}
-						id='page-title'
+		<FeatureFlagsProvider features={settings.features}>
+			<LocaleProvider language={language}>
+				<div className={styles['app-shell']}>
+					<AppNavigation
+						ariaLabel={copy.navigationAriaLabel}
+						items={sections.map(item => ({ label: labels[item], value: item }))}
+						onChange={setSection}
+						value={section}
+					/>
+					<main
+						className={styles['main-content']}
+						id='main-content'
 						tabIndex={-1}>
-						{settings.applicationName}
-					</h1>
-					{section === SECTION.TRANSACTIONS && (
-						<TransactionsManagement currencyCode={settings.currencyCode} />
-					)}
-					{section === SECTION.SCHEDULED && (
-						<ScheduledTransactionsManagement currencyCode={settings.currencyCode} />
-					)}
-					{section === SECTION.CATEGORIES && <CategoriesManagement />}
-					{section === SECTION.ADMINISTRATION && <AdministrationManagement />}
-				</main>
-			</div>
-		</LocaleProvider>
+						<h1
+							className={styles['visually-hidden']}
+							id='page-title'
+							tabIndex={-1}>
+							{settings.applicationName}
+						</h1>
+						{section === SECTION.TRANSACTIONS && (
+							<TransactionsManagement currencyCode={settings.currencyCode} />
+						)}
+						{section === SECTION.SCHEDULED && (
+							<ScheduledTransactionsManagement currencyCode={settings.currencyCode} />
+						)}
+						{section === SECTION.CATEGORIES && <CategoriesManagement />}
+						{section === SECTION.ADMINISTRATION && <AdministrationManagement />}
+					</main>
+				</div>
+			</LocaleProvider>
+		</FeatureFlagsProvider>
 	);
 }
 
