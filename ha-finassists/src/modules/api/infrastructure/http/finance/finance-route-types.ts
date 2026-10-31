@@ -16,6 +16,7 @@ import type {
 	UpdateScheduledTransaction,
 	UpdateTransaction,
 } from '@modules/ledger/application';
+import type { FeatureFlags } from '@modules/shell/domain';
 
 interface FinanceUseCases {
 	ledger: {
@@ -49,7 +50,7 @@ interface RouteActor {
 }
 
 interface FinanceEnvironment {
-	Variables: { actor: RouteActor; useCases: FinanceUseCases };
+	Variables: { actor: RouteActor; features: FeatureFlags; useCases: FinanceUseCases };
 }
 
 export type { FinanceEnvironment, FinanceUseCases, RouteActor };

@@ -10,7 +10,10 @@ info:
     HTTP credential clients can forge. The session and personal-token management
     endpoints are restricted to trusted Ingress. The LAN listener is opt-in; do
     not expose it to the public Internet. Configure TLS at a trusted reverse
-    proxy if needed.
+    proxy if needed. Feature capabilities are reported by `/capabilities`.
+    Scheduled endpoints return 404 when the app disables the
+    `scheduled_transactions` capability; clients must treat a missing
+    capabilities endpoint as all capabilities enabled.
 servers:
   - url: http://{host}:{port}/api/v1
     variables:
@@ -33,6 +36,26 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/IngressActor' }
         '403': { description: Request did not come from the trusted Supervisor peer }
+  /capabilities:
+    get:
+      summary: Get the capabilities enabled by the app
+      description: Requires a valid bearer token or a trusted Ingress request. Clients must treat a 404 as all capabilities enabled for compatibility with older apps.
+      responses:
+        '200':
+          description: Capability flags
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [features]
+                properties:
+                  features:
+                    type: object
+                    required: [categories, scheduledTransactions]
+                    properties:
+                      categories: { type: boolean }
+                      scheduledTransactions: { type: boolean }
+        '401': { description: Authentication required }
   /tokens:
     get:
       summary: List the current actor's personal API tokens

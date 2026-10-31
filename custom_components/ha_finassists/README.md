@@ -5,7 +5,7 @@ Connect your [Fin Assist](../../README.md) ledger to Home Assistant: keep this m
 ## What you get
 
 - **Two recorded sensors** that follow the current month: *Income this month* and *Expenses this month*.
-- **Three scheduled sensors**: *Scheduled income next 30 days*, *Scheduled expenses next 30 days* and *Scheduled movements due*.
+- **Three scheduled sensors**: *Scheduled income next 30 days*, *Scheduled expenses next 30 days* and *Scheduled movements due*. They are created only while the app's `scheduled_transactions` capability is enabled.
 - **Nine services** to record expenses and incomes, manage scheduled movements, delete a transaction and refresh on demand, with an optional category by name.
 - **A Lovelace card** bundled with the integration, so there is nothing extra to download.
 
@@ -57,7 +57,7 @@ The recorded sensors expose `kind`, `month`, `scope: actual`, `period: current_m
 
 The scheduled sensors expose `kind`, `scope: scheduled`, `period: next_30_days`, `from_date`, `to_date`, `by_category`, `uncategorized`, `items` and `integration_entry_id`. `items` lists up to ten projected occurrences with `schedule_id`, `due_date`, `kind`, `description`, `amount` and `category`. The due sensor exposes `scope: scheduled_due` and the pending `items`. If the forecast is temporarily unavailable, recorded sensors keep working and the scheduled sensors expose an `error` attribute.
 
-The integration polls every five minutes; the `refresh` service asks for an immediate update.
+The integration polls every five minutes; the `refresh` service asks for an immediate update. It also reads `GET /api/v1/capabilities` and reloads the config entry when the app changes a capability. When `scheduled_transactions` is off, the scheduled sensors are not created and the scheduled services fail with a clear error. Update the app and the integration together: an older app without the capabilities endpoint is treated as having every capability enabled.
 
 ## Services
 

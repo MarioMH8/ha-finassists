@@ -14,6 +14,7 @@ export {
 	type UpcomingScheduledTransactionItem,
 	type UpcomingScheduledTransactions,
 } from './list-upcoming-scheduled-transactions';
+export { PauseActiveScheduledTransactions } from './pause-active-scheduled-transactions';
 export {
 	PostDueScheduledTransactions,
 	type PostDueScheduledTransactionsResult,

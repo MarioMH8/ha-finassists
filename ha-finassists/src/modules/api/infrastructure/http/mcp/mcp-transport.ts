@@ -4,10 +4,12 @@ import type {
 	SystemCredentialUseCases,
 	TokenManagementUseCases,
 } from '@modules/api/infrastructure/http/shared/request-context';
+import type { FeatureFlags } from '@modules/shell/domain';
+import { DEFAULT_FEATURE_FLAGS } from '@modules/shell/domain';
 import { APP_VERSION } from '@modules/version';
 
 import { McpToolExecution } from './mcp-tool-execution';
-import { TOOLS } from './mcp-tools';
+import { McpTools } from './mcp-tools';
 
 const MCP_PROTOCOL_VERSION = {
 	CURRENT: '2025-11-25',
@@ -30,7 +32,8 @@ class McpTransport {
 		request: Request,
 		tokenUseCases: TokenManagementUseCases,
 		useCases: FinanceUseCases,
-		systemCredentialUseCases?: SystemCredentialUseCases
+		systemCredentialUseCases?: SystemCredentialUseCases,
+		features: FeatureFlags = DEFAULT_FEATURE_FLAGS
 	): Promise<Response> {
 		if (!this.hasValidOrigin(request)) {
 			return HttpResponses.text('Forbidden', 403);
@@ -89,7 +92,7 @@ class McpTransport {
 			return this.rpcError(rpcRequest.id ?? JSON_RPC_NULL, -32_600, 'Unsupported MCP protocol version');
 		}
 		try {
-			return await this.processRpc(rpcRequest, protocolVersion, actor, useCases);
+			return await this.processRpc(rpcRequest, protocolVersion, actor, useCases, features);
 		} catch {
 			return this.rpcError(rpcRequest.id ?? JSON_RPC_NULL, -32_603, 'Internal error');
 		}
@@ -135,7 +138,8 @@ class McpTransport {
 		message: JsonRpcRequest,
 		_protocolVersion: string,
 		actor: { id: string; kind: 'home_assistant_integration' | 'home_assistant_user' },
-		useCases: FinanceUseCases
+		useCases: FinanceUseCases,
+		features: FeatureFlags
 	): Promise<Response> {
 		if (message.id === undefined && message.method.startsWith('notifications/')) {
 			return HttpResponses.empty(202, {
@@ -164,7 +168,11 @@ class McpTransport {
 			});
 		}
 		if (message.method === 'tools/list') {
-			return this.jsonResponse({ id: message.id ?? JSON_RPC_NULL, jsonrpc: '2.0', result: { tools: TOOLS } });
+			return this.jsonResponse({
+				id: message.id ?? JSON_RPC_NULL,
+				jsonrpc: '2.0',
+				result: { tools: McpTools.list(features) },
+			});
 		}
 		if (message.method === 'tools/call') {
 			const parameters = this.isRecord(message.params) ? message.params : {};
@@ -176,7 +184,7 @@ class McpTransport {
 					'A tool name and object arguments are required'
 				);
 			}
-			const result = await McpToolExecution.invokeTool(parameters.name, toolArguments, actor, useCases);
+			const result = await McpToolExecution.invokeTool(parameters.name, toolArguments, actor, useCases, features);
 
 			return result === undefined
 				? this.rpcError(message.id ?? JSON_RPC_NULL, -32_602, `Unknown tool: ${parameters.name}`)
@@ -217,4 +225,4 @@ class McpTransport {
 
 export { MCP_MAX_BODY_BYTES, MCP_PROTOCOL_VERSION, McpTransport };
 
-export { TOOLS } from './mcp-tools';
+export { McpTools, TOOLS } from './mcp-tools';

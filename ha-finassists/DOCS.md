@@ -31,6 +31,7 @@ The app needs the Home Assistant Supervisor. It does not run on Home Assistant C
 | `month_summary_chart` | `true` | Show the six-month chart inside the summary. It is hidden when `month_summary` is off. |
 | `scheduled_summary` | `true` | Show the “Upcoming 30 days” forecast in Scheduled. |
 | `scheduled_pending` | `true` | Show the list of manual scheduled movements waiting for confirmation. |
+| `scheduled_transactions` | `true` | Enable scheduled movements across the app, REST API, MCP and integration. Turning it off pauses active schedules and stops automatic posting. |
 
 `SUPERVISOR_IP` overrides `supervisor_ip` when the container runs outside Home Assistant. An invalid address stops startup.
 
@@ -38,7 +39,13 @@ The app needs the Home Assistant Supervisor. It does not run on Home Assistant C
 
 The interface flags hide parts of the web app without deleting data or changing the API, MCP server or Home Assistant integration. They default to `true`, so updating the app does not change the interface until you turn one off. Save the options and restart the app for a change to apply.
 
-Hiding Administration removes the place where you create and revoke personal API tokens. Those tokens, the REST API and MCP keep working; turn the option back on when you need to manage them. Hiding the summary or the chart only affects the web interface. Scheduled movements remain managed by the app, its API and the integration; these flags do not stop automatic posting.
+Hiding Administration removes the place where you create and revoke personal API tokens. Those tokens, the REST API and MCP keep working; turn the option back on when you need to manage them. Hiding the summary, the chart or the scheduled panels only affects the web interface and does not stop automatic posting.
+
+### Capability flags
+
+`scheduled_transactions` disables the whole scheduled feature. When it is off at startup, the app pauses every active scheduled movement, automatic posting stops and the scheduled REST routes and MCP tools are unavailable. The integration stops creating its scheduled sensors, and its scheduled services fail with a clear error. Existing schedules and posted transactions are kept.
+
+When you turn the option back on, schedules stay paused. Review them and resume the ones you want; resuming skips the occurrences that became due while the feature was off, so it does not create a backlog of transactions.
 
 ## Network
 
