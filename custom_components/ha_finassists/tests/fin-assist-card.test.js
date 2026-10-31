@@ -115,6 +115,8 @@ describe('Fin Assist Lovelace card', () => {
 		expect(card.shadowRoot.html).toContain('1200.00 EUR');
 		expect(card.shadowRoot.html).toContain('Expenses this month');
 		expect(card.shadowRoot.html).toContain('345.50 EUR');
+		expect(card.shadowRoot.html).not.toContain('Scheduled income');
+		expect(card.shadowRoot.html).not.toContain('Scheduled expenses');
 	});
 
 	it('refreshes the only entry in scope', () => {

@@ -24,6 +24,8 @@ import {
 	SqliteLedgerRepository,
 	SqliteScheduledTransactionRepository,
 } from '@modules/ledger/infrastructure';
+import type { FeatureFlags } from '@modules/shell/domain';
+import { DEFAULT_FEATURE_FLAGS, DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import { DatabaseMigrator } from '@modules/storage/infrastructure';
 import { AuthenticateApiToken, IssueApiToken, ListApiTokens, RevokeApiToken } from '@modules/tokens/application';
 import { SqliteApiTokenRepository, WebCryptoTokenCredentialService } from '@modules/tokens/infrastructure';
@@ -173,14 +175,21 @@ async function readJson<T>(response: Response): Promise<T> {
 	return JSON.parse(await response.text()) as T;
 }
 
-async function send(useCases: FinanceUseCases, pathname: string, method = 'GET', body?: unknown): Promise<Response> {
+async function send(
+	useCases: FinanceUseCases,
+	pathname: string,
+	method = 'GET',
+	body?: unknown,
+	features: FeatureFlags = DEFAULT_FEATURE_FLAGS
+): Promise<Response> {
 	return FinanceFacade.handle(
 		new Request(`http://localhost${pathname}`, {
 			method,
 			...(body !== undefined && { body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } }),
 		}),
 		{ id: 'actor-123', kind: 'home_assistant_user' },
-		useCases
+		useCases,
+		features
 	);
 }
 
@@ -1018,6 +1027,26 @@ describe('scheduled transactions REST routes', () => {
 		expect(manualIncome.items[0]?.kind).toBe('income');
 		expect(due.total).toBe(1);
 	});
+
+	it('returns 404 for every scheduled route when the capability is off', async () => {
+		const { useCases } = setup();
+		const features: FeatureFlags = {
+			...DEFAULT_FEATURE_FLAGS,
+			capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, scheduledTransactions: false },
+		};
+
+		for (const [pathname, method] of [
+			['/api/v1/scheduled-transactions', 'GET'],
+			['/api/v1/scheduled-transactions', 'POST'],
+			['/api/v1/scheduled-transactions/upcoming', 'GET'],
+			['/api/v1/scheduled-transactions/schedule-1', 'DELETE'],
+			['/api/v1/scheduled-transactions/schedule-1/post', 'POST'],
+		] as const) {
+			// eslint-disable-next-line no-await-in-loop -- The assertion needs each response status in order.
+			const response = await send(useCases, pathname, method, undefined, features);
+			expect(response.status).toBe(404);
+		}
+	});
 });
 
 describe('scheduled transactions over MCP', () => {
@@ -1133,5 +1162,109 @@ describe('scheduled transactions over MCP', () => {
 		expect(skipped.result.structuredContent.nextDueDate).toBe('2026-06-01');
 		expect(paused.result.structuredContent.id).toBe(first.result.structuredContent.id);
 		expect(deleted.result.isError).toBe(false);
+	});
+});
+
+describe('scheduled transactions capability', () => {
+	function disabledFeatures(): FeatureFlags {
+		return {
+			...DEFAULT_FEATURE_FLAGS,
+			capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, scheduledTransactions: false },
+		};
+	}
+
+	async function authenticatedContainer() {
+		const { useCases } = setup();
+		const tokenUseCases = setupTokens();
+		const issued = await tokenUseCases.issue.execute({ name: 'client', ownerId: 'owner' });
+
+		return {
+			authorization: `Bearer ${issued.secret}`,
+			container: HttpContainerBuilder.create({ financeUseCases: useCases, tokenUseCases }),
+			tokenUseCases,
+			useCases,
+		};
+	}
+
+	it('reports the capability to authenticated clients', async () => {
+		const { authorization, container } = await authenticatedContainer();
+		const response = await HttpApplication.handle(
+			new Request('http://localhost/api/v1/capabilities', {
+				headers: { Authorization: authorization },
+			}),
+			{
+				remoteAddress: '[IP_ADDRESS]',
+				shellConfig: { ...DEFAULT_SHELL_CONFIG, features: disabledFeatures() },
+				trustedIngressIp: '::1',
+			},
+			container
+		);
+
+		expect(response.status).toBe(200);
+		expect(await readJson(response)).toEqual({
+			features: { categories: true, scheduledTransactions: false },
+		});
+	});
+
+	it('returns 404 through the HTTP application when scheduled routes are off', async () => {
+		const { authorization, container } = await authenticatedContainer();
+		const response = await HttpApplication.handle(
+			new Request('http://localhost/api/v1/scheduled-transactions', {
+				headers: { Authorization: authorization },
+			}),
+			{
+				remoteAddress: '[IP_ADDRESS]',
+				shellConfig: { ...DEFAULT_SHELL_CONFIG, features: disabledFeatures() },
+				trustedIngressIp: '::1',
+			},
+			container
+		);
+
+		expect(response.status).toBe(404);
+	});
+
+	it('removes scheduled tools from the MCP list and rejects calls', async () => {
+		const { authorization, tokenUseCases, useCases } = await authenticatedContainer();
+		const call = (message: unknown) =>
+			McpTransport.handle(
+				new Request('http://localhost/mcp', {
+					body: JSON.stringify(message),
+					headers: {
+						Accept: 'application/json, text/event-stream',
+						Authorization: authorization,
+						'Content-Type': 'application/json',
+					},
+					method: 'POST',
+				}),
+				tokenUseCases,
+				useCases,
+				undefined,
+				disabledFeatures()
+			);
+		const listed = await readJson<{ result: { tools: { name: string }[] } }>(
+			await call({ id: 1, jsonrpc: '2.0', method: 'tools/list' })
+		);
+		const names = listed.result.tools.map(tool => tool.name);
+		const rejected = await readJson<{ error: { code: number } }>(
+			await call({
+				id: 2,
+				jsonrpc: '2.0',
+				method: 'tools/call',
+				params: {
+					arguments: {
+						amountMinor: 1000,
+						frequency: 'monthly',
+						kind: 'expense',
+						startDate: '2026-05-01',
+					},
+					name: 'create_scheduled_transaction',
+				},
+			})
+		);
+
+		expect(names).not.toContain('create_scheduled_transaction');
+		expect(names).not.toContain('list_scheduled_transactions');
+		expect(names).toContain('create_transaction');
+		expect(rejected.error.code).toBe(-32_602);
 	});
 });

@@ -12,6 +12,7 @@ describe('WebPage', () => {
 				settings={{
 					...DEFAULT_SHELL_CONFIG,
 					features: {
+						...DEFAULT_FEATURE_FLAGS,
 						ui: {
 							...DEFAULT_FEATURE_FLAGS.ui,
 							administration: false,

@@ -11,6 +11,7 @@ import {
 	ListScheduledTransactions,
 	ListTransactions,
 	ListUpcomingScheduledTransactions,
+	PauseActiveScheduledTransactions,
 	PostDueScheduledTransactions,
 	PostScheduledTransaction,
 	SkipScheduledTransaction,
@@ -116,6 +117,7 @@ function buildLedgerUseCases(container: ReturnType<typeof buildCredentialUseCase
 				),
 				delete: new DeleteScheduledTransaction(c.get('scheduledTransactionRepository')),
 				list: new ListScheduledTransactions(c.get('scheduledTransactionRepository')),
+				pauseActive: new PauseActiveScheduledTransactions(c.get('scheduledTransactionRepository')),
 				post: new PostScheduledTransaction(c.get('scheduledPostingRepository')),
 				postDue: new PostDueScheduledTransactions(c.get('scheduledPostingRepository'), c.get('today'), () =>
 					new Date().toISOString()

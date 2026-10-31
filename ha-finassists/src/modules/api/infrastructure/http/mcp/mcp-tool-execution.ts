@@ -1,5 +1,9 @@
 import { FinanceFacade } from '@modules/api/infrastructure/http/finance/finance-facade';
 import type { FinanceUseCases } from '@modules/api/infrastructure/http/finance/finance-route-types';
+import type { FeatureFlags } from '@modules/shell/domain';
+import { DEFAULT_FEATURE_FLAGS } from '@modules/shell/domain';
+
+import { McpTools } from './mcp-tools';
 
 const LIST_FILTERS = ['categoryId', 'fromDate', 'kind', 'limit', 'offset', 'search', 'toDate'] as const;
 const SCHEDULED_LIST_FILTERS = [
@@ -21,10 +25,14 @@ class McpToolExecution {
 		name: string,
 		arguments_: Record<string, unknown>,
 		actor: { id: string; kind: 'home_assistant_integration' | 'home_assistant_user' },
-		useCases: FinanceUseCases
+		useCases: FinanceUseCases,
+		features: FeatureFlags = DEFAULT_FEATURE_FLAGS
 	): Promise<
 		undefined | { content: { text: string; type: 'text' }[]; isError: boolean; structuredContent: unknown }
 	> {
+		if (!McpTools.isEnabled(name, features)) {
+			return;
+		}
 		const toolRequest = this.getToolRequest(name, arguments_);
 		if (!toolRequest) {
 			return;
@@ -38,7 +46,8 @@ class McpToolExecution {
 				}),
 			}),
 			actor,
-			useCases
+			useCases,
+			features
 		);
 		const text = await response.text();
 		const value: unknown = text === '' ? undefined : JSON.parse(text);
