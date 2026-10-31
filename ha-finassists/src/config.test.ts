@@ -20,7 +20,19 @@ describe('ServerConfigLoader.load', () => {
 			developmentActor: undefined,
 			developmentMode: false,
 			port: 8099,
-			shellConfig: { applicationName: 'Fin Assist', currencyCode: 'EUR' },
+			shellConfig: {
+				applicationName: 'Fin Assist',
+				currencyCode: 'EUR',
+				features: {
+					ui: {
+						administration: true,
+						monthSummary: true,
+						monthSummaryChart: true,
+						scheduledPending: true,
+						scheduledSummary: true,
+					},
+				},
+			},
 			supervisorToken: undefined,
 			timeZone: 'UTC',
 			trustedIngressIp: DEFAULT_TRUSTED_INGRESS_IP,
@@ -57,8 +69,13 @@ describe('ServerConfigLoader.load', () => {
 			await writeFile(
 				optionsPath,
 				JSON.stringify({
+					administration: 'false',
 					application_name: 'Invalid\u{0}name',
 					currency: 'euro',
+					month_summary: 1,
+					month_summary_chart: null,
+					scheduled_pending: [],
+					scheduled_summary: 'true',
 					supervisor_ip: ['127.0.0.1'],
 				})
 			);
@@ -70,8 +87,51 @@ describe('ServerConfigLoader.load', () => {
 			expect(config.shellConfig).toEqual({
 				applicationName: 'Fin Assist',
 				currencyCode: 'EUR',
+				features: {
+					ui: {
+						administration: true,
+						monthSummary: true,
+						monthSummaryChart: true,
+						scheduledPending: true,
+						scheduledSummary: true,
+					},
+				},
 			});
 			expect(config.trustedIngressIp).toBe(DEFAULT_TRUSTED_INGRESS_IP);
+		} finally {
+			await rm(directory, { force: true, recursive: true });
+		}
+	});
+
+	it('reads UI flags and hides the chart when the summary is hidden', async () => {
+		const directory = await mkdtemp(path.join(tmpdir(), 'fin-assist-config-'));
+		const optionsPath = path.join(directory, 'options.json');
+
+		try {
+			await writeFile(
+				optionsPath,
+				JSON.stringify({
+					administration: false,
+					month_summary: false,
+					month_summary_chart: true,
+					scheduled_pending: false,
+					scheduled_summary: true,
+				})
+			);
+			const config = await ServerConfigLoader.load({
+				environment: { NODE_ENV: 'production' },
+				optionsPath,
+			});
+
+			expect(config.shellConfig.features).toEqual({
+				ui: {
+					administration: false,
+					monthSummary: false,
+					monthSummaryChart: false,
+					scheduledPending: false,
+					scheduledSummary: true,
+				},
+			});
 		} finally {
 			await rm(directory, { force: true, recursive: true });
 		}

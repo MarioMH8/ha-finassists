@@ -1,6 +1,9 @@
 import { LOAD_STATE } from '@app/features/transactions/transactions-constants';
 import { getCopy } from '@app/i18n';
 import { LocaleProvider } from '@app/i18n/locale-context';
+import { FeatureFlagsProvider } from '@app/shell/feature-flags-context';
+import type { FeatureFlags, UiFeatureFlags } from '@modules/shell/domain';
+import { DEFAULT_FEATURE_FLAGS } from '@modules/shell/domain';
 import { describe, expect, test } from 'bun:test';
 import { createRef } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -108,8 +111,16 @@ function state(language: 'en' | 'es', overrides: Partial<ScheduledTransactionsSt
 	};
 }
 
-function render(language: 'en' | 'es', element: React.ReactElement): string {
-	return renderToStaticMarkup(<LocaleProvider language={language}>{element}</LocaleProvider>);
+function features(overrides: Partial<UiFeatureFlags> = {}): FeatureFlags {
+	return { ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...overrides } };
+}
+
+function render(language: 'en' | 'es', element: React.ReactElement, ui: Partial<UiFeatureFlags> = {}): string {
+	return renderToStaticMarkup(
+		<FeatureFlagsProvider features={features(ui)}>
+			<LocaleProvider language={language}>{element}</LocaleProvider>
+		</FeatureFlagsProvider>
+	);
 }
 
 describe('ScheduledTransactionsManagement', () => {
@@ -119,6 +130,17 @@ describe('ScheduledTransactionsManagement', () => {
 		expect(markup).toContain('Loading forecast…');
 		expect(markup).toContain('Loading scheduled movements…');
 		expect(markup.match(/data-skeleton="rows"/g) ?? []).toHaveLength(1);
+	});
+
+	test('hides the forecast and pending panels when their flags are off', () => {
+		const markup = render('en', <ScheduledTransactionsManagement currencyCode='EUR' />, {
+			scheduledPending: false,
+			scheduledSummary: false,
+		});
+
+		expect(markup).not.toContain('Upcoming 30 days');
+		expect(markup).not.toContain('Waiting for confirmation');
+		expect(markup).toContain('Loading scheduled movements…');
 	});
 });
 

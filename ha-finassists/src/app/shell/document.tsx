@@ -5,6 +5,7 @@ import type { ReactElement, ReactNode } from 'react';
 
 import { App } from './app';
 import styles from './document.module.css';
+import { featureAttributes } from './settings';
 
 interface DocumentProps {
 	children: ReactNode;
@@ -67,6 +68,7 @@ function WebPage({ developmentMode = false, language, settings = DEFAULT_SHELL_C
 			language={language}
 			settings={settings}>
 			<div
+				{...featureAttributes(settings.features)}
 				data-application-name={settings.applicationName}
 				data-currency-code={settings.currencyCode}
 				data-language={language}

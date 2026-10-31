@@ -2,7 +2,9 @@ import type { Category } from '@app/features/categories/categories-api';
 import { getCopy } from '@app/i18n';
 import { LocaleProvider } from '@app/i18n/locale-context';
 import { App } from '@app/shell/app';
-import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
+import { FeatureFlagsProvider } from '@app/shell/feature-flags-context';
+import type { FeatureFlags, UiFeatureFlags } from '@modules/shell/domain';
+import { DEFAULT_FEATURE_FLAGS, DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import { describe, expect, test } from 'bun:test';
 import { createRef } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -97,8 +99,16 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 	};
 }
 
-function render(language: 'en' | 'es', element: React.ReactElement): string {
-	return renderToStaticMarkup(<LocaleProvider language={language}>{element}</LocaleProvider>);
+function features(overrides: Partial<UiFeatureFlags> = {}): FeatureFlags {
+	return { ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...overrides } };
+}
+
+function render(language: 'en' | 'es', element: React.ReactElement, ui: Partial<UiFeatureFlags> = {}): string {
+	return renderToStaticMarkup(
+		<FeatureFlagsProvider features={features(ui)}>
+			<LocaleProvider language={language}>{element}</LocaleProvider>
+		</FeatureFlagsProvider>
+	);
 }
 
 describe('TransactionForm', () => {
@@ -314,6 +324,14 @@ describe('MonthSummary', () => {
 			'No se pudieron cargar los totales de este mes.'
 		);
 	});
+
+	test('hides the chart toggle and chart when the chart flag is off', () => {
+		const markup = render('en', <MonthSummary {...state('en')} />, { monthSummaryChart: false });
+
+		expect(markup).toContain('This month');
+		expect(markup).not.toContain('Income and expenses');
+		expect(markup).not.toContain('aria-label="Show chart"');
+	});
 });
 
 describe('App', () => {
@@ -346,5 +364,30 @@ describe('App', () => {
 		expect(markup.indexOf('<h1')).toBeGreaterThan(markup.indexOf('<main'));
 		expect(markup).not.toContain('data-application-name="Fin Assist"');
 		expect(markup).toContain('aria-hidden="true"');
+	});
+
+	test('hides the administration navigation when its flag is off', () => {
+		const markup = renderToStaticMarkup(
+			<App
+				language='en'
+				settings={{ ...DEFAULT_SHELL_CONFIG, features: features({ administration: false }) }}
+			/>
+		);
+
+		expect(markup).not.toContain('>Administration<');
+		expect(markup).toContain('Application navigation');
+		expect(markup).toContain('New transaction');
+	});
+
+	test('hides the month summary when its flag is off', () => {
+		const markup = renderToStaticMarkup(
+			<App
+				language='en'
+				settings={{ ...DEFAULT_SHELL_CONFIG, features: features({ monthSummary: false }) }}
+			/>
+		);
+
+		expect(markup).not.toContain('This month');
+		expect(markup).toContain('Recent transactions');
 	});
 });

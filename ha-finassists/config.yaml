@@ -23,7 +23,17 @@ options:
   supervisor_ip: "172.30.32.2"
   application_name: Fin Assist
   currency: EUR
+  administration: true
+  month_summary: true
+  month_summary_chart: true
+  scheduled_summary: true
+  scheduled_pending: true
 schema:
   supervisor_ip: str
   application_name: str
   currency: str
+  administration: bool
+  month_summary: bool
+  month_summary_chart: bool
+  scheduled_summary: bool
+  scheduled_pending: bool

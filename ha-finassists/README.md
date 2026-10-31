@@ -6,6 +6,7 @@ private ledger in your own instance: no cloud, no subscription.
 - **Opens from the sidebar.** The app runs behind Home Assistant Ingress, so there is no port to remember.
 - **Your data stays home.** One SQLite file in `/data`, included in your Home Assistant backups.
 - **One ledger for the household.** Search, filter, edit and delete transactions from the web interface or from automations.
+- **Choose what you see.** Hide Administration, the monthly summary, the chart or the scheduled panels from the app options when you do not use them.
 
 This app is the ledger, the API and the web interface. Install the [Fin Assist integration](https://github.com/MarioMH8/ha-finassists#readme) through HACS to add the dashboard sensors, the automation services and the Lovelace card.
 
