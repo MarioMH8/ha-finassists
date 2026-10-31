@@ -20,6 +20,7 @@ import type { TransactionKind } from '@app/features/transactions/transactions-ap
 import { TRANSACTION_KIND } from '@app/features/transactions/transactions-api';
 import type { Copy } from '@app/i18n';
 import { interpolate } from '@app/i18n';
+import { useFeatureFlags } from '@app/shell/feature-flags-context';
 import type { ReactElement } from 'react';
 
 import styles from './scheduled-transaction-form.module.css';
@@ -151,6 +152,7 @@ function ScheduledTransactionForm({
 	submit,
 	today,
 }: ScheduledTransactionFormProps): ReactElement {
+	const { capabilities } = useFeatureFlags();
 	const isEditing = editingScheduleId !== undefined;
 	const isOneTime = frequency === SCHEDULED_TRANSACTION_FREQUENCY.ONCE;
 	const isPastAutomaticStart =
@@ -332,27 +334,29 @@ function ScheduledTransactionForm({
 							/>
 						</Field>
 					)}
-					<Field
-						htmlFor='scheduled-transaction-category'
-						label={copy.transactionCategoryLabel}>
-						<Select
-							id='scheduled-transaction-category'
-							name='categoryId'
-							onChange={event => {
-								setCategoryId(event.currentTarget.value);
-							}}
-							size={SELECT_SIZE.SMALL}
-							value={categoryId}>
-							<option value=''>{copy.transactionCategoryNone}</option>
-							{kindCategories.map(category => (
-								<option
-									key={category.id}
-									value={category.id}>
-									{category.name}
-								</option>
-							))}
-						</Select>
-					</Field>
+					{capabilities.categories ? (
+						<Field
+							htmlFor='scheduled-transaction-category'
+							label={copy.transactionCategoryLabel}>
+							<Select
+								id='scheduled-transaction-category'
+								name='categoryId'
+								onChange={event => {
+									setCategoryId(event.currentTarget.value);
+								}}
+								size={SELECT_SIZE.SMALL}
+								value={categoryId}>
+								<option value=''>{copy.transactionCategoryNone}</option>
+								{kindCategories.map(category => (
+									<option
+										key={category.id}
+										value={category.id}>
+										{category.name}
+									</option>
+								))}
+							</Select>
+						</Field>
+					) : undefined}
 					<Field
 						className={styles.full}
 						error={descriptionError}

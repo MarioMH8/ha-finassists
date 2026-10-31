@@ -94,7 +94,7 @@ function amountInputValue(transaction: Transaction, currencyCode: string, langua
 
 function useTransactions(currencyCode: string): TransactionsState {
 	const { copy, language } = useLocale();
-	const { ui } = useFeatureFlags();
+	const { capabilities, ui } = useFeatureFlags();
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
 	const [total, setTotal] = useState(0);
 	const [listState, setListState] = useState<LoadState>(LOAD_STATE.LOADING);
@@ -144,10 +144,12 @@ function useTransactions(currencyCode: string): TransactionsState {
 		if (ui.monthSummary) {
 			void loadSummary(controller.signal);
 		}
-		void loadCategories(controller.signal);
+		if (capabilities.categories) {
+			void loadCategories(controller.signal);
+		}
 
 		return () => controller.abort();
-	}, [ui.monthSummary]);
+	}, [capabilities.categories, ui.monthSummary]);
 
 	useEffect(() => {
 		const controller = new AbortController();
@@ -308,6 +310,11 @@ function useTransactions(currencyCode: string): TransactionsState {
 
 	function changeKind(nextKind: TransactionKind): void {
 		setKindValue(nextKind);
+		if (!capabilities.categories) {
+			setCategoryIdValue('');
+
+			return;
+		}
 		setCategoryIdValue(current => {
 			const category = categories.find(item => item.id === current);
 

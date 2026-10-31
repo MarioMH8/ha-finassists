@@ -41,6 +41,7 @@ const homeAssistantOptionsSchema = z
 	.object({
 		administration: z.boolean().optional().catch(undefined),
 		application_name: z.string().optional().catch(undefined),
+		categories: z.boolean().optional().catch(undefined),
 		currency: z.string().optional().catch(undefined),
 		month_summary: z.boolean().optional().catch(undefined),
 		month_summary_chart: z.boolean().optional().catch(undefined),
@@ -174,6 +175,7 @@ class ServerConfigLoader {
 
 	private static resolveFeatureFlags(options: {
 		administration?: boolean | undefined;
+		categories?: boolean | undefined;
 		month_summary?: boolean | undefined;
 		month_summary_chart?: boolean | undefined;
 		scheduled_pending?: boolean | undefined;
@@ -184,7 +186,7 @@ class ServerConfigLoader {
 
 		return {
 			capabilities: {
-				categories: DEFAULT_FEATURE_FLAGS.capabilities.categories,
+				categories: options.categories ?? DEFAULT_FEATURE_FLAGS.capabilities.categories,
 				scheduledTransactions:
 					options.scheduled_transactions ?? DEFAULT_FEATURE_FLAGS.capabilities.scheduledTransactions,
 			},

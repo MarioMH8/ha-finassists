@@ -170,6 +170,26 @@ describe('ServerConfigLoader.load', () => {
 		}
 	});
 
+	it('reads the categories capability', async () => {
+		const directory = await mkdtemp(path.join(tmpdir(), 'fin-assist-config-'));
+		const optionsPath = path.join(directory, 'options.json');
+
+		try {
+			await writeFile(optionsPath, JSON.stringify({ categories: false }));
+			const config = await ServerConfigLoader.load({
+				environment: { NODE_ENV: 'production' },
+				optionsPath,
+			});
+
+			expect(config.shellConfig.features.capabilities).toEqual({
+				categories: false,
+				scheduledTransactions: true,
+			});
+		} finally {
+			await rm(directory, { force: true, recursive: true });
+		}
+	});
+
 	it('accepts a Supervisor token for add-on discovery provisioning', async () => {
 		const config = await ServerConfigLoader.load({
 			environment: { NODE_ENV: 'production', SUPERVISOR_TOKEN: 'supervisor-token' },

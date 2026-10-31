@@ -102,7 +102,7 @@ function amountInputValue(schedule: ScheduledTransaction, currencyCode: string, 
 
 function useScheduledTransactions(currencyCode: string): ScheduledTransactionsState {
 	const { copy, language } = useLocale();
-	const { ui } = useFeatureFlags();
+	const { capabilities, ui } = useFeatureFlags();
 	const [schedules, setSchedules] = useState<ScheduledTransaction[]>([]);
 	const [today, setToday] = useState(todayIsoDate());
 	const [listState, setListState] = useState<LoadState>(LOAD_STATE.LOADING);
@@ -142,10 +142,12 @@ function useScheduledTransactions(currencyCode: string): ScheduledTransactionsSt
 		if (ui.scheduledSummary) {
 			void loadForecast(controller.signal);
 		}
-		void loadCategories(controller.signal);
+		if (capabilities.categories) {
+			void loadCategories(controller.signal);
+		}
 
 		return () => controller.abort();
-	}, [ui.scheduledSummary]);
+	}, [capabilities.categories, ui.scheduledSummary]);
 
 	async function loadSchedules(signal?: AbortSignal): Promise<void> {
 		const generation = ++listGeneration.current;
@@ -236,6 +238,11 @@ function useScheduledTransactions(currencyCode: string): ScheduledTransactionsSt
 
 	function changeKind(nextKind: TransactionKind): void {
 		setKindValue(nextKind);
+		if (!capabilities.categories) {
+			setCategoryIdValue('');
+
+			return;
+		}
 		setCategoryIdValue(current => {
 			const category = categories.find(item => item.id === current);
 
