@@ -31,3 +31,6 @@ jobs:
     with:
       base-branch: main
       version-command: bun run version
+      use-app-token: true
+    secrets:
+      app-private-key: ${{ secrets.HEXABOT_PRIVATE_KEY }}
