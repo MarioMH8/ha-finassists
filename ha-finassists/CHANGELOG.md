@@ -1,5 +1,12 @@
 # ha-finassists
 
+## 0.4.0
+
+### Minor Changes
+
+- 21b0b60: Add interface flags to hide Administration, the monthly summary, the six-month chart and the scheduled forecast and pending panels from the app options. Flags only affect the web interface and never delete data.
+- 53cedf6: Add the `scheduled_transactions` capability. When disabled, the app hides the Scheduled section, pauses active schedules, stops automatic posting, removes scheduled REST routes and MCP tools, and the integration stops creating scheduled sensors while its scheduled services fail with a clear error. Re-enabling leaves schedules paused so they do not post a backlog.
+
 ## 0.3.0
 
 ### Minor Changes
