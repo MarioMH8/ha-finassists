@@ -2,7 +2,7 @@ import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import { describe, expect, test } from 'bun:test';
 
 import type { AttributeSource } from './settings';
-import { featureAttributes, readShellSettings } from './settings';
+import { ShellSettings } from './settings';
 
 function source(attributes: Record<string, string>): AttributeSource {
 	return {
@@ -12,14 +12,14 @@ function source(attributes: Record<string, string>): AttributeSource {
 	};
 }
 
-describe('readShellSettings', () => {
+describe('ShellSettings', () => {
 	test('falls back to the default settings when the root has no attributes', () => {
-		expect(readShellSettings(null)).toEqual(DEFAULT_SHELL_CONFIG);
+		expect(ShellSettings.fromDocument(null)).toEqual(DEFAULT_SHELL_CONFIG);
 	});
 
-	test('reads explicit feature attributes', () => {
+	test('reads explicit feature attributes from the document', () => {
 		expect(
-			readShellSettings(
+			ShellSettings.fromDocument(
 				source({
 					'data-feature-administration': 'false',
 					'data-feature-month-summary': 'true',
@@ -41,7 +41,7 @@ describe('readShellSettings', () => {
 
 	test('normalizes the chart off when the summary is hidden', () => {
 		expect(
-			readShellSettings(
+			ShellSettings.fromDocument(
 				source({
 					'data-feature-month-summary': 'false',
 					'data-feature-month-summary-chart': 'true',
@@ -55,7 +55,7 @@ describe('readShellSettings', () => {
 
 	test('ignores values that are not true or false', () => {
 		expect(
-			readShellSettings(
+			ShellSettings.fromDocument(
 				source({
 					'data-feature-administration': 'no',
 					'data-feature-month-summary': '1',
@@ -64,11 +64,9 @@ describe('readShellSettings', () => {
 			).features
 		).toEqual(DEFAULT_SHELL_CONFIG.features);
 	});
-});
 
-describe('featureAttributes', () => {
 	test('serializes every UI flag with the same attribute names used for hydration', () => {
-		expect(featureAttributes(DEFAULT_SHELL_CONFIG.features)).toEqual({
+		expect(ShellSettings.toFeatureAttributes(DEFAULT_SHELL_CONFIG.features)).toEqual({
 			'data-feature-administration': 'true',
 			'data-feature-month-summary': 'true',
 			'data-feature-month-summary-chart': 'true',
