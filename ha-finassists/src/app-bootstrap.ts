@@ -23,6 +23,10 @@ async function startApp(): Promise<ReturnType<typeof ApiServer.create>> {
 		currencyCode: config.shellConfig.currencyCode,
 		timeZone: config.timeZone,
 	});
+	const isScheduledTransactionsEnabled = config.shellConfig.features.capabilities.scheduledTransactions;
+	if (!isScheduledTransactionsEnabled) {
+		await container.get('ledgerUseCases').scheduled.pauseActive.execute();
+	}
 	const bootstrapCapability =
 		config.supervisorToken === undefined ? config.bootstrapCapability : BootstrapCapability.create();
 	const isBootstrapCapabilityConfigured =
@@ -54,14 +58,16 @@ async function startApp(): Promise<ReturnType<typeof ApiServer.create>> {
 		}
 	}
 
-	const scheduledPostingJob = new ScheduledPostingJob(
-		container.get('ledgerUseCases').scheduled.postDue,
-		new BunCronScheduler(config.timeZone),
-		error => {
-			process.stderr.write(`Scheduled posting failed: ${String(error)}\n`);
-		}
-	);
-	scheduledPostingJob.start();
+	if (isScheduledTransactionsEnabled) {
+		const scheduledPostingJob = new ScheduledPostingJob(
+			container.get('ledgerUseCases').scheduled.postDue,
+			new BunCronScheduler(config.timeZone),
+			error => {
+				process.stderr.write(`Scheduled posting failed: ${String(error)}\n`);
+			}
+		);
+		scheduledPostingJob.start();
+	}
 
 	return server;
 }

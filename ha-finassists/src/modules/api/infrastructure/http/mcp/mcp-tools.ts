@@ -1,3 +1,5 @@
+import type { FeatureFlags } from '@modules/shell/domain';
+
 import { McpSchemas } from './mcp-schemas';
 
 interface McpTool {
@@ -11,6 +13,15 @@ const SCHEDULED_FREQUENCY_VALUES = ['once', 'daily', 'weekly', 'monthly', 'yearl
 const SCHEDULED_POSTING_MODE_VALUES = ['automatic', 'manual'];
 const SCHEDULED_STATUS_VALUES = ['active', 'paused', 'completed'];
 const SCHEDULED_UPDATE_STATUS_VALUES = ['active', 'paused'];
+const SCHEDULED_TOOL_NAMES = new Set([
+	'create_scheduled_transaction',
+	'delete_scheduled_transaction',
+	'list_scheduled_transactions',
+	'list_upcoming_scheduled_transactions',
+	'post_scheduled_transaction',
+	'skip_scheduled_transaction',
+	'update_scheduled_transaction',
+]);
 
 const TOOLS: McpTool[] = [
 	{
@@ -206,4 +217,16 @@ const TOOLS: McpTool[] = [
 	},
 ];
 
-export { TOOLS };
+class McpTools {
+	private constructor() {}
+
+	static isEnabled(name: string, features: FeatureFlags): boolean {
+		return features.capabilities.scheduledTransactions || !SCHEDULED_TOOL_NAMES.has(name);
+	}
+
+	static list(features: FeatureFlags): McpTool[] {
+		return TOOLS.filter(tool => this.isEnabled(tool.name, features));
+	}
+}
+
+export { McpTools, TOOLS };

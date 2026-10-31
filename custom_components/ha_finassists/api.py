@@ -10,6 +10,8 @@ from urllib.parse import urljoin
 from aiohttp import ClientError, ClientSession, ClientTimeout
 from babel.numbers import get_currency_precision
 
+from .const import DEFAULT_CAPABILITIES
+
 DEFAULT_CURRENCY_CODE = "EUR"
 
 
@@ -106,6 +108,23 @@ class FinAssistApi:
             offset += len(page["items"])
             if offset >= total or not page["items"]:
                 return items
+
+    async def async_fetch_capabilities(self) -> dict[str, bool]:
+        """Read the capabilities enabled by the app."""
+        try:
+            result = await self.async_request("GET", "capabilities")
+        except FinAssistApiError as err:
+            if err.status == 404:
+                return dict(DEFAULT_CAPABILITIES)
+            raise
+        if not isinstance(result, dict) or not isinstance(result.get("features"), dict):
+            raise FinAssistApiError("Fin Assist returned invalid capabilities")
+        features = result["features"]
+
+        return {
+            "categories": bool(features.get("categories", True)),
+            "scheduledTransactions": bool(features.get("scheduledTransactions", True)),
+        }
 
     async def async_fetch_summary(
         self, currency_code: str = DEFAULT_CURRENCY_CODE
