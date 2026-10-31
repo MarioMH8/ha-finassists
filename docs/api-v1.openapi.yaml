@@ -13,7 +13,9 @@ info:
     proxy if needed. Feature capabilities are reported by `/capabilities`.
     Scheduled endpoints return 404 when the app disables the
     `scheduled_transactions` capability; clients must treat a missing
-    capabilities endpoint as all capabilities enabled.
+    capabilities endpoint as all capabilities enabled. When the `categories`
+    capability is disabled, `GET /categories` remains available for existing
+    references and reports, while category mutations return 404.
 servers:
   - url: http://{host}:{port}/api/v1
     variables:

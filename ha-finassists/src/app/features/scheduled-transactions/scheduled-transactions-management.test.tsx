@@ -2,7 +2,7 @@ import { LOAD_STATE } from '@app/features/transactions/transactions-constants';
 import { getCopy } from '@app/i18n';
 import { LocaleProvider } from '@app/i18n/locale-context';
 import { FeatureFlagsProvider } from '@app/shell/feature-flags-context';
-import type { FeatureFlags, UiFeatureFlags } from '@modules/shell/domain';
+import type { CapabilityFeatureFlags, FeatureFlags, UiFeatureFlags } from '@modules/shell/domain';
 import { DEFAULT_FEATURE_FLAGS } from '@modules/shell/domain';
 import { describe, expect, test } from 'bun:test';
 import { createRef } from 'react';
@@ -111,16 +111,21 @@ function state(language: 'en' | 'es', overrides: Partial<ScheduledTransactionsSt
 	};
 }
 
-function features(overrides: Partial<UiFeatureFlags> = {}): FeatureFlags {
+function features(ui: Partial<UiFeatureFlags> = {}, capabilities: Partial<CapabilityFeatureFlags> = {}): FeatureFlags {
 	return {
-		capabilities: DEFAULT_FEATURE_FLAGS.capabilities,
-		ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...overrides },
+		capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, ...capabilities },
+		ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...ui },
 	};
 }
 
-function render(language: 'en' | 'es', element: React.ReactElement, ui: Partial<UiFeatureFlags> = {}): string {
+function render(
+	language: 'en' | 'es',
+	element: React.ReactElement,
+	ui: Partial<UiFeatureFlags> = {},
+	capabilities: Partial<CapabilityFeatureFlags> = {}
+): string {
 	return renderToStaticMarkup(
-		<FeatureFlagsProvider features={features(ui)}>
+		<FeatureFlagsProvider features={features(ui, capabilities)}>
 			<LocaleProvider language={language}>{element}</LocaleProvider>
 		</FeatureFlagsProvider>
 	);
@@ -241,6 +246,32 @@ describe('ScheduledTransactionList', () => {
 			'No se pudieron cargar los movimientos programados.'
 		);
 	});
+
+	test('hides the category column when the capability is off', () => {
+		const markup = render(
+			'en',
+			<ScheduledTransactionList
+				{...state('en', {
+					categories: [
+						{
+							createdAt: '2026-05-01T10:00:00.000Z',
+							id: 'category-1',
+							kind: 'expense',
+							name: 'Food',
+							scheduledTransactionCount: 1,
+							transactionCount: 0,
+						},
+					],
+					schedules: [schedule({ categoryId: 'category-1' })],
+				})}
+			/>,
+			{},
+			{ categories: false }
+		);
+
+		expect(markup).not.toContain('>Category</th>');
+		expect(markup).not.toContain('>Food</td>');
+	});
 });
 
 describe('ScheduledTransactionForm', () => {
@@ -278,5 +309,31 @@ describe('ScheduledTransactionForm', () => {
 		expect(markup).toContain('Introduce un número entre 1 y 999.');
 		expect(markup).toContain('La última fecha debe ser igual o posterior a la primera.');
 		expect(markup).toContain('Los cambios solo afectan a las ocurrencias futuras.');
+	});
+
+	test('hides the category selector when the capability is off', () => {
+		const markup = render(
+			'en',
+			<ScheduledTransactionForm
+				{...state('en', {
+					categories: [
+						{
+							createdAt: '2026-05-01T10:00:00.000Z',
+							id: 'category-1',
+							kind: 'expense',
+							name: 'Food',
+							scheduledTransactionCount: 1,
+							transactionCount: 0,
+						},
+					],
+				})}
+			/>,
+			{},
+			{ categories: false }
+		);
+
+		expect(markup).not.toContain('Category (optional)');
+		expect(markup).not.toContain('scheduled-transaction-category');
+		expect(markup).not.toContain('>Food</option>');
 	});
 });

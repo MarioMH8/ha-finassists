@@ -48,13 +48,20 @@ describe('section route', () => {
 			SECTION.CATEGORIES,
 			SECTION.ADMINISTRATION,
 		]);
+		expect(visibleSections(features({}, { categories: false }))).toEqual([
+			SECTION.TRANSACTIONS,
+			SECTION.SCHEDULED,
+			SECTION.ADMINISTRATION,
+		]);
 	});
 
 	test('falls back to the first visible section for a hidden hash', () => {
-		const sections = visibleSections(features({ administration: false }, { scheduledTransactions: false }));
+		const sections = visibleSections(
+			features({ administration: false }, { categories: false, scheduledTransactions: false })
+		);
 
 		expect(parseSectionHash('#/administration', sections)).toBe(SECTION.TRANSACTIONS);
 		expect(parseSectionHash('#/scheduled', sections)).toBe(SECTION.TRANSACTIONS);
-		expect(parseSectionHash('#/categories', sections)).toBe(SECTION.CATEGORIES);
+		expect(parseSectionHash('#/categories', sections)).toBe(SECTION.TRANSACTIONS);
 	});
 });
