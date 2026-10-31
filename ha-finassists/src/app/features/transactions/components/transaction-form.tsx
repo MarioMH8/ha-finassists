@@ -11,6 +11,7 @@ import { TRANSACTION_KIND } from '@app/features/transactions/transactions-api';
 import type { TransactionsState } from '@app/features/transactions/use-transactions.hook';
 import type { Copy } from '@app/i18n';
 import { interpolate } from '@app/i18n';
+import { useFeatureFlags } from '@app/shell/feature-flags-context';
 import type { ReactElement } from 'react';
 
 import styles from './transaction-form.module.css';
@@ -100,6 +101,7 @@ function TransactionForm({
 	setKind,
 	submit,
 }: TransactionFormProps): ReactElement {
+	const { capabilities } = useFeatureFlags();
 	const isEditing = editingTransactionId !== undefined;
 	const kindCategories = categories.filter(category => category.kind === kind);
 	const amountHint = interpolate(copy.transactionAmountHint, {
@@ -208,28 +210,30 @@ function TransactionForm({
 							value={date}
 						/>
 					</Field>
-					<Field
-						className={styles.description}
-						htmlFor='transaction-category'
-						label={copy.transactionCategoryLabel}>
-						<Select
-							id='transaction-category'
-							name='categoryId'
-							onChange={event => {
-								setCategoryId(event.currentTarget.value);
-							}}
-							size={SELECT_SIZE.SMALL}
-							value={categoryId}>
-							<option value=''>{copy.transactionCategoryNone}</option>
-							{kindCategories.map(category => (
-								<option
-									key={category.id}
-									value={category.id}>
-									{category.name}
-								</option>
-							))}
-						</Select>
-					</Field>
+					{capabilities.categories ? (
+						<Field
+							className={styles.description}
+							htmlFor='transaction-category'
+							label={copy.transactionCategoryLabel}>
+							<Select
+								id='transaction-category'
+								name='categoryId'
+								onChange={event => {
+									setCategoryId(event.currentTarget.value);
+								}}
+								size={SELECT_SIZE.SMALL}
+								value={categoryId}>
+								<option value=''>{copy.transactionCategoryNone}</option>
+								{kindCategories.map(category => (
+									<option
+										key={category.id}
+										value={category.id}>
+										{category.name}
+									</option>
+								))}
+							</Select>
+						</Field>
+					) : undefined}
 					<Field
 						className={styles.description}
 						error={descriptionError}
