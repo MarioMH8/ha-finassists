@@ -1,4 +1,5 @@
 import { Notice, NOTICE_TONE } from '@app/components/notice';
+import { useFeatureFlags } from '@app/shell/feature-flags-context';
 import type { ReactElement } from 'react';
 
 import { ScheduledPendingList } from './components/scheduled-pending-list';
@@ -12,6 +13,7 @@ interface ScheduledTransactionsManagementProps {
 }
 
 function ScheduledTransactionsManagement({ currencyCode }: ScheduledTransactionsManagementProps): ReactElement {
+	const { ui } = useFeatureFlags();
 	const state = useScheduledTransactions(currencyCode);
 
 	return (
@@ -21,8 +23,8 @@ function ScheduledTransactionsManagement({ currencyCode }: ScheduledTransactions
 					{state.feedback.message}
 				</Notice>
 			) : undefined}
-			<ScheduledSummary {...state} />
-			<ScheduledPendingList {...state} />
+			{ui.scheduledSummary ? <ScheduledSummary {...state} /> : undefined}
+			{ui.scheduledPending ? <ScheduledPendingList {...state} /> : undefined}
 			<ScheduledTransactionList {...state} />
 			<ScheduledTransactionForm {...state} />
 		</>

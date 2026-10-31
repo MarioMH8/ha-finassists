@@ -9,6 +9,7 @@ import { LOAD_STATE } from '@app/features/transactions/transactions-constants';
 import type { Copy } from '@app/i18n';
 import type { Language } from '@app/i18n/language';
 import { useLocale } from '@app/i18n/locale-context';
+import { useFeatureFlags } from '@app/shell/feature-flags-context';
 import type { ChangeEvent, Dispatch, RefObject, SetStateAction, SubmitEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -101,6 +102,7 @@ function amountInputValue(schedule: ScheduledTransaction, currencyCode: string, 
 
 function useScheduledTransactions(currencyCode: string): ScheduledTransactionsState {
 	const { copy, language } = useLocale();
+	const { ui } = useFeatureFlags();
 	const [schedules, setSchedules] = useState<ScheduledTransaction[]>([]);
 	const [today, setToday] = useState(todayIsoDate());
 	const [listState, setListState] = useState<LoadState>(LOAD_STATE.LOADING);
@@ -137,11 +139,13 @@ function useScheduledTransactions(currencyCode: string): ScheduledTransactionsSt
 		setStartDateValue(current => current || todayIsoDate());
 		const controller = new AbortController();
 		void loadSchedules(controller.signal);
-		void loadForecast(controller.signal);
+		if (ui.scheduledSummary) {
+			void loadForecast(controller.signal);
+		}
 		void loadCategories(controller.signal);
 
 		return () => controller.abort();
-	}, []);
+	}, [ui.scheduledSummary]);
 
 	async function loadSchedules(signal?: AbortSignal): Promise<void> {
 		const generation = ++listGeneration.current;
@@ -188,7 +192,7 @@ function useScheduledTransactions(currencyCode: string): ScheduledTransactionsSt
 	}
 
 	async function refresh(): Promise<void> {
-		await Promise.all([loadSchedules(), loadForecast()]);
+		await Promise.all([loadSchedules(), ...(ui.scheduledSummary ? [loadForecast()] : [])]);
 	}
 
 	function openCreate(): void {

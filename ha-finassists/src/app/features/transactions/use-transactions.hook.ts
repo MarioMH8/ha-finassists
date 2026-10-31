@@ -3,6 +3,7 @@ import { fetchCategories } from '@app/features/categories/categories-api';
 import type { Copy } from '@app/i18n';
 import type { Language } from '@app/i18n/language';
 import { useLocale } from '@app/i18n/locale-context';
+import { useFeatureFlags } from '@app/shell/feature-flags-context';
 import type { ChangeEvent, Dispatch, RefObject, SetStateAction, SubmitEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -93,6 +94,7 @@ function amountInputValue(transaction: Transaction, currencyCode: string, langua
 
 function useTransactions(currencyCode: string): TransactionsState {
 	const { copy, language } = useLocale();
+	const { ui } = useFeatureFlags();
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
 	const [total, setTotal] = useState(0);
 	const [listState, setListState] = useState<LoadState>(LOAD_STATE.LOADING);
@@ -139,11 +141,13 @@ function useTransactions(currencyCode: string): TransactionsState {
 		// The default date depends on the browser clock, so it is set after hydration.
 		setDateValue(current => current || todayIsoDate());
 		const controller = new AbortController();
-		void loadSummary(controller.signal);
+		if (ui.monthSummary) {
+			void loadSummary(controller.signal);
+		}
 		void loadCategories(controller.signal);
 
 		return () => controller.abort();
-	}, []);
+	}, [ui.monthSummary]);
 
 	useEffect(() => {
 		const controller = new AbortController();
@@ -224,7 +228,7 @@ function useTransactions(currencyCode: string): TransactionsState {
 	}
 
 	async function refresh(): Promise<void> {
-		await Promise.all([loadList(), loadSummary()]);
+		await Promise.all([loadList(), ...(ui.monthSummary ? [loadSummary()] : [])]);
 	}
 
 	async function removeTransaction(transaction: Transaction): Promise<void> {
