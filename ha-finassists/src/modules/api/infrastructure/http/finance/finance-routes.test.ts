@@ -1223,6 +1223,33 @@ describe('scheduled transactions capability', () => {
 		expect(response.status).toBe(404);
 	});
 
+	it('keeps transactions and categories available when scheduled is off', async () => {
+		const { useCases } = setup();
+		const features = disabledFeatures();
+		const transactions = await send(useCases, '/api/v1/transactions', 'GET', undefined, features);
+		const categories = await send(useCases, '/api/v1/categories', 'GET', undefined, features);
+
+		expect(transactions.status).toBe(200);
+		expect(categories.status).toBe(200);
+	});
+
+	it('keeps transactions available through the HTTP application when scheduled is off', async () => {
+		const { authorization, container } = await authenticatedContainer();
+		const response = await HttpApplication.handle(
+			new Request('http://localhost/api/v1/transactions', {
+				headers: { Authorization: authorization },
+			}),
+			{
+				remoteAddress: '[IP_ADDRESS]',
+				shellConfig: { ...DEFAULT_SHELL_CONFIG, features: disabledFeatures() },
+				trustedIngressIp: '::1',
+			},
+			container
+		);
+
+		expect(response.status).toBe(200);
+	});
+
 	it('removes scheduled tools from the MCP list and rejects calls', async () => {
 		const { authorization, tokenUseCases, useCases } = await authenticatedContainer();
 		const call = (message: unknown) =>
