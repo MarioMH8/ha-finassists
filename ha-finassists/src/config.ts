@@ -2,8 +2,8 @@ import { isIP } from 'node:net';
 
 import type { HomeAssistantActor } from '@modules/home-assistant';
 import { DEFAULT_TRUSTED_INGRESS_IP } from '@modules/home-assistant';
-import type { ShellConfig } from '@modules/shell/domain';
-import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
+import type { FeatureFlags, ShellConfig } from '@modules/shell/domain';
+import { DEFAULT_FEATURE_FLAGS, DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import { z } from 'zod';
 
 interface ServerConfig {
@@ -39,8 +39,13 @@ interface LoadServerConfigOptions {
 
 const homeAssistantOptionsSchema = z
 	.object({
+		administration: z.boolean().optional().catch(undefined),
 		application_name: z.string().optional().catch(undefined),
 		currency: z.string().optional().catch(undefined),
+		month_summary: z.boolean().optional().catch(undefined),
+		month_summary_chart: z.boolean().optional().catch(undefined),
+		scheduled_pending: z.boolean().optional().catch(undefined),
+		scheduled_summary: z.boolean().optional().catch(undefined),
 		supervisor_ip: z.string().optional().catch(undefined),
 	})
 	.catch({});
@@ -84,6 +89,7 @@ class ServerConfigLoader {
 					? normalizedName
 					: DEFAULT_SHELL_CONFIG.applicationName,
 			currencyCode: this.normalizeCurrencyCode(options.currency),
+			features: this.resolveFeatureFlags(options),
 		};
 
 		const bootstrapCapability = this.readOptionalEnvironmentValue(
@@ -163,6 +169,28 @@ class ServerConfigLoader {
 		}
 
 		return file.json();
+	}
+
+	private static resolveFeatureFlags(options: {
+		administration?: boolean | undefined;
+		month_summary?: boolean | undefined;
+		month_summary_chart?: boolean | undefined;
+		scheduled_pending?: boolean | undefined;
+		scheduled_summary?: boolean | undefined;
+	}): FeatureFlags {
+		const isMonthSummaryEnabled = options.month_summary ?? DEFAULT_FEATURE_FLAGS.ui.monthSummary;
+
+		return {
+			ui: {
+				administration: options.administration ?? DEFAULT_FEATURE_FLAGS.ui.administration,
+				monthSummary: isMonthSummaryEnabled,
+				monthSummaryChart:
+					isMonthSummaryEnabled &&
+					(options.month_summary_chart ?? DEFAULT_FEATURE_FLAGS.ui.monthSummaryChart),
+				scheduledPending: options.scheduled_pending ?? DEFAULT_FEATURE_FLAGS.ui.scheduledPending,
+				scheduledSummary: options.scheduled_summary ?? DEFAULT_FEATURE_FLAGS.ui.scheduledSummary,
+			},
+		};
 	}
 
 	private static resolveTimeZone(value: string | undefined): string {

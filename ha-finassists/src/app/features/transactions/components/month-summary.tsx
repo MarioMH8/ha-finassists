@@ -7,6 +7,7 @@ import { SectionHeading } from '@app/components/section-heading';
 import { formatMinorUnits } from '@app/features/transactions/transaction-amount';
 import { LOAD_STATE } from '@app/features/transactions/transactions-constants';
 import type { TransactionsState } from '@app/features/transactions/use-transactions.hook';
+import { useFeatureFlags } from '@app/shell/feature-flags-context';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 
@@ -42,6 +43,7 @@ function deltaArrow(delta: number): string {
 }
 
 function MonthSummary({ copy, currencyCode, language, summary, summaryState }: MonthSummaryProps): ReactElement {
+	const { ui } = useFeatureFlags();
 	const [isChartOpen, setIsChartOpen] = useState(false);
 	const metrics = summary
 		? [
@@ -96,7 +98,7 @@ function MonthSummary({ copy, currencyCode, language, summary, summaryState }: M
 			aria-labelledby='month-summary-title'
 			className={styles.card}>
 			<SectionHeading
-				actions={chartToggle}
+				actions={ui.monthSummaryChart ? chartToggle : undefined}
 				description={copy.monthSummaryDescription}
 				level={3}
 				title={copy.monthSummaryTitle}
@@ -149,24 +151,26 @@ function MonthSummary({ copy, currencyCode, language, summary, summaryState }: M
 							);
 						})}
 					</dl>
-					<section
-						aria-labelledby='month-summary-chart-title'
-						className={styles.chartSection}
-						hidden={!isChartOpen}
-						id='month-summary-chart'>
-						<div className={styles.chartHeading}>
-							<h4 id='month-summary-chart-title'>{copy.monthSummaryChartTitle}</h4>
-							<p>{copy.monthSummaryChartDescription}</p>
-						</div>
-						{isChartOpen ? (
-							<MonthlyFlowChart
-								copy={copy}
-								currencyCode={currencyCode}
-								language={language}
-								months={summary.months}
-							/>
-						) : undefined}
-					</section>
+					{ui.monthSummaryChart ? (
+						<section
+							aria-labelledby='month-summary-chart-title'
+							className={styles.chartSection}
+							hidden={!isChartOpen}
+							id='month-summary-chart'>
+							<div className={styles.chartHeading}>
+								<h4 id='month-summary-chart-title'>{copy.monthSummaryChartTitle}</h4>
+								<p>{copy.monthSummaryChartDescription}</p>
+							</div>
+							{isChartOpen ? (
+								<MonthlyFlowChart
+									copy={copy}
+									currencyCode={currencyCode}
+									language={language}
+									months={summary.months}
+								/>
+							) : undefined}
+						</section>
+					) : undefined}
 				</>
 			) : (
 				<MonthSummarySkeleton copy={copy} />
