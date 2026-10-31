@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DEFAULT_CAPABILITIES, DOMAIN
 
 SENSORS = (
     ("income", "Income this month", "income_minor", "mdi:cash-plus"),
@@ -52,14 +52,16 @@ def _scale(currency_code: str) -> Decimal:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: Any) -> None:
     """Create the recorded and scheduled sensors for the entry."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    runtime = hass.data[DOMAIN][entry.entry_id]
+    coordinator = runtime["coordinator"]
     entities: list[Any] = [
         FinAssistMonthlyTotalSensor(coordinator, entry, *sensor) for sensor in SENSORS
     ]
-    entities.extend(
-        FinAssistScheduledTotalSensor(coordinator, entry, *sensor) for sensor in SCHEDULED_SENSORS
-    )
-    entities.append(FinAssistScheduledDueSensor(coordinator, entry))
+    if runtime.get("capabilities", DEFAULT_CAPABILITIES).get("scheduledTransactions", True):
+        entities.extend(
+            FinAssistScheduledTotalSensor(coordinator, entry, *sensor) for sensor in SCHEDULED_SENSORS
+        )
+        entities.append(FinAssistScheduledDueSensor(coordinator, entry))
     async_add_entities(entities)
 
 

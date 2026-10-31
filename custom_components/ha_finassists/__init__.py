@@ -15,10 +15,17 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady, HomeAssistantError
 
 from .api import FinAssistApi, FinAssistApiError
-from .const import CONF_BASE_URL, CONF_SYSTEM_TOKEN, DOMAIN, PLATFORMS, UPDATE_INTERVAL
+from .const import (
+    CONF_BASE_URL,
+    CONF_SYSTEM_TOKEN,
+    DEFAULT_CAPABILITIES,
+    DOMAIN,
+    PLATFORMS,
+    UPDATE_INTERVAL,
+)
 
 SERVICE_REFRESH = "refresh"
 SERVICE_ADD_EXPENSE = "add_expense"
@@ -52,23 +59,42 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     session = async_get_clientsession(hass)
     base_url = entry.options.get(CONF_BASE_URL, entry.data[CONF_BASE_URL])
     api = FinAssistApi(base_url, entry.data[CONF_SYSTEM_TOKEN], session)
+    try:
+        capabilities = await api.async_fetch_capabilities()
+    except FinAssistApiError as err:
+        if err.status == 401:
+            raise ConfigEntryAuthFailed("Fin Assist system credential is no longer valid") from err
+        raise ConfigEntryNotReady(str(err)) from err
 
     async def async_update_data() -> dict[str, Any]:
+        try:
+            current_capabilities = await api.async_fetch_capabilities()
+        except FinAssistApiError as err:
+            if err.status == 401:
+                raise ConfigEntryAuthFailed("Fin Assist system credential is no longer valid") from err
+            current_capabilities = runtime["capabilities"]
+        else:
+            if current_capabilities != runtime["capabilities"]:
+                runtime["capabilities"] = current_capabilities
+                hass.config_entries.async_schedule_reload(entry.entry_id)
         try:
             summary = await api.async_fetch_summary()
         except FinAssistApiError as err:
             if err.status == 401:
                 raise ConfigEntryAuthFailed("Fin Assist system credential is no longer valid") from err
             raise UpdateFailed(str(err)) from err
-        try:
-            scheduled = await api.async_fetch_scheduled_summary()
-        except FinAssistApiError as err:
-            if err.status == 401:
-                raise ConfigEntryAuthFailed("Fin Assist system credential is no longer valid") from err
-            # Recorded totals stay available when the forecast is temporarily unavailable.
-            scheduled = {"scheduled_error": str(err)}
+        scheduled: dict[str, Any] = {}
+        if runtime["capabilities"]["scheduledTransactions"]:
+            try:
+                scheduled = await api.async_fetch_scheduled_summary()
+            except FinAssistApiError as err:
+                if err.status == 401:
+                    raise ConfigEntryAuthFailed("Fin Assist system credential is no longer valid") from err
+                # Recorded totals stay available when the forecast is temporarily unavailable.
+                scheduled = {"scheduled_error": str(err)}
         return {**summary, **scheduled}
 
+    runtime: dict[str, Any] = {"api": api, "capabilities": capabilities}
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
@@ -77,7 +103,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=UPDATE_INTERVAL,
     )
     await coordinator.async_config_entry_first_refresh()
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {"api": api, "coordinator": coordinator}
+    runtime["coordinator"] = coordinator
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = runtime
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await _async_register_card(hass)
     _async_register_services(hass)
@@ -152,6 +179,12 @@ async def _async_resolve_category(api: FinAssistApi, kind: str, name: str) -> st
         ):
             return category_id
     raise ValueError(f"Unknown Fin Assist category: {name}")
+
+
+def _require_scheduled_transactions(runtime: dict[str, Any]) -> None:
+    """Reject scheduled service calls when the app disabled the capability."""
+    if not runtime.get("capabilities", DEFAULT_CAPABILITIES).get("scheduledTransactions", True):
+        raise HomeAssistantError("Scheduled transactions are disabled in Fin Assist")
 
 
 def _async_register_services(hass: HomeAssistant) -> None:
@@ -235,6 +268,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
             runtime = hass.data.get(DOMAIN, {}).get(call.data["entry_id"])
             if runtime is None:
                 raise ValueError("Unknown Fin Assist config entry")
+            _require_scheduled_transactions(runtime)
             coordinator = runtime["coordinator"]
             frequency = str(call.data["frequency"])
             if frequency not in {"once", "daily", "weekly", "monthly", "yearly"}:
@@ -292,6 +326,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
             runtime = hass.data.get(DOMAIN, {}).get(call.data["entry_id"])
             if runtime is None:
                 raise ValueError("Unknown Fin Assist config entry")
+            _require_scheduled_transactions(runtime)
             try:
                 await getattr(runtime["api"], api_method)(call.data["scheduled_transaction_id"])
             except FinAssistApiError as err:

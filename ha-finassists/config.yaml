@@ -28,6 +28,7 @@ options:
   month_summary_chart: true
   scheduled_summary: true
   scheduled_pending: true
+  scheduled_transactions: true
 schema:
   supervisor_ip: str
   application_name: str
@@ -37,3 +38,4 @@ schema:
   month_summary_chart: bool
   scheduled_summary: bool
   scheduled_pending: bool
+  scheduled_transactions: bool

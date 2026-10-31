@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/name-replacements -- The adapter keeps its full domain name. */
 import { inferdiHono } from '@inferdi/hono';
 import { TrustedIngressPeer } from '@modules/home-assistant';
-import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
+import { DEFAULT_FEATURE_FLAGS, DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { createMiddleware } from 'hono/factory';
@@ -9,6 +9,7 @@ import { createMiddleware } from 'hono/factory';
 import { FinancialAuthentication } from './auth/financial-authentication';
 import { SystemCredentialRoutes } from './auth/system-credential-routes';
 import { TokenRoutes } from './auth/token-routes';
+import { CapabilitiesRoute } from './capabilities-route';
 import type { FinanceEnvironment } from './finance/finance-route-types';
 import { FinanceRoutes } from './finance/finance-routes';
 import { McpTransport } from './mcp/mcp-transport';
@@ -30,11 +31,16 @@ class HttpApplication {
 			context.res = SecurityHeaders.apply(context.res);
 		});
 		app.use('*', inferdiHono({ container }));
+		app.use('*', async (context, next) => {
+			context.set('features', context.env.requestContext.shellConfig?.features ?? DEFAULT_FEATURE_FLAGS);
+			await next();
+		});
 
 		app.get('/health', () => HttpResponses.json({ status: 'ok' }));
 		app.route('/api/v1/tokens', TokenRoutes.create());
 		app.route('/api/v1/system-credentials', SystemCredentialRoutes.create());
 		app.get('/api/v1/session', SessionRoute.create());
+		app.get('/api/v1/capabilities', CapabilitiesRoute.create());
 		app.route('/api/v1', this.createFinanceApp());
 		app.all('*', this.createFallbackRoute());
 		app.onError(() => SecurityHeaders.apply(HttpResponses.text('Internal Server Error', 500)));
@@ -60,7 +66,8 @@ class HttpApplication {
 							context.req.raw,
 							context.var.di.get('tokenUseCases'),
 							financeUseCases,
-							context.var.di.get('systemCredentialUseCases')
+							context.var.di.get('systemCredentialUseCases'),
+							context.var.features
 						);
 			}
 

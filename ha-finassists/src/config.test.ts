@@ -24,6 +24,10 @@ describe('ServerConfigLoader.load', () => {
 				applicationName: 'Fin Assist',
 				currencyCode: 'EUR',
 				features: {
+					capabilities: {
+						categories: true,
+						scheduledTransactions: true,
+					},
 					ui: {
 						administration: true,
 						monthSummary: true,
@@ -76,6 +80,7 @@ describe('ServerConfigLoader.load', () => {
 					month_summary_chart: null,
 					scheduled_pending: [],
 					scheduled_summary: 'true',
+					scheduled_transactions: 'false',
 					supervisor_ip: ['127.0.0.1'],
 				})
 			);
@@ -88,6 +93,10 @@ describe('ServerConfigLoader.load', () => {
 				applicationName: 'Fin Assist',
 				currencyCode: 'EUR',
 				features: {
+					capabilities: {
+						categories: true,
+						scheduledTransactions: true,
+					},
 					ui: {
 						administration: true,
 						monthSummary: true,
@@ -124,6 +133,10 @@ describe('ServerConfigLoader.load', () => {
 			});
 
 			expect(config.shellConfig.features).toEqual({
+				capabilities: {
+					categories: true,
+					scheduledTransactions: true,
+				},
 				ui: {
 					administration: false,
 					monthSummary: false,
@@ -131,6 +144,26 @@ describe('ServerConfigLoader.load', () => {
 					scheduledPending: false,
 					scheduledSummary: true,
 				},
+			});
+		} finally {
+			await rm(directory, { force: true, recursive: true });
+		}
+	});
+
+	it('reads the scheduled transactions capability', async () => {
+		const directory = await mkdtemp(path.join(tmpdir(), 'fin-assist-config-'));
+		const optionsPath = path.join(directory, 'options.json');
+
+		try {
+			await writeFile(optionsPath, JSON.stringify({ scheduled_transactions: false }));
+			const config = await ServerConfigLoader.load({
+				environment: { NODE_ENV: 'production' },
+				optionsPath,
+			});
+
+			expect(config.shellConfig.features.capabilities).toEqual({
+				categories: true,
+				scheduledTransactions: false,
 			});
 		} finally {
 			await rm(directory, { force: true, recursive: true });

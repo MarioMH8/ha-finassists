@@ -1,4 +1,4 @@
-import type { FeatureFlags, UiFeatureFlags } from '@modules/shell/domain';
+import type { CapabilityFeatureFlags, FeatureFlags, UiFeatureFlags } from '@modules/shell/domain';
 import { DEFAULT_FEATURE_FLAGS } from '@modules/shell/domain';
 import { describe, expect, test } from 'bun:test';
 
@@ -11,8 +11,11 @@ import {
 	visibleSections,
 } from './section-route';
 
-function features(overrides: Partial<UiFeatureFlags> = {}): FeatureFlags {
-	return { ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...overrides } };
+function features(ui: Partial<UiFeatureFlags> = {}, capabilities: Partial<CapabilityFeatureFlags> = {}): FeatureFlags {
+	return {
+		capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, ...capabilities },
+		ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...ui },
+	};
 }
 
 describe('section route', () => {
@@ -40,12 +43,18 @@ describe('section route', () => {
 			SECTION.SCHEDULED,
 			SECTION.CATEGORIES,
 		]);
+		expect(visibleSections(features({}, { scheduledTransactions: false }))).toEqual([
+			SECTION.TRANSACTIONS,
+			SECTION.CATEGORIES,
+			SECTION.ADMINISTRATION,
+		]);
 	});
 
 	test('falls back to the first visible section for a hidden hash', () => {
-		const sections = visibleSections(features({ administration: false }));
+		const sections = visibleSections(features({ administration: false }, { scheduledTransactions: false }));
 
 		expect(parseSectionHash('#/administration', sections)).toBe(SECTION.TRANSACTIONS);
-		expect(parseSectionHash('#/scheduled', sections)).toBe(SECTION.SCHEDULED);
+		expect(parseSectionHash('#/scheduled', sections)).toBe(SECTION.TRANSACTIONS);
+		expect(parseSectionHash('#/categories', sections)).toBe(SECTION.CATEGORIES);
 	});
 });

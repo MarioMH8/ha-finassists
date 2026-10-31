@@ -90,6 +90,8 @@ def _install_home_assistant_stubs() -> None:
     http.StaticPathConfig = type("StaticPathConfig", (), {})
     exceptions = types.ModuleType("homeassistant.exceptions")
     exceptions.ConfigEntryAuthFailed = type("ConfigEntryAuthFailed", (Exception,), {})
+    exceptions.ConfigEntryNotReady = type("ConfigEntryNotReady", (Exception,), {})
+    exceptions.HomeAssistantError = type("HomeAssistantError", (Exception,), {})
     helpers.aiohttp_client = aiohttp_client
     helpers.service_info = service_info
     service_info.hassio = hassio
@@ -143,6 +145,7 @@ _install_home_assistant_stubs()
 
 import custom_components.ha_finassists as integration  # noqa: E402
 from custom_components.ha_finassists import config_flow  # noqa: E402
+from custom_components.ha_finassists import sensor as sensor_module  # noqa: E402
 from custom_components.ha_finassists.api import FinAssistApi, FinAssistApiError  # noqa: E402
 from custom_components.ha_finassists.sensor import (  # noqa: E402
     FinAssistMonthlyTotalSensor,
@@ -302,6 +305,8 @@ class ConfigFlowTests(unittest.IsolatedAsyncioTestCase):
 
 
 class _SetupApi:
+    capabilities_error: FinAssistApiError | None = None
+    capabilities: dict[str, bool] = {"categories": True, "scheduledTransactions": True}
     error: FinAssistApiError | None = None
     instances: list["_SetupApi"] = []
 
@@ -309,6 +314,11 @@ class _SetupApi:
         self.base_url = base_url
         self.token = token
         self.__class__.instances.append(self)
+
+    async def async_fetch_capabilities(self) -> dict[str, bool]:
+        if self.capabilities_error:
+            raise self.capabilities_error
+        return dict(self.capabilities)
 
     async def async_fetch_summary(self) -> dict[str, Any]:
         if self.error:
@@ -351,6 +361,8 @@ class _SetupCoordinator:
 
 class IntegrationSetupTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
+        _SetupApi.capabilities = {"categories": True, "scheduledTransactions": True}
+        _SetupApi.capabilities_error = None
         _SetupApi.error = None
         _SetupApi.instances.clear()
         _SetupCoordinator.instances.clear()
@@ -370,7 +382,10 @@ class IntegrationSetupTests(unittest.IsolatedAsyncioTestCase):
         return SimpleNamespace(
             data={},
             session=object(),
-            config_entries=SimpleNamespace(async_forward_entry_setups=AsyncMock()),
+            config_entries=SimpleNamespace(
+                async_forward_entry_setups=AsyncMock(),
+                async_schedule_reload=Mock(),
+            ),
         )
 
     async def test_setup_fetches_initial_data_and_registers_platforms(self) -> None:
@@ -423,6 +438,50 @@ class IntegrationSetupTests(unittest.IsolatedAsyncioTestCase):
                 await integration.async_setup_entry(hass, entry)
 
         self.assertEqual(hass.data, {})
+
+    async def test_setup_skips_scheduled_data_when_the_capability_is_off(self) -> None:
+        _SetupApi.capabilities = {"categories": True, "scheduledTransactions": False}
+        entry = self._entry()
+        hass = self._hass()
+        with (
+            patch.object(integration, "FinAssistApi", _SetupApi),
+            patch.object(integration, "DataUpdateCoordinator", _SetupCoordinator),
+            patch.object(integration, "async_get_clientsession", return_value="session"),
+            patch.object(integration, "_async_register_card", new_callable=AsyncMock),
+            patch.object(integration, "_async_register_services"),
+        ):
+            self.assertTrue(await integration.async_setup_entry(hass, entry))
+
+        runtime = hass.data[integration.DOMAIN][entry.entry_id]
+        self.assertEqual(runtime["capabilities"], {"categories": True, "scheduledTransactions": False})
+        self.assertNotIn("scheduled_income_minor", runtime["coordinator"].data)
+
+    async def test_capability_change_schedules_a_config_entry_reload(self) -> None:
+        entry = self._entry()
+        hass = self._hass()
+        with (
+            patch.object(integration, "FinAssistApi", _SetupApi),
+            patch.object(integration, "DataUpdateCoordinator", _SetupCoordinator),
+            patch.object(integration, "async_get_clientsession", return_value="session"),
+            patch.object(integration, "_async_register_card", new_callable=AsyncMock),
+            patch.object(integration, "_async_register_services"),
+        ):
+            self.assertTrue(await integration.async_setup_entry(hass, entry))
+
+        coordinator = _SetupCoordinator.instances[0]
+        _SetupApi.capabilities = {"categories": True, "scheduledTransactions": False}
+        await coordinator.update_method()
+
+        hass.config_entries.async_schedule_reload.assert_called_once_with("entry-1")
+        self.assertFalse(
+            hass.data[integration.DOMAIN][entry.entry_id]["capabilities"]["scheduledTransactions"]
+        )
+
+    def test_scheduled_services_reject_a_disabled_capability(self) -> None:
+        with self.assertRaises(integration.HomeAssistantError):
+            integration._require_scheduled_transactions(
+                {"capabilities": {"categories": True, "scheduledTransactions": False}}
+            )
 
 
 class SensorTests(unittest.TestCase):
@@ -534,6 +593,57 @@ class SensorTests(unittest.TestCase):
         self.assertEqual(sensor.extra_state_attributes["items"], [{"id": "a"}])
 
 
+class SensorSetupTests(unittest.IsolatedAsyncioTestCase):
+    async def test_skips_scheduled_sensors_when_the_capability_is_off(self) -> None:
+        coordinator = SimpleNamespace(data={})
+        hass = SimpleNamespace(
+            data={
+                "ha_finassists": {
+                    "entry-1": {
+                        "capabilities": {"categories": True, "scheduledTransactions": False},
+                        "coordinator": coordinator,
+                    }
+                }
+            }
+        )
+        added: list[Any] = []
+
+        def add_entities(entities: list[Any]) -> None:
+            added.extend(entities)
+
+        await sensor_module.async_setup_entry(
+            hass, SimpleNamespace(entry_id="entry-1"), add_entities
+        )
+
+        self.assertEqual(len(added), len(sensor_module.SENSORS))
+
+    async def test_adds_scheduled_sensors_when_the_capability_is_on(self) -> None:
+        coordinator = SimpleNamespace(data={})
+        hass = SimpleNamespace(
+            data={
+                "ha_finassists": {
+                    "entry-1": {
+                        "capabilities": {"categories": True, "scheduledTransactions": True},
+                        "coordinator": coordinator,
+                    }
+                }
+            }
+        )
+        added: list[Any] = []
+
+        def add_entities(entities: list[Any]) -> None:
+            added.extend(entities)
+
+        await sensor_module.async_setup_entry(
+            hass, SimpleNamespace(entry_id="entry-1"), add_entities
+        )
+
+        self.assertEqual(
+            len(added),
+            len(sensor_module.SENSORS) + len(sensor_module.SCHEDULED_SENSORS) + 1,
+        )
+
+
 class _Response:
     def __init__(
         self, status: int = 200, payload: Any = None, malformed_json: bool = False
@@ -569,6 +679,16 @@ class _Session:
         payload = {"id": "credential-1", "credential": "long-lived-secret"}
         status = 204 if method == "DELETE" else 200
         return _RequestContext(_Response(status, payload))
+
+
+class _StaticSession:
+    def __init__(self, response: _Response) -> None:
+        self.response = response
+        self.calls: list[dict[str, Any]] = []
+
+    def request(self, method: str, url: str, **kwargs: Any) -> _RequestContext:
+        self.calls.append({"method": method, "url": url, **kwargs})
+        return _RequestContext(self.response)
 
 
 class CredentialLifecycleTests(unittest.IsolatedAsyncioTestCase):
@@ -709,6 +829,33 @@ class TransactionApiTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(summary["currencyCode"], "EUR")
         self.assertEqual((summary["income_minor"], summary["expense_minor"]), (0, 0))
+
+    async def test_capabilities_default_to_enabled_when_the_endpoint_is_missing(self) -> None:
+        session = _StaticSession(_Response(404, {"error": "Not found"}))
+        capabilities = await FinAssistApi(
+            "http://fin-assist/api/v1", "token", session
+        ).async_fetch_capabilities()
+
+        self.assertEqual(
+            capabilities, {"categories": True, "scheduledTransactions": True}
+        )
+
+    async def test_capabilities_parse_the_feature_flags(self) -> None:
+        session = _StaticSession(
+            _Response(
+                200,
+                {"features": {"categories": False, "scheduledTransactions": False}},
+            )
+        )
+        capabilities = await FinAssistApi(
+            "http://fin-assist/api/v1", "token", session
+        ).async_fetch_capabilities()
+
+        self.assertEqual(
+            capabilities, {"categories": False, "scheduledTransactions": False}
+        )
+        self.assertEqual(session.calls[0]["method"], "GET")
+        self.assertTrue(session.calls[0]["url"].endswith("/capabilities"))
 
     async def test_create_transaction_posts_contract_body(self) -> None:
         session = _PagedSession([])

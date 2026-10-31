@@ -46,6 +46,7 @@ const homeAssistantOptionsSchema = z
 		month_summary_chart: z.boolean().optional().catch(undefined),
 		scheduled_pending: z.boolean().optional().catch(undefined),
 		scheduled_summary: z.boolean().optional().catch(undefined),
+		scheduled_transactions: z.boolean().optional().catch(undefined),
 		supervisor_ip: z.string().optional().catch(undefined),
 	})
 	.catch({});
@@ -177,10 +178,16 @@ class ServerConfigLoader {
 		month_summary_chart?: boolean | undefined;
 		scheduled_pending?: boolean | undefined;
 		scheduled_summary?: boolean | undefined;
+		scheduled_transactions?: boolean | undefined;
 	}): FeatureFlags {
 		const isMonthSummaryEnabled = options.month_summary ?? DEFAULT_FEATURE_FLAGS.ui.monthSummary;
 
 		return {
+			capabilities: {
+				categories: DEFAULT_FEATURE_FLAGS.capabilities.categories,
+				scheduledTransactions:
+					options.scheduled_transactions ?? DEFAULT_FEATURE_FLAGS.capabilities.scheduledTransactions,
+			},
 			ui: {
 				administration: options.administration ?? DEFAULT_FEATURE_FLAGS.ui.administration,
 				monthSummary: isMonthSummaryEnabled,

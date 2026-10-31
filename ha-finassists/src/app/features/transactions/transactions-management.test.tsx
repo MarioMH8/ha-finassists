@@ -100,7 +100,10 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 }
 
 function features(overrides: Partial<UiFeatureFlags> = {}): FeatureFlags {
-	return { ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...overrides } };
+	return {
+		capabilities: DEFAULT_FEATURE_FLAGS.capabilities,
+		ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...overrides },
+	};
 }
 
 function render(language: 'en' | 'es', element: React.ReactElement, ui: Partial<UiFeatureFlags> = {}): string {

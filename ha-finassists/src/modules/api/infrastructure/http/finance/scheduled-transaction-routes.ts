@@ -85,6 +85,13 @@ class ScheduledTransactionRoutes {
 
 	static create(): Hono<FinanceEnvironment> {
 		const routes = new Hono<FinanceEnvironment>();
+		routes.use('*', async (context, next) => {
+			if (!context.var.features.capabilities.scheduledTransactions) {
+				return HttpResponses.empty(404);
+			}
+
+			return next();
+		});
 
 		routes
 			.get('/scheduled-transactions', async context => {

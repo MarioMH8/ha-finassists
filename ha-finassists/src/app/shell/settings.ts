@@ -1,4 +1,4 @@
-import type { FeatureFlags, ShellConfig, UiFeatureFlags } from '@modules/shell/domain';
+import type { CapabilityFeatureFlags, FeatureFlags, ShellConfig, UiFeatureFlags } from '@modules/shell/domain';
 import { DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 
 interface AttributeSource {
@@ -6,6 +6,11 @@ interface AttributeSource {
 }
 
 class ShellSettings {
+	private static readonly CAPABILITY_ATTRIBUTES: Record<keyof CapabilityFeatureFlags, string> = {
+		categories: 'data-capability-categories',
+		scheduledTransactions: 'data-capability-scheduled-transactions',
+	};
+
 	private static readonly UI_FEATURE_ATTRIBUTES: Record<keyof UiFeatureFlags, string> = {
 		administration: 'data-feature-administration',
 		monthSummary: 'data-feature-month-summary',
@@ -27,6 +32,18 @@ class ShellSettings {
 			applicationName: source?.getAttribute('data-application-name') ?? DEFAULT_SHELL_CONFIG.applicationName,
 			currencyCode: source?.getAttribute('data-currency-code') ?? DEFAULT_SHELL_CONFIG.currencyCode,
 			features: {
+				capabilities: {
+					categories: this.isFeatureEnabled(
+						source,
+						this.CAPABILITY_ATTRIBUTES.categories,
+						DEFAULT_SHELL_CONFIG.features.capabilities.categories
+					),
+					scheduledTransactions: this.isFeatureEnabled(
+						source,
+						this.CAPABILITY_ATTRIBUTES.scheduledTransactions,
+						DEFAULT_SHELL_CONFIG.features.capabilities.scheduledTransactions
+					),
+				},
 				ui: {
 					administration: this.isFeatureEnabled(
 						source,
@@ -58,6 +75,9 @@ class ShellSettings {
 
 	static toFeatureAttributes(features: FeatureFlags): Record<string, string> {
 		const attributes: Record<string, string> = {};
+		for (const feature of Object.keys(this.CAPABILITY_ATTRIBUTES) as (keyof CapabilityFeatureFlags)[]) {
+			attributes[this.CAPABILITY_ATTRIBUTES[feature]] = String(features.capabilities[feature]);
+		}
 		for (const feature of Object.keys(this.UI_FEATURE_ATTRIBUTES) as (keyof UiFeatureFlags)[]) {
 			attributes[this.UI_FEATURE_ATTRIBUTES[feature]] = String(features.ui[feature]);
 		}

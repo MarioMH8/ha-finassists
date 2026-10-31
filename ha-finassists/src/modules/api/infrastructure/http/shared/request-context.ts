@@ -1,5 +1,5 @@
 import type { HomeAssistantActor } from '@modules/home-assistant';
-import type { ShellConfig } from '@modules/shell/domain';
+import type { FeatureFlags, ShellConfig } from '@modules/shell/domain';
 import type {
 	AuthenticateSystemCredential,
 	ExchangeSystemCredential,
@@ -34,7 +34,7 @@ interface SystemCredentialUseCases {
 
 interface HttpEnvironment {
 	Bindings: { requestContext: RequestContext };
-	Variables: { di: HttpScope };
+	Variables: { di: HttpScope; features: FeatureFlags };
 }
 
 export type { HttpEnvironment, RequestContext, SystemCredentialUseCases, TokenManagementUseCases };

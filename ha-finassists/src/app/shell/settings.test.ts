@@ -21,6 +21,8 @@ describe('ShellSettings', () => {
 		expect(
 			ShellSettings.fromDocument(
 				source({
+					'data-capability-categories': 'false',
+					'data-capability-scheduled-transactions': 'false',
 					'data-feature-administration': 'false',
 					'data-feature-month-summary': 'true',
 					'data-feature-month-summary-chart': 'false',
@@ -29,6 +31,10 @@ describe('ShellSettings', () => {
 				})
 			).features
 		).toEqual({
+			capabilities: {
+				categories: false,
+				scheduledTransactions: false,
+			},
 			ui: {
 				administration: false,
 				monthSummary: true,
@@ -65,8 +71,10 @@ describe('ShellSettings', () => {
 		).toEqual(DEFAULT_SHELL_CONFIG.features);
 	});
 
-	test('serializes every UI flag with the same attribute names used for hydration', () => {
+	test('serializes every flag with the same attribute names used for hydration', () => {
 		expect(ShellSettings.toFeatureAttributes(DEFAULT_SHELL_CONFIG.features)).toEqual({
+			'data-capability-categories': 'true',
+			'data-capability-scheduled-transactions': 'true',
 			'data-feature-administration': 'true',
 			'data-feature-month-summary': 'true',
 			'data-feature-month-summary-chart': 'true',
