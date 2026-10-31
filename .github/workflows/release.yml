@@ -70,7 +70,7 @@ jobs:
       id-token: write
       issues: write
       pull-requests: write
-    uses: hexadrop/github-workflows/.github/workflows/release.yml@v1.7.3
+    uses: hexadrop/github-workflows/.github/workflows/release.yml@v1.7.4
     with:
       target: tags
       concurrency-group: release-main
