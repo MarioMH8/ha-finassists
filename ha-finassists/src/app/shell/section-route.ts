@@ -20,7 +20,7 @@ const DEFAULT_SECTION: Section = SECTION.TRANSACTIONS;
 
 const SECTION_VISIBILITY: Record<Section, (features: FeatureFlags) => boolean> = {
 	[SECTION.ADMINISTRATION]: features => features.ui.administration,
-	[SECTION.CATEGORIES]: () => true,
+	[SECTION.CATEGORIES]: features => features.capabilities.categories,
 	[SECTION.SCHEDULED]: features => features.capabilities.scheduledTransactions,
 	[SECTION.TRANSACTIONS]: () => true,
 };

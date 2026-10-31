@@ -57,7 +57,7 @@ The recorded sensors expose `kind`, `month`, `scope: actual`, `period: current_m
 
 The scheduled sensors expose `kind`, `scope: scheduled`, `period: next_30_days`, `from_date`, `to_date`, `by_category`, `uncategorized`, `items` and `integration_entry_id`. `items` lists up to ten projected occurrences with `schedule_id`, `due_date`, `kind`, `description`, `amount` and `category`. The due sensor exposes `scope: scheduled_due` and the pending `items`. If the forecast is temporarily unavailable, recorded sensors keep working and the scheduled sensors expose an `error` attribute.
 
-The integration polls every five minutes; the `refresh` service asks for an immediate update. It also reads `GET /api/v1/capabilities` and reloads the config entry when the app changes a capability. When `scheduled_transactions` is off, the scheduled sensors are not created and the scheduled services fail with a clear error. Update the app and the integration together: an older app without the capabilities endpoint is treated as having every capability enabled.
+The integration polls every five minutes; the `refresh` service asks for an immediate update. It also reads `GET /api/v1/capabilities` and reloads the config entry when the app changes a capability. When `scheduled_transactions` is off, the scheduled sensors are not created and the scheduled services fail with a clear error. When `categories` is read-only, `GET /categories` keeps working, so services that take a category name and the `by_category` sensor attributes are unchanged. Update the app and the integration together: an older app without the capabilities endpoint is treated as having every capability enabled.
 
 ## Services
 
