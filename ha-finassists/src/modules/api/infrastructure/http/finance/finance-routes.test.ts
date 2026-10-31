@@ -825,6 +825,53 @@ describe('categories read-only capability', () => {
 		}
 	});
 
+	it('keeps transactions writable when categories are read-only', async () => {
+		const { useCases } = setup();
+		const features: FeatureFlags = {
+			...DEFAULT_FEATURE_FLAGS,
+			capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, categories: false },
+		};
+		const created = await send(
+			useCases,
+			'/api/v1/transactions',
+			'POST',
+			{ amountMinor: 1000, kind: 'expense', transactionDate: '2026-05-15' },
+			features
+		);
+		const listed = await send(useCases, '/api/v1/transactions', 'GET', undefined, features);
+
+		expect(created.status).toBe(201);
+		expect(listed.status).toBe(200);
+	});
+
+	it('keeps transactions writable through the HTTP application when categories are read-only', async () => {
+		const { useCases } = setup();
+		const tokenUseCases = setupTokens();
+		const issued = await tokenUseCases.issue.execute({ name: 'client', ownerId: 'owner' });
+		const features: FeatureFlags = {
+			...DEFAULT_FEATURE_FLAGS,
+			capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, categories: false },
+		};
+		const response = await HttpApplication.handle(
+			new Request('http://localhost/api/v1/transactions', {
+				body: JSON.stringify({ amountMinor: 1000, kind: 'expense', transactionDate: '2026-05-15' }),
+				headers: {
+					Authorization: `Bearer ${issued.secret}`,
+					'Content-Type': 'application/json',
+				},
+				method: 'POST',
+			}),
+			{
+				remoteAddress: '[IP_ADDRESS]',
+				shellConfig: { ...DEFAULT_SHELL_CONFIG, features },
+				trustedIngressIp: '::1',
+			},
+			HttpContainerBuilder.create({ financeUseCases: useCases, tokenUseCases })
+		);
+
+		expect(response.status).toBe(201);
+	});
+
 	it('keeps list_categories in MCP and removes category management tools', async () => {
 		const { useCases } = setup();
 		const tokenUseCases = setupTokens();
