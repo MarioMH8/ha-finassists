@@ -1,5 +1,19 @@
 # ha-finassists
 
+## 0.3.0
+
+### Minor Changes
+
+- 6d4bb5f: Expose scheduled transactions through the REST API and MCP, including automatic or manual posting, skips and a 30-day forecast with totals and category breakdown.
+- 2c9d530: Post scheduled expenses and incomes automatically when they are due, or keep them pending for manual confirmation, with bounded catch-up after downtime and pause/resume support.
+- 370a154: Expose scheduled movements in Home Assistant with forecast and due sensors, scheduled add/delete/post/skip services, and recorded-versus-scheduled totals in the Lovelace card.
+- 8625223: Manage scheduled expenses and incomes in the web app, with a next-30-days forecast, pending manual confirmations, pause/resume and a one-time or recurring form.
+- 5ebe03c: Add scheduled expenses and incomes with one-time and recurring dates, automatic or manual posting, a 30-day forecast, REST and MCP access, and Home Assistant sensors, services and card support.
+
+### Patch Changes
+
+- 93b0131: Replace the loading messages with delayed skeletons, so the web app keeps its layout and never flashes a placeholder while data loads.
+
 ## 0.2.5
 
 ### Patch Changes
