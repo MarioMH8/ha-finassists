@@ -804,6 +804,106 @@ describe('categories over MCP', () => {
 	});
 });
 
+describe('categories read-only capability', () => {
+	it('keeps category reads and blocks mutations', async () => {
+		const { useCases } = setup();
+		const features: FeatureFlags = {
+			...DEFAULT_FEATURE_FLAGS,
+			capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, categories: false },
+		};
+
+		const list = await send(useCases, '/api/v1/categories', 'GET', undefined, features);
+		expect(list.status).toBe(200);
+		for (const [pathname, method, body] of [
+			['/api/v1/categories', 'POST', { kind: 'expense', name: 'Food' }],
+			['/api/v1/categories/category-1', 'PATCH', { name: 'Food' }],
+			['/api/v1/categories/category-1', 'DELETE', undefined],
+		] as const) {
+			// eslint-disable-next-line no-await-in-loop -- Each request is asserted in order.
+			const response = await send(useCases, pathname, method, body, features);
+			expect(response.status).toBe(404);
+		}
+	});
+
+	it('keeps transactions writable when categories are read-only', async () => {
+		const { useCases } = setup();
+		const features: FeatureFlags = {
+			...DEFAULT_FEATURE_FLAGS,
+			capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, categories: false },
+		};
+		const created = await send(
+			useCases,
+			'/api/v1/transactions',
+			'POST',
+			{ amountMinor: 1000, kind: 'expense', transactionDate: '2026-05-15' },
+			features
+		);
+		const listed = await send(useCases, '/api/v1/transactions', 'GET', undefined, features);
+
+		expect(created.status).toBe(201);
+		expect(listed.status).toBe(200);
+	});
+
+	it('keeps transactions writable through the HTTP application when categories are read-only', async () => {
+		const { useCases } = setup();
+		const tokenUseCases = setupTokens();
+		const issued = await tokenUseCases.issue.execute({ name: 'client', ownerId: 'owner' });
+		const features: FeatureFlags = {
+			...DEFAULT_FEATURE_FLAGS,
+			capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, categories: false },
+		};
+		const response = await HttpApplication.handle(
+			new Request('http://localhost/api/v1/transactions', {
+				body: JSON.stringify({ amountMinor: 1000, kind: 'expense', transactionDate: '2026-05-15' }),
+				headers: {
+					Authorization: `Bearer ${issued.secret}`,
+					'Content-Type': 'application/json',
+				},
+				method: 'POST',
+			}),
+			{
+				remoteAddress: '[IP_ADDRESS]',
+				shellConfig: { ...DEFAULT_SHELL_CONFIG, features },
+				trustedIngressIp: '::1',
+			},
+			HttpContainerBuilder.create({ financeUseCases: useCases, tokenUseCases })
+		);
+
+		expect(response.status).toBe(201);
+	});
+
+	it('keeps list_categories in MCP and removes category management tools', async () => {
+		const { useCases } = setup();
+		const tokenUseCases = setupTokens();
+		const issued = await tokenUseCases.issue.execute({ name: 'client', ownerId: 'owner' });
+		const features: FeatureFlags = {
+			...DEFAULT_FEATURE_FLAGS,
+			capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, categories: false },
+		};
+		const response = await McpTransport.handle(
+			new Request('http://localhost/mcp', {
+				body: JSON.stringify({ id: 1, jsonrpc: '2.0', method: 'tools/list' }),
+				headers: {
+					Accept: 'application/json, text/event-stream',
+					Authorization: `Bearer ${issued.secret}`,
+					'Content-Type': 'application/json',
+				},
+				method: 'POST',
+			}),
+			tokenUseCases,
+			useCases,
+			undefined,
+			features
+		);
+		const listed = await readJson<{ result: { tools: { name: string }[] } }>(response);
+		const names = listed.result.tools.map(tool => tool.name);
+
+		expect(names).toContain('list_categories');
+		expect(names).not.toContain('create_category');
+		expect(names).not.toContain('delete_category');
+	});
+});
+
 describe('scheduled transactions REST routes', () => {
 	it('creates, lists, updates and deletes a schedule', async () => {
 		const { useCases } = setup();
@@ -1203,6 +1303,30 @@ describe('scheduled transactions capability', () => {
 		expect(response.status).toBe(200);
 		expect(await readJson(response)).toEqual({
 			features: { categories: true, scheduledTransactions: false },
+		});
+	});
+
+	it('reports read-only categories', async () => {
+		const { authorization, container } = await authenticatedContainer();
+		const features: FeatureFlags = {
+			...DEFAULT_FEATURE_FLAGS,
+			capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, categories: false },
+		};
+		const response = await HttpApplication.handle(
+			new Request('http://localhost/api/v1/capabilities', {
+				headers: { Authorization: authorization },
+			}),
+			{
+				remoteAddress: '[IP_ADDRESS]',
+				shellConfig: { ...DEFAULT_SHELL_CONFIG, features },
+				trustedIngressIp: '::1',
+			},
+			container
+		);
+
+		expect(response.status).toBe(200);
+		expect(await readJson(response)).toEqual({
+			features: { categories: false, scheduledTransactions: true },
 		});
 	});
 

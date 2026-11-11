@@ -27,6 +27,7 @@ The app needs the Home Assistant Supervisor. It does not run on Home Assistant C
 | `application_name` | Fin Assist | Name shown in the interface and in the browser tab. |
 | `currency` | EUR | ISO 4217 code applied to every amount. Changing it does not convert amounts that are already recorded. |
 | `administration` | `true` | Show the Administration section and personal API token management. Existing tokens keep working when hidden. |
+| `categories` | `true` | Enable category management and category controls. Turning it off makes categories read-only: existing references and breakdowns stay, but no category can be created, renamed or deleted. |
 | `month_summary` | `true` | Show the “This month” summary in Transactions. |
 | `month_summary_chart` | `true` | Show the six-month chart inside the summary. It is hidden when `month_summary` is off. |
 | `scheduled_summary` | `true` | Show the “Upcoming 30 days” forecast in Scheduled. |
@@ -46,6 +47,8 @@ Hiding Administration removes the place where you create and revoke personal API
 `scheduled_transactions` disables the whole scheduled feature. When it is off at startup, the app pauses every active scheduled movement, automatic posting stops and the scheduled REST routes and MCP tools are unavailable. The integration stops creating its scheduled sensors, and its scheduled services fail with a clear error. Existing schedules and posted transactions are kept.
 
 When you turn the option back on, schedules stay paused. Review them and resume the ones you want; resuming skips the occurrences that became due while the feature was off, so it does not create a backlog of transactions.
+
+`categories` makes category management read-only. The Categories section and the category selectors, columns and filters disappear from the app, and the REST and MCP category mutations are unavailable. `GET /categories` stays available so existing transactions, reports and integration sensors can keep resolving category names and breakdowns. Existing categories and `categoryId` values are never deleted; turning the option back on restores management.
 
 ## Network
 

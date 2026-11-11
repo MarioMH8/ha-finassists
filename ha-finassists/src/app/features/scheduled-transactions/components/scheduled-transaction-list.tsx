@@ -14,6 +14,7 @@ import { formatDate, formatMinorUnits } from '@app/features/transactions/transac
 import { TRANSACTION_KIND } from '@app/features/transactions/transactions-api';
 import { LOAD_STATE } from '@app/features/transactions/transactions-constants';
 import { interpolate } from '@app/i18n';
+import { useFeatureFlags } from '@app/shell/feature-flags-context';
 import type { ReactElement } from 'react';
 
 import styles from './scheduled-transaction-list.module.css';
@@ -59,6 +60,7 @@ function ScheduledTransactionList({
 	setConfirmingScheduleId,
 	today,
 }: ScheduledTransactionListProps): ReactElement {
+	const { capabilities } = useFeatureFlags();
 	const categoryNames = new Map(categories.map(category => [category.id, category.name]));
 	const pendingDelete = schedules.find(schedule => schedule.id === confirmingScheduleId);
 	const isDeleting = deletingScheduleId === pendingDelete?.id;
@@ -99,7 +101,7 @@ function ScheduledTransactionList({
 			<tr>
 				<DataHeaderCell>{copy.scheduledColumnNextDate}</DataHeaderCell>
 				<DataHeaderCell>{copy.scheduledColumnDescription}</DataHeaderCell>
-				<DataHeaderCell>{copy.scheduledColumnCategory}</DataHeaderCell>
+				{capabilities.categories ? <DataHeaderCell>{copy.scheduledColumnCategory}</DataHeaderCell> : undefined}
 				<DataHeaderCell>{copy.scheduledColumnRecurrence}</DataHeaderCell>
 				<DataHeaderCell align={DATA_ALIGN.END}>{copy.scheduledColumnAmount}</DataHeaderCell>
 				<DataHeaderCell>{copy.scheduledColumnStatus}</DataHeaderCell>
@@ -166,15 +168,19 @@ function ScheduledTransactionList({
 											<span className={styles.muted}>{copy.transactionNoDescription}</span>
 										)}
 									</DataCell>
-									<DataCell>
-										{schedule.categoryId === null ? (
-											<span className={styles.muted}>{copy.transactionCategoryNone}</span>
-										) : (
-											(categoryNames.get(schedule.categoryId) ?? (
-												<span className={styles.muted}>{copy.transactionCategoryUnknown}</span>
-											))
-										)}
-									</DataCell>
+									{capabilities.categories ? (
+										<DataCell>
+											{schedule.categoryId === null ? (
+												<span className={styles.muted}>{copy.transactionCategoryNone}</span>
+											) : (
+												(categoryNames.get(schedule.categoryId) ?? (
+													<span className={styles.muted}>
+														{copy.transactionCategoryUnknown}
+													</span>
+												))
+											)}
+										</DataCell>
+									) : undefined}
 									<DataCell>{recurrenceLabel(copy, schedule.frequency, schedule.interval)}</DataCell>
 									<DataCell
 										className={

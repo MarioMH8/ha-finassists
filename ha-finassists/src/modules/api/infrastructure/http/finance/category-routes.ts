@@ -29,6 +29,15 @@ class CategoryRoutes {
 
 	static create(): Hono<FinanceEnvironment> {
 		const routes = new Hono<FinanceEnvironment>();
+		for (const path of ['/categories', '/categories/*']) {
+			routes.use(path, async (context, next) => {
+				if (!context.var.features.capabilities.categories && context.req.method !== 'GET') {
+					return HttpResponses.empty(404);
+				}
+
+				return next();
+			});
+		}
 
 		routes
 			.get('/categories', async context => {

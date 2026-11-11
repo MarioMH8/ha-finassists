@@ -13,6 +13,7 @@ const SCHEDULED_FREQUENCY_VALUES = ['once', 'daily', 'weekly', 'monthly', 'yearl
 const SCHEDULED_POSTING_MODE_VALUES = ['automatic', 'manual'];
 const SCHEDULED_STATUS_VALUES = ['active', 'paused', 'completed'];
 const SCHEDULED_UPDATE_STATUS_VALUES = ['active', 'paused'];
+const CATEGORY_MANAGEMENT_TOOL_NAMES = new Set(['create_category', 'delete_category']);
 const SCHEDULED_TOOL_NAMES = new Set([
 	'create_scheduled_transaction',
 	'delete_scheduled_transaction',
@@ -221,7 +222,11 @@ class McpTools {
 	private constructor() {}
 
 	static isEnabled(name: string, features: FeatureFlags): boolean {
-		return features.capabilities.scheduledTransactions || !SCHEDULED_TOOL_NAMES.has(name);
+		if (!features.capabilities.scheduledTransactions && SCHEDULED_TOOL_NAMES.has(name)) {
+			return false;
+		}
+
+		return features.capabilities.categories || !CATEGORY_MANAGEMENT_TOOL_NAMES.has(name);
 	}
 
 	static list(features: FeatureFlags): McpTool[] {

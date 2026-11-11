@@ -3,7 +3,7 @@ import { getCopy } from '@app/i18n';
 import { LocaleProvider } from '@app/i18n/locale-context';
 import { App } from '@app/shell/app';
 import { FeatureFlagsProvider } from '@app/shell/feature-flags-context';
-import type { FeatureFlags, UiFeatureFlags } from '@modules/shell/domain';
+import type { CapabilityFeatureFlags, FeatureFlags, UiFeatureFlags } from '@modules/shell/domain';
 import { DEFAULT_FEATURE_FLAGS, DEFAULT_SHELL_CONFIG } from '@modules/shell/domain';
 import { describe, expect, test } from 'bun:test';
 import { createRef } from 'react';
@@ -99,16 +99,21 @@ function state(language: 'en' | 'es', overrides: Partial<TransactionsState> = {}
 	};
 }
 
-function features(overrides: Partial<UiFeatureFlags> = {}): FeatureFlags {
+function features(ui: Partial<UiFeatureFlags> = {}, capabilities: Partial<CapabilityFeatureFlags> = {}): FeatureFlags {
 	return {
-		capabilities: DEFAULT_FEATURE_FLAGS.capabilities,
-		ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...overrides },
+		capabilities: { ...DEFAULT_FEATURE_FLAGS.capabilities, ...capabilities },
+		ui: { ...DEFAULT_FEATURE_FLAGS.ui, ...ui },
 	};
 }
 
-function render(language: 'en' | 'es', element: React.ReactElement, ui: Partial<UiFeatureFlags> = {}): string {
+function render(
+	language: 'en' | 'es',
+	element: React.ReactElement,
+	ui: Partial<UiFeatureFlags> = {},
+	capabilities: Partial<CapabilityFeatureFlags> = {}
+): string {
 	return renderToStaticMarkup(
-		<FeatureFlagsProvider features={features(ui)}>
+		<FeatureFlagsProvider features={features(ui, capabilities)}>
 			<LocaleProvider language={language}>{element}</LocaleProvider>
 		</FeatureFlagsProvider>
 	);
@@ -163,6 +168,23 @@ describe('TransactionForm', () => {
 		expect(markup).toContain('No category');
 		expect(markup).toContain('>Food</option>');
 		expect(markup).not.toContain('>Salary</option>');
+	});
+
+	test('hides the category selector when the capability is off', () => {
+		const markup = render(
+			'en',
+			<TransactionForm
+				{...state('en', {
+					categories: [category({ id: 'category-1', kind: 'expense', name: 'Food' })],
+				})}
+			/>,
+			{},
+			{ categories: false }
+		);
+
+		expect(markup).not.toContain('Category (optional)');
+		expect(markup).not.toContain('transaction-category');
+		expect(markup).not.toContain('>Food</option>');
 	});
 });
 
@@ -256,6 +278,25 @@ describe('TransactionList', () => {
 
 		expect(markup).toContain('transaction-filter-category');
 		expect(markup).toContain('>Food</option>');
+	});
+
+	test('hides category columns and filters when the capability is off', () => {
+		const markup = render(
+			'en',
+			<TransactionList
+				{...state('en', {
+					categories: [category({ id: 'category-1', name: 'Food' })],
+					total: 1,
+					transactions: [expense({ categoryId: 'category-1' })],
+				})}
+			/>,
+			{},
+			{ categories: false }
+		);
+
+		expect(markup).not.toContain('>Category</th>');
+		expect(markup).not.toContain('transaction-filter-category');
+		expect(markup).not.toContain('>Food</td>');
 	});
 
 	test('offers per-row and select-all checkboxes for bulk deletion', () => {
@@ -392,5 +433,18 @@ describe('App', () => {
 
 		expect(markup).not.toContain('This month');
 		expect(markup).toContain('Recent transactions');
+	});
+
+	test('hides the categories navigation when its capability is off', () => {
+		const markup = renderToStaticMarkup(
+			<App
+				language='en'
+				settings={{ ...DEFAULT_SHELL_CONFIG, features: features({}, { categories: false }) }}
+			/>
+		);
+
+		expect(markup).not.toContain('>Categories<');
+		expect(markup).toContain('Scheduled');
+		expect(markup).toContain('New transaction');
 	});
 });

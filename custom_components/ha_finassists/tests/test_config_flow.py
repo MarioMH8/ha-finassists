@@ -823,6 +823,32 @@ class TransactionApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(categories, [{"id": "cat-food", "name": "Food", "kind": "expense"}])
         self.assertEqual(session.calls[0]["params"], {"kind": "expense"})
 
+    async def test_read_only_categories_keep_name_resolution(self) -> None:
+        class _ReadOnlySession:
+            def __init__(self) -> None:
+                self.calls: list[dict[str, Any]] = []
+
+            def request(self, method: str, url: str, **kwargs: Any) -> _RequestContext:
+                self.calls.append({"method": method, "url": url, **kwargs})
+                if url.endswith("/capabilities"):
+                    return _RequestContext(
+                        _Response(
+                            200,
+                            {"features": {"categories": False, "scheduledTransactions": True}},
+                        )
+                    )
+                return _RequestContext(
+                    _Response(200, {"items": [{"id": "cat-food", "name": "Food", "kind": "expense"}]})
+                )
+
+        session = _ReadOnlySession()
+        api = FinAssistApi("http://fin-assist/api/v1", "token", session)
+        capabilities = await api.async_fetch_capabilities()
+        categories = await api.async_list_categories("expense")
+
+        self.assertFalse(capabilities["categories"])
+        self.assertEqual(categories, [{"id": "cat-food", "name": "Food", "kind": "expense"}])
+
     async def test_summary_falls_back_to_default_currency_without_transactions(self) -> None:
         session = _PagedSession([{"items": [], "total": 0}])
         summary = await FinAssistApi("http://fin-assist/api/v1", "token", session).async_fetch_summary()

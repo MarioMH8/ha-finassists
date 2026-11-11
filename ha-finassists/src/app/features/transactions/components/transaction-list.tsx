@@ -18,6 +18,7 @@ import type { FilterKind, PageSize, TransactionFilters } from '@app/features/tra
 import { FILTER_KIND, LOAD_STATE, PAGE_SIZES } from '@app/features/transactions/transactions-constants';
 import type { TransactionsState } from '@app/features/transactions/use-transactions.hook';
 import { interpolate } from '@app/i18n';
+import { useFeatureFlags } from '@app/shell/feature-flags-context';
 import type { ReactElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -96,6 +97,7 @@ function TransactionList({
 	total,
 	transactions,
 }: TransactionListProps): ReactElement {
+	const { capabilities } = useFeatureFlags();
 	const [filtersOpen, setFiltersOpen] = useState(false);
 	const categoryNames = new Map(categories.map(category => [category.id, category.name]));
 	const filterCategories = categories.filter(
@@ -313,7 +315,9 @@ function TransactionList({
 				</DataHeaderCell>
 				<DataHeaderCell>{copy.transactionColumnDate}</DataHeaderCell>
 				<DataHeaderCell>{copy.transactionColumnDescription}</DataHeaderCell>
-				<DataHeaderCell>{copy.transactionColumnCategory}</DataHeaderCell>
+				{capabilities.categories ? (
+					<DataHeaderCell>{copy.transactionColumnCategory}</DataHeaderCell>
+				) : undefined}
 				<DataHeaderCell align={DATA_ALIGN.END}>{copy.transactionColumnAmount}</DataHeaderCell>
 				<DataHeaderCell align={DATA_ALIGN.END}>{copy.transactionColumnActions}</DataHeaderCell>
 			</tr>
@@ -397,17 +401,21 @@ function TransactionList({
 													</span>
 												)}
 											</DataCell>
-											<DataCell>
-												{transaction.categoryId === null ? (
-													<span className={styles.muted}>{copy.transactionCategoryNone}</span>
-												) : (
-													(categoryNames.get(transaction.categoryId) ?? (
+											{capabilities.categories ? (
+												<DataCell>
+													{transaction.categoryId === null ? (
 														<span className={styles.muted}>
-															{copy.transactionCategoryUnknown}
+															{copy.transactionCategoryNone}
 														</span>
-													))
-												)}
-											</DataCell>
+													) : (
+														(categoryNames.get(transaction.categoryId) ?? (
+															<span className={styles.muted}>
+																{copy.transactionCategoryUnknown}
+															</span>
+														))
+													)}
+												</DataCell>
+											) : undefined}
 											<DataCell
 												className={classNames(isIncome ? styles.income : styles.expense)}
 												numeric>
@@ -541,30 +549,32 @@ function TransactionList({
 							<option value={TRANSACTION_KIND.INCOME}>{copy.transactionKindIncome}</option>
 						</Select>
 					</Field>
-					<Field
-						htmlFor='transaction-filter-category'
-						label={copy.transactionFilterCategory}>
-						<Select
-							id='transaction-filter-category'
-							onChange={event => {
-								const categoryId = event.currentTarget.value;
-								setDraftFilters(current => ({
-									...current,
-									categoryId,
-								}));
-							}}
-							size={SELECT_SIZE.SMALL}
-							value={draftFilters.categoryId}>
-							<option value=''>{copy.transactionFilterAll}</option>
-							{filterCategories.map(category => (
-								<option
-									key={category.id}
-									value={category.id}>
-									{category.name}
-								</option>
-							))}
-						</Select>
-					</Field>
+					{capabilities.categories ? (
+						<Field
+							htmlFor='transaction-filter-category'
+							label={copy.transactionFilterCategory}>
+							<Select
+								id='transaction-filter-category'
+								onChange={event => {
+									const categoryId = event.currentTarget.value;
+									setDraftFilters(current => ({
+										...current,
+										categoryId,
+									}));
+								}}
+								size={SELECT_SIZE.SMALL}
+								value={draftFilters.categoryId}>
+								<option value=''>{copy.transactionFilterAll}</option>
+								{filterCategories.map(category => (
+									<option
+										key={category.id}
+										value={category.id}>
+										{category.name}
+									</option>
+								))}
+							</Select>
+						</Field>
+					) : undefined}
 					<Field
 						htmlFor='transaction-filter-from'
 						label={copy.transactionFilterFrom}>
