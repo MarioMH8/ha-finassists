@@ -2,7 +2,7 @@
 #   docker build -f ha-finassists/Dockerfile -t ha-finassists .
 # BuildKit picks up Dockerfile.dockerignore next to this file; patterns apply to
 # that context.
-FROM oven/bun:1.4.0-alpine AS build
+FROM oven/bun:1.4.5-alpine AS build
 
 WORKDIR /app
 COPY package.json bun.lock ./
@@ -12,7 +12,7 @@ COPY ha-finassists/tsconfig.json ./ha-finassists/tsconfig.json
 COPY ha-finassists/src ./ha-finassists/src
 RUN cd ha-finassists && bun run build
 
-FROM oven/bun:1.4.0-alpine
+FROM oven/bun:1.4.5-alpine
 
 WORKDIR /app
 COPY package.json bun.lock ./
